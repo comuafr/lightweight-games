@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Snake icon foreground: three green rounded body segments forming an L,
+     plus a red food pip. Vector only — no PNG bitmaps in the APK. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- body -->
+    <path
+        android:fillColor="#FF5FD068"
+        android:pathData="M42,38 H50 A4,4 0 0 1 54,42 V50 A4,4 0 0 1 50,54 H42 A4,4 0 0 1 38,50 V42 A4,4 0 0 1 42,38 Z" />
+    <!-- head -->
+    <path
+        android:fillColor="#FF9BE7A6"
+        android:pathData="M60,38 H68 A4,4 0 0 1 72,42 V50 A4,4 0 0 1 68,54 H60 A4,4 0 0 1 56,50 V42 A4,4 0 0 1 60,38 Z" />
+    <!-- tail -->
+    <path
+        android:fillColor="#FF5FD068"
+        android:pathData="M42,56 H50 A4,4 0 0 1 54,60 V68 A4,4 0 0 1 50,72 H42 A4,4 0 0 1 38,68 V60 A4,4 0 0 1 42,56 Z" />
+    <!-- food -->
+    <path
+        android:fillColor="#FFE85D5D"
+        android:pathData="M61,58 H67 A3,3 0 0 1 70,61 V67 A3,3 0 0 1 67,70 H61 A3,3 0 0 1 58,67 V61 A3,3 0 0 1 61,58 Z" />
+</vector>
