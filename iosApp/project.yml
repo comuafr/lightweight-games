@@ -1,0 +1,131 @@
+name: LightweightGames
+options:
+  bundleIdPrefix: fr.regisp
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+  # M2 (PLAN.md §6): `Products.storekit` (this directory) is the local
+  # StoreKit configuration for the "unlock_all" non-consumable, used both by
+  # the LightweightGames scheme's Run action below (Xcode's local StoreKit
+  # testing environment -- no App Store Connect product needed to develop
+  # against it) and by `LightweightGamesTests/StoreKitTests.swift` via
+  # `SKTestSession(configurationFileNamed:)`. `schemePathPrefix` is left at
+  # XcodeGen's default ("../../", correct for a plain, non-workspace
+  # .xcodeproj: two levels up from
+  # `LightweightGames.xcodeproj/xcshareddata/xcschemes/` lands back in this
+  # directory), so `storeKitConfiguration` below is written relative to this
+  # file. Before submitting to the real App Store, create the matching
+  # "unlock_all" non-consumable in App Store Connect (same product id,
+  # price, and en/fr localizations as this file).
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEAD_CODE_STRIPPING: YES
+    STRIP_INSTALLED_PRODUCT: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    FRAMEWORK_SEARCH_PATHS:
+      - "$(SRCROOT)/../core/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+      - "$(SRCROOT)/Frameworks"
+    OTHER_LDFLAGS: "-framework GamesCore"
+    ENABLE_BITCODE: NO
+    # iPhone + iPad (PLAN.md §9 M5: "captures générées" implies both device
+    # families); Mac Catalyst is explicitly out of scope (touch-first UI,
+    # never built/tested for a pointer+keyboard environment).
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    ASSETCATALOG_COMPILER_OPTIMIZATION: space
+  configs:
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-Osize"
+      DEAD_CODE_STRIPPING: YES
+      STRIP_INSTALLED_PRODUCT: YES
+      ENABLE_BITCODE: NO
+
+targets:
+  LightweightGames:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: LightweightGames
+        excludes:
+          - "Info.plist"
+    info:
+      path: LightweightGames/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.regisp.lightgames
+        PRODUCT_NAME: LightweightGames
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+    preBuildScripts:
+      - name: "Build & embed GamesCore.xcframework (Gradle)"
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          if [ "$LG_USE_PREBUILT" = "1" ]; then
+            echo "LG_USE_PREBUILT=1: skipping the Gradle embed step; using $SRCROOT/Frameworks/GamesCore.framework instead (see iosApp/README.md)."
+            exit 0
+          fi
+
+          # Xcode Run Script phases do not source ~/.zshrc / ~/.bash_profile,
+          # so JAVA_HOME may not be set even if a JDK is installed. Try to
+          # resolve a JDK 21 via the standard macOS helper before falling
+          # back to whatever JAVA_HOME is already in the environment.
+          RESOLVED_JAVA_HOME="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
+          if [ -n "$RESOLVED_JAVA_HOME" ]; then
+            export JAVA_HOME="$RESOLVED_JAVA_HOME"
+          fi
+
+          cd "$SRCROOT/.."
+          ./gradlew :core:embedAndSignAppleFrameworkForXcode
+
+  LightweightGamesTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - LightweightGamesTests
+      # `SKTestSession(configurationFileNamed: "Products")` looks this up as
+      # a bundle resource of the test target at runtime, so it must be
+      # copied in (not compiled) -- StoreKit configuration files are not one
+      # of XcodeGen's auto-detected resource extensions.
+      - path: Products.storekit
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.regisp.lightgames.tests
+    dependencies:
+      - target: LightweightGames
+      # Weak-linked: only `StoreKitTests.swift` uses it, and weak linking
+      # keeps the test bundle launchable on the (hypothetical) case of a
+      # deployment target below where StoreKitTest.framework exists -- it
+      # is available from iOS 14+, so this is mostly belt-and-braces given
+      # this project's iOS 15 floor.
+      - sdk: StoreKitTest.framework
+        weak: true
+
+schemes:
+  LightweightGames:
+    build:
+      targets:
+        LightweightGames: all
+        LightweightGamesTests: [test]
+    run:
+      config: Debug
+      # Local StoreKit testing environment for the "unlock_all" IAP
+      # (PLAN.md §6/§9): lets Run in Xcode simulate purchases, Ask to Buy,
+      # and refunds without a sandbox Apple ID. Path is relative to this
+      # file (see the `schemePathPrefix` note above `Products.storekit`
+      # isn't itself compiled into the app target; the scheme references it
+      # directly on disk).
+      storeKitConfiguration: Products.storekit
+    test:
+      config: Debug
+      targets:
+        - LightweightGamesTests
+    archive:
+      config: Release

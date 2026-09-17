@@ -1,0 +1,27 @@
+[versions]
+kotlin = "2.4.20"
+agp = "9.4.0"
+billing = "8.0.0"
+compileSdk = "36"
+minSdk = "24"
+junit = "4.13.2"
+androidxTestRunner = "1.6.2"
+androidxTestRules = "1.6.1"
+androidxTestJunit = "1.2.1"
+
+[libraries]
+billing = { module = "com.android.billingclient:billing", version.ref = "billing" }
+# Test-only (JVM unit tests); never ships in the app.
+junit = { module = "junit:junit", version.ref = "junit" }
+# Test-only (androidTest instrumentation, androidTestImplementation only); never ships in the app.
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidxTestRules" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestJunit" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

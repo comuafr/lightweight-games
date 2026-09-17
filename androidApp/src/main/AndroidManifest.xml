@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      No permissions: no network, no storage, nothing (PLAN.md §2).
+
+      `com.android.billingclient:billing` (added in M2) merges in three
+      uses-permission entries; only one of them is actually needed:
+
+      - `com.android.vending.BILLING`: required. It is a *normal*,
+        non-dangerous permission owned by the Play Store app itself (never
+        shown to the user as a grantable permission) that authorizes the IPC
+        bind to Play Store's billing service. Play Billing cannot work
+        without it, so it is kept.
+      - `android.permission.INTERNET` and
+        `android.permission.ACCESS_NETWORK_STATE`: NOT needed. They are
+        pulled in transitively by `com.google.android.datatransport:transport-backend-cct`,
+        an internal Clearcut telemetry transport bundled with the Play
+        Billing dependency graph (unrelated to the purchase/query/restore
+        flow, which talks to the Play Store app entirely over IPC — see
+        PLAN.md §10 "Sans permission INTERNET"). Removed here so the app
+        keeps its zero-network-access posture; verified with
+        `aapt2 dump badging` after every build (tools/footprint.sh's
+        "permissions" section, and the M2 verification report).
+    -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+
+    <application
+        android:name=".App"
+        android:allowBackup="false"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.LG"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.LG">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LG"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode" />
+
+        <activity
+            android:name=".PaywallActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:theme="@style/Theme.LG" />
+        <!-- configChanges above: the Play purchase sheet sits on top of this
+             activity; recreating it on rotation would drop the in-flight
+             purchase listener. The layout is a programmatic vertical stack
+             that re-measures on its own. -->
+
+    </application>
+</manifest>

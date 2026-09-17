@@ -1,0 +1,46 @@
+{
+  "identifier" : "63CF1BFC-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "DBE9806C",
+      "localizations" : [
+        {
+          "description" : "One purchase, no ads, no subscription. Works offline.",
+          "displayName" : "Unlock every game",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Un seul achat, sans publicité, sans abonnement. Fonctionne hors ligne.",
+          "displayName" : "Débloquer tous les jeux",
+          "locale" : "fr_FR"
+        }
+      ],
+      "productID" : "unlock_all",
+      "referenceName" : "Unlock all",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "0000000000",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

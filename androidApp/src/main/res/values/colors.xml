@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches Palette.LIGHT[Palette.BG] in ui/Palette.kt; kept in sync by hand. -->
+    <color name="window_background">#FFF6F1E7</color>
+    <color name="ic_launcher_background">#FF2EC4B6</color>
+</resources>

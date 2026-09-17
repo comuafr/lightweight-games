@@ -1,0 +1,26 @@
+# Mots français pour le Pendu : noms concrets, familiers aux enfants, sans accent.
+# Un mot par ligne ; le script garde 5 à 9 lettres, minuscules a-z, sans doublon.
+maison jardin voiture chateau ecole cahier crayon table chaise fenetre porte cuisine chambre salon lampe tapis miroir horloge montre
+pomme poire banane orange fraise cerise citron raisin melon peche prune tomate carotte salade radis oignon poivron chou haricot
+chien chat lapin souris cheval vache mouton cochon poule canard oiseau pigeon moineau hibou aigle corbeau cygne pingouin dauphin
+baleine requin poisson crabe crevette tortue grenouille serpent lezard escargot papillon abeille fourmi araignee mouche moustique
+lion tigre girafe zebre singe gorille elephant panda koala kangourou renard loup ours cerf sanglier ecureuil herisson castor
+soleil lune etoile nuage pluie neige vent orage tonnerre arc ciel terre montagne colline riviere fleuve lac ocean plage sable
+foret arbre branche feuille fleur racine herbe champ prairie desert volcan grotte cascade rocher caillou galet
+pain beurre fromage lait yaourt gateau tarte biscuit bonbon chocolat sucre miel confiture crepe pizza pates riz soupe salade
+bateau navire avion train velo moto camion tracteur fusee voilier sousmarin helico taxi metro autobus
+football tennis rugby natation course saut danse judo ping escalade patin luge skate
+guitare piano violon flute tambour trompette harpe musique chanson orchestre
+pirate chevalier princesse roi reine dragon sorciere fantome robot monstre geant fee licorne magicien clown
+tete bras jambe main pied doigt oreille bouche dent cheveu ventre epaule genou coude
+chapeau manteau pull robe jupe pantalon chemise chaussure botte gant echarpe bonnet pyjama
+boulanger docteur pompier policier facteur fermier pilote marin cuisinier jardinier peintre coiffeur
+livre histoire lettre journal image photo dessin peinture pinceau ciseaux colle gomme regle stylo feutre
+ballon poupee toupie puzzle billes cartes domino train jouet peluche cerf volant trottinette
+jaune rouge bleu vert orange violet rose blanc noir marron gris
+lundi mardi jeudi samedi dimanche janvier fevrier avril juillet octobre novembre decembre hiver printemps automne
+famille parent frere soeur cousin cousine tante oncle mamie papi bebe enfant ami copain voisin
+village ville quartier rue place pont tunnel tour eglise musee marche magasin boutique hopital piscine stade parc zoo cirque
+bureau ordinateur clavier ecran souris telephone tablette camera radio television
+bouteille verre assiette fourchette couteau cuillere casserole poele four frigo evier eponge serviette savon brosse peigne
+tresor carte cle coffre boussole lanterne bougie corde echelle marteau clou vis tournevis pelle rateau seau arrosoir brouette

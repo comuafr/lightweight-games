@@ -1,0 +1,187 @@
+package lg.core.session
+
+import lg.core.Complexity
+import lg.core.Game
+import lg.core.GameMeta
+import lg.core.GameStatus
+import lg.core.Orientation
+import lg.core.Tier
+import lg.core.games.snake.SnakeGame
+import lg.core.input.Gesture
+import lg.core.input.PointerPhase
+import lg.core.scene.Scene
+import lg.core.scene.SoundId
+import lg.core.scene.StringKey
+import lg.core.store.Scores
+import lg.core.store.Settings
+import lg.core.testutil.FakeClock
+import lg.core.testutil.FakeStore
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertTrue
+
+/**
+ * Minimal [Game] whose `render` always sets a sound flag reflecting "what
+ * just happened" the way a real game would (e.g. Snake's `ateThisTick`),
+ * without resetting it itself. Used to prove [GameSession] — not the game —
+ * is responsible for making sure that flag reaches the platform at most once
+ * per actual state change.
+ */
+private class SoundOnEveryRenderGame : Game {
+    override val meta: GameMeta get() = FAKE_META
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override var score: Int = 0
+        private set
+    override val wantsFrames: Boolean = false
+
+    /** Test hook: makes the next [update] call report a state change. */
+    public var changeOnNextUpdate: Boolean = false
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture): Unit = Unit
+
+    override fun update(dtMs: Int): Boolean {
+        val changed = changeOnNextUpdate
+        changeOnNextUpdate = false
+        return changed
+    }
+
+    override fun render(scene: Scene) {
+        // Deliberately never clears this: stands in for a game that keeps its
+        // "last event" flags readable across renders, as real games do.
+        scene.sound(SoundId.TICK)
+    }
+
+    private companion object {
+        val FAKE_META = GameMeta(
+            id = "fake-sound",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.ANY,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { error("factory not used in this test") },
+            icon = { _, _ -> },
+        )
+    }
+}
+
+public class GameSessionTest {
+    private fun newSession(store: FakeStore = FakeStore(), clock: FakeClock = FakeClock()): GameSession {
+        val scores = Scores(store)
+        val settings = Settings(store)
+        return GameSession(SnakeGame.META, scores, settings, clock)
+    }
+
+    @Test
+    public fun startsWithStartOverlay(): Unit {
+        val session = newSession()
+        assertIs<Overlay.Start>(session.overlay)
+    }
+
+    @Test
+    public fun tapOnStartButtonBeginsPlay(): Unit {
+        val session = newSession()
+        session.resize(400f, 400f)
+        // Single centered "Tap to start" button for a 1-player game covers the screen center.
+        session.onPointer(0, PointerPhase.DOWN, 200f, 200f)
+        session.onPointer(0, PointerPhase.UP, 200f, 200f)
+        assertIs<Overlay.None>(session.overlay)
+    }
+
+    @Test
+    public fun pauseThenResumeReturnsToPlay(): Unit {
+        val session = newSession()
+        session.resize(400f, 400f)
+        session.start(players = 1, seed = 1L)
+        assertIs<Overlay.None>(session.overlay)
+
+        session.pause()
+        assertIs<Overlay.Paused>(session.overlay)
+
+        session.resume()
+        assertIs<Overlay.None>(session.overlay)
+    }
+
+    @Test
+    public fun gameOverShowsOverlayAndPersistsBestScore(): Unit {
+        val store = FakeStore()
+        // Seed a lower "previous best" directly in storage so the game-over
+        // submission (score 0, since the snake dies on the wall without
+        // eating) is guaranteed to be a new best and observably update it.
+        store.putInt("score.snake", -5)
+        val session = newSession(store)
+        session.resize(400f, 400f)
+        session.start(players = 1, seed = 1L)
+
+        var ticks = 0
+        while (session.overlay == Overlay.None && ticks < 60) {
+            session.update(160)
+            ticks++
+        }
+
+        assertIs<Overlay.Over>(session.overlay)
+        val scores = Scores(store)
+        assertEquals(session.score, scores.best("snake"))
+    }
+
+    @Test
+    public fun soundFiresOnceThenIsSuppressedOnConsecutiveRender(): Unit {
+        val store = FakeStore()
+        val scores = Scores(store)
+        val settings = Settings(store)
+        val clock = FakeClock()
+        val fakeGame = SoundOnEveryRenderGame()
+        val meta = GameMeta(
+            id = "fake-sound",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.ANY,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { fakeGame },
+            icon = { _, _ -> },
+        )
+        val session = GameSession(meta, scores, settings, clock)
+        session.resize(400f, 400f)
+        session.start(players = 1, seed = 1L)
+
+        // Consume the arm-on-start event so it doesn't interfere with the
+        // assertions below, which are about an update-driven state change.
+        val warmup = Scene()
+        session.render(warmup)
+
+        fakeGame.changeOnNextUpdate = true
+        session.update(16)
+
+        val first = Scene()
+        session.render(first)
+        assertTrue(first.soundMask and SoundId.TICK.bit != 0, "first render after a state change must carry the sound bit")
+
+        val second = Scene()
+        session.render(second)
+        assertEquals(0, second.soundMask, "consecutive render without a new state change must not replay the sound")
+    }
+
+    @Test
+    public fun needsFrameLoopOnlyWhilePlaying(): Unit {
+        val session = newSession()
+        session.resize(400f, 400f)
+        assertEquals(false, session.needsFrameLoop)
+        session.start(players = 1, seed = 1L)
+        assertEquals(true, session.needsFrameLoop)
+        session.pause()
+        assertEquals(false, session.needsFrameLoop)
+    }
+}

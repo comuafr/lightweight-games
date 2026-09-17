@@ -1,0 +1,25 @@
+# English words for Hangman: concrete nouns familiar to children.
+# One word per line or space separated; the script keeps 5-9 letters, lowercase a-z, no duplicates.
+house garden window kitchen bedroom table chair mirror clock pillow blanket carpet candle lamp door floor roof
+apple banana orange cherry lemon grape melon peach mango berry tomato carrot potato onion pepper lettuce
+puppy kitten rabbit mouse horse sheep goose chicken donkey turkey pigeon parrot eagle robin swan penguin dolphin
+whale shark salmon lobster turtle frog snake lizard snail spider beetle butterfly ladybug dragonfly
+tiger giraffe zebra monkey gorilla elephant panda koala kangaroo camel hippo rhino leopard cheetah otter beaver badger squirrel
+sunshine cloud rainbow thunder storm breeze winter spring summer autumn morning evening night
+mountain valley river ocean beach island desert forest jungle meadow field cliff volcano canyon glacier
+bread butter cheese yogurt cookie cracker muffin pancake waffle honey sugar candy chocolate pizza pasta noodle sandwich cereal
+train truck tractor rocket airplane bicycle scooter helicopter sailboat submarine wagon
+soccer tennis hockey cricket skating swimming running jumping climbing dancing bowling
+guitar piano violin flute trumpet drums banjo whistle
+pirate knight princess dragon wizard witch ghost robot monster giant fairy unicorn mermaid clown
+finger elbow shoulder ankle tooth tongue cheek stomach thumb
+jacket sweater shirt skirt dress trousers shorts socks boots gloves scarf helmet pajamas
+baker doctor farmer pilot sailor nurse teacher painter builder dentist chef plumber
+story letter pencil crayon eraser ruler marker paper notebook picture poster sticker
+puzzle marble kite balloon teddy doll blocks yoyo frisbee skateboard
+yellow purple green orange brown black white silver golden
+monday friday sunday january march april august october
+mother father sister brother cousin uncle grandma grandpa family friend neighbor
+village castle tower bridge tunnel church museum market bakery school hospital library stadium circus theater
+computer keyboard screen tablet camera radio phone
+bottle glass plate spoon knife bucket basket ladder hammer shovel rope wrench magnet compass lantern treasure
