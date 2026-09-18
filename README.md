@@ -94,3 +94,7 @@ Installer cet IPA sur l'iPhone impose une signature Apple. Deux voies, toutes de
 - **Compte développeur Apple (99 $/an) + TestFlight** : le même workflow peut signer et envoyer le build sur TestFlight avec une clé API App Store Connect (à ajouter le moment venu) ; l'installation se fait alors depuis l'app TestFlight, sans câble, et les achats se testent en sandbox.
 
 Un Mac reste plus confortable pour déboguer (points d'arrêt, Instruments, menu StoreKit), mais il n'est pas indispensable pour compiler ni pour tester sur l'appareil.
+
+## Licence
+
+Logiciel propriétaire. Copyright (c) 2026 CONCEPTION, MACHINES ET USINAGE D'AUCAMVILLE (COMUA), SARL au capital de 10 000 €, SIREN 914 806 468, 2 route du Burgaud, 82600 Aucamville. Tous droits réservés. Le code est lisible mais n'est pas open source : voir [`LICENSE`](LICENSE).

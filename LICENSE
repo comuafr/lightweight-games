@@ -1,0 +1,132 @@
+LICENCE PROPRIÉTAIRE — LIGHTWEIGHT GAMES
+=========================================
+
+Copyright (c) 2026 CONCEPTION, MACHINES ET USINAGE D'AUCAMVILLE (COMUA).
+Tous droits réservés.
+
+1. TITULAIRE DES DROITS
+
+   CONCEPTION, MACHINES ET USINAGE D'AUCAMVILLE (COMUA)
+   Société à responsabilité limitée au capital de 10 000 euros
+   Siège social : 2 route du Burgaud, 82600 Aucamville, France
+   SIREN 914 806 468 — RCS Montauban — SIRET du siège 914 806 468 00015
+   N° TVA intracommunautaire : FR65 914 806 468
+   Représentée par son gérant, Régis Portalez
+   (ci-après « COMUA »)
+
+2. OBJET
+
+   Le présent dépôt et tout ce qu'il contient — code source (modules `core`,
+   `androidApp`, `iosApp`, `preview`, `tools`, `legacy` et tout autre module),
+   scripts de construction, documentation, plans, journaux, listes de mots,
+   icônes, graphismes, sons générés, textes de fiches de magasin, noms des
+   jeux, ainsi que les applications compilées qui en résultent (ci-après
+   « le Logiciel ») — est la propriété exclusive de COMUA, protégée par le
+   Code de la propriété intellectuelle français et les conventions
+   internationales.
+
+3. ABSENCE DE LICENCE
+
+   Le Logiciel n'est PAS un logiciel libre ni open source. Le fait que le
+   code source soit lisible, hébergé sur une plateforme de partage ou
+   transmis à un tiers ne confère aucun droit. Sauf accord écrit et signé de
+   COMUA, il est interdit de :
+
+   a) copier, reproduire, télécharger ou conserver le Logiciel, en tout ou
+      partie, en dehors de l'usage strictement nécessaire à une mission
+      confiée par COMUA ;
+   b) modifier, traduire, adapter, décompiler, désassembler ou procéder à
+      l'ingénierie inverse du Logiciel, hors les cas expressément permis par
+      la loi (article L.122-6-1 du Code de la propriété intellectuelle) ;
+   c) distribuer, publier, vendre, louer, prêter, sous-licencier, mettre à
+      disposition ou exploiter commercialement le Logiciel, ses dérivés ou
+      ses applications compilées, sur quelque support ou magasin que ce
+      soit ;
+   d) utiliser le Logiciel, ses noms, ses icônes ou ses textes pour créer un
+      produit concurrent ou pour entraîner des systèmes automatisés.
+
+4. UTILISATEURS FINAUX DES APPLICATIONS
+
+   Les applications publiées par COMUA sur Google Play et l'App Store sont
+   mises à disposition des utilisateurs finaux uniquement selon les
+   conditions d'utilisation de ces magasins et, le cas échéant, le contrat de
+   licence utilisateur final affiché lors de l'installation. Cet usage ne
+   transfère aucun droit sur le code source, les ressources ou les marques.
+
+5. CONTRIBUTIONS
+
+   Toute contribution (code, correctif, documentation, ressource) apportée au
+   Logiciel par un salarié, un prestataire ou un tiers est, dès sa création,
+   cédée à COMUA à titre exclusif, pour le monde entier et pour toute la
+   durée légale de protection, tous droits patrimoniaux compris, sauf contrat
+   écrit contraire. Le contributeur garantit qu'il détient les droits
+   nécessaires et que sa contribution ne porte pas atteinte aux droits de
+   tiers.
+
+6. COMPOSANTS TIERS
+
+   Le Logiciel utilise des composants tiers soumis à leurs propres licences
+   (notamment Kotlin et la bibliothèque standard Kotlin, les plugins Gradle,
+   le SDK Android et Google Play Billing, les SDK Apple). Ces composants
+   restent régis par leurs licences respectives, qui ne s'étendent pas au
+   Logiciel de COMUA.
+
+7. MARQUES ET NOMS
+
+   « Light Games », « Jeux Légers », les noms d'affichage des jeux, les
+   icônes et l'identité visuelle sont des signes distinctifs de COMUA. Aucun
+   droit d'usage n'est concédé. Les jeux sont des réalisations originales de
+   COMUA ; toute ressemblance de mécanique avec des jeux classiques du
+   domaine public ne confère aucun droit à un tiers sur le Logiciel.
+
+8. CONFIDENTIALITÉ
+
+   Toute personne ayant accès au Logiciel dans le cadre d'une relation avec
+   COMUA s'engage à le garder confidentiel, à ne pas le divulguer et à le
+   restituer ou le détruire à la fin de cette relation, sur simple demande.
+
+9. GARANTIE ET RESPONSABILITÉ
+
+   LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE,
+   EXPRESSE OU IMPLICITE. DANS LES LIMITES PERMISES PAR LA LOI, COMUA NE
+   SAURAIT ÊTRE TENUE RESPONSABLE D'AUCUN DOMMAGE DIRECT OU INDIRECT RÉSULTANT
+   DE L'UTILISATION OU DE L'IMPOSSIBILITÉ D'UTILISER LE LOGICIEL.
+
+10. SANCTIONS
+
+   Toute utilisation non autorisée constitue une contrefaçon sanctionnée par
+   les articles L.335-2 et suivants du Code de la propriété intellectuelle et
+   engage la responsabilité civile et pénale de son auteur.
+
+11. DROIT APPLICABLE ET JURIDICTION
+
+   La présente licence est régie par le droit français. Tout litige relatif à
+   son interprétation ou à son exécution relève de la compétence exclusive
+   des tribunaux dans le ressort desquels se situe le siège de COMUA, sous
+   réserve des règles d'ordre public applicables aux consommateurs.
+
+12. CONTACT
+
+   Toute demande d'autorisation ou question relative aux droits doit être
+   adressée à COMUA, 2 route du Burgaud, 82600 Aucamville, France.
+
+-----------------------------------------------------------------------------
+
+PROPRIETARY LICENSE — SUMMARY IN ENGLISH (the French text above prevails)
+
+Copyright (c) 2026 CONCEPTION, MACHINES ET USINAGE D'AUCAMVILLE (COMUA), a
+French limited liability company (SARL) with a share capital of EUR 10,000,
+registered in Montauban under number 914 806 468, head office at 2 route du
+Burgaud, 82600 Aucamville, France. All rights reserved.
+
+This repository and everything in it (source code, build scripts, docs,
+plans, word lists, icons, generated sounds, store texts, game names and the
+resulting applications) is the exclusive property of COMUA. It is NOT open
+source: readable source does not grant any right. Without COMUA's prior
+written consent you may not copy, modify, reverse engineer (beyond what the
+law mandates), distribute, sell, sublicense or commercially exploit it, nor
+use it to build a competing product or to train automated systems. End users
+of the published apps are only bound by the app stores' terms. Contributions
+are assigned to COMUA. Third-party components keep their own licenses. The
+software is provided "as is" without warranty. French law applies; the courts
+of COMUA's head office have exclusive jurisdiction.

@@ -22,7 +22,9 @@
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
-    <key>ITSAppUsesNonExemptEncryption</key>
+    <key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 CONCEPTION, MACHINES ET USINAGE D'AUCAMVILLE (COMUA). Tous droits réservés.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>UIRequiresFullScreen</key>
     <false/>
