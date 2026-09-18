@@ -10,7 +10,9 @@ APK="${1:-$ROOT/androidApp/build/outputs/apk/release/androidApp-release-unsigned
 [ -f "$APK" ] || { echo "APK not found. Run: ./gradlew :androidApp:assembleRelease" >&2; exit 2; }
 MAX_DOWNLOAD_BYTES="${MAX_DOWNLOAD_BYTES:-5242880}"   # 5 MiB internal threshold, well under the 10 MB target
 SDK="${ANDROID_HOME:-$HOME/Android/Sdk}"
-APKANALYZER="$(ls "$SDK"/cmdline-tools/latest/bin/apkanalyzer 2>/dev/null || ls "$SDK"/tools/bin/apkanalyzer 2>/dev/null || true)"
+# apkanalyzer ships with cmdline-tools; CI images may only have a versioned folder (cmdline-tools/16.0/...).
+APKANALYZER="$(ls "$SDK"/cmdline-tools/latest/bin/apkanalyzer "$SDK"/cmdline-tools/*/bin/apkanalyzer "$SDK"/tools/bin/apkanalyzer 2>/dev/null | head -1 || true)"
+[ -n "$APKANALYZER" ] || APKANALYZER="$(command -v apkanalyzer || true)"
 [ -n "$APKANALYZER" ] || { echo "apkanalyzer not found under $SDK" >&2; exit 2; }
 echo "== $APK"
 FILE_SIZE=$("$APKANALYZER" apk file-size "$APK")

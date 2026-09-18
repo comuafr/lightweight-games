@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
 # Source this file before running Gradle: `source tools/env.sh && ./gradlew ...`
 #
-# It pins JAVA_HOME to a locally installed JDK 21 (Temurin), which is required
-# because the only JDK preinstalled on this machine is a bare JRE 25 without
-# javac. It also exports ANDROID_HOME so Gradle can find the Android SDK once
-# it is installed (see core/build.gradle.kts for how the Android target is
-# gated on its presence).
+# Dev machine defaults (no root): a Temurin JDK 21 under ~/.jdks/jdk-21 and the
+# Android SDK under ~/Android/Sdk. Each variable is only set when that default
+# location exists and nothing better is already exported, so the same script is
+# harmless on CI runners (which provide JAVA_HOME / ANDROID_HOME themselves).
 
-export JAVA_HOME="$HOME/.jdks/jdk-21"
-export PATH="$JAVA_HOME/bin:$PATH"
-export ANDROID_HOME="$HOME/Android/Sdk"
+if [ -z "${JAVA_HOME:-}" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
+  if [ -x "$HOME/.jdks/jdk-21/bin/javac" ]; then
+    export JAVA_HOME="$HOME/.jdks/jdk-21"
+  fi
+fi
+[ -n "${JAVA_HOME:-}" ] && export PATH="$JAVA_HOME/bin:$PATH"
+
+if [ -z "${ANDROID_HOME:-}" ] || [ ! -d "$ANDROID_HOME" ]; then
+  if [ -d "$HOME/Android/Sdk" ]; then
+    export ANDROID_HOME="$HOME/Android/Sdk"
+  elif [ -n "${ANDROID_SDK_ROOT:-}" ] && [ -d "$ANDROID_SDK_ROOT" ]; then
+    export ANDROID_HOME="$ANDROID_SDK_ROOT"
+  fi
+fi
 # adb and the other platform tools, for installing on a phone (adb devices, adb install -r ...).
-export PATH="$ANDROID_HOME/platform-tools:$PATH"
+[ -n "${ANDROID_HOME:-}" ] && export PATH="$ANDROID_HOME/platform-tools:$PATH"
