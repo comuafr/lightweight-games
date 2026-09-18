@@ -32,6 +32,12 @@ jobs:
           mkdir -p Frameworks
           cp -R ../core/build/XCFrameworks/release/GamesCore.xcframework Frameworks/
           xcodegen generate
+      # The generated Objective-C header is the ground truth for every Kotlin
+      # symbol the Swift code uses; published so it can be reviewed offline.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gamescore-header
+          path: iosApp/Frameworks/GamesCore.xcframework/ios-arm64/GamesCore.framework/Headers/GamesCore.h
       - name: Compile for the simulator (Swift type-check of the whole app)
         working-directory: iosApp
         env: { LG_USE_PREBUILT: '1' }

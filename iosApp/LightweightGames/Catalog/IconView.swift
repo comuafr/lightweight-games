@@ -44,7 +44,9 @@ final class IconView: UIView {
         scene.clear()
         let size = Float(min(bounds.width, bounds.height))
         guard size > 0 else { return }
-        meta.icon(scene, size)
+        // Kotlin lambdas box primitive parameters when exported to Objective-C:
+        // `(Scene, Float) -> Unit` becomes `(Scene, KotlinFloat) -> Void`.
+        meta.icon(scene, KotlinFloat(value: size))
         renderer.draw(scene, in: context, colors: cgColors)
     }
 }
