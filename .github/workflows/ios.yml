@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['iosApp/**', 'core/**', '.github/workflows/ios.yml']
+    paths: ['iosApp/**', 'core/**', '.github/workflows/ios.yml', '!**/*.md']
 jobs:
   ios:
     runs-on: macos-15

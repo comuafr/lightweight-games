@@ -252,6 +252,15 @@ M4/M5. What's still explicitly out of scope for the app shell itself:
 
 ## Things that may need fixing on first Mac build
 
+> **Verified on CI, 2026-09-18** (GitHub macOS runner, Xcode 26.3, `.github/workflows/ios.yml`):
+> the app compiles, the 10 XCTest cases pass (SmokeTests, StoreKitTests with the
+> local StoreKit configuration, EntitlementReconcilerTests) and an unsigned device
+> archive is produced (app 1.4 MB, IPA 433 KB). Only two source fixes were
+> needed: `Services` had to be `@MainActor` (it owns `StoreManager`), and the
+> Kotlin icon lambda takes a boxed `KotlinFloat`. Everything below is therefore
+> confirmed, and kept as a reference for future Kotlin API changes.
+
+
 Everything here was written against the Kotlin sources in
 `core/src/commonMain/kotlin/lg/core/` and the stated Kotlin/Native → Swift
 ObjC-export rules, but **none of it has been compiled**. In rough order of
