@@ -32,3 +32,10 @@ Créer un plan pour une app Android/iOS de mini-jeux : version gratuite avec 3 j
 - L'utilisateur dispose d'un iPhone et d'un Samsung pour tester ; reprise prévue le lendemain.
 - À faire : installer l'APK sur le Samsung et dérouler `docs/QA_CHECKLIST.md` ; premier build sur Mac via XcodeGen puis test sur l'iPhone ; créer le produit `unlock_all` dans les consoles.
 - Consigne : sauvegarder l'état (commit) et ce journal à chaque tour.
+
+## 2026-09-18 — Réconciliation avec le dépôt GitHub
+
+- Dépôt distant `github.com/comuafr/lightweight-games` (accès SSH via `gh`, compte JeWaVe) : il contenait une approche antérieure de mai 2026, un kit « usine » Android avec une app autonome par jeu (Snake), des gabarits, un workflow d'agent et un bootstrap VPS.
+- Fusion des historiques avec priorité au travail actuel : wrapper Gradle 9.7.1, `.gitignore` et `gradlew` conservés dans leur version locale.
+- Ancien kit déplacé sous `legacy/` (README, agent/, bootstrap/, games/, templates/, new_game.py) ; ancien workflow CI supprimé (il construisait `games/*`) ; nouveau `README.md` racine décrivant la structure KMP.
+- Poussé sur `origin/main`.

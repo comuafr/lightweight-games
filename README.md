@@ -1,80 +1,30 @@
-# Lightweight Games — monorepo + factory kit
+# Lightweight Games
 
-A single repo holding many small, dependency-free, **paid** Android games, plus
-the kit/agent that produces them.
+One small mobile app (Android + iOS) with 15 minimal, offline games: 3 free, 12 unlocked by a single non-consumable purchase. No ads, no tracking, no account, no network needed to play.
 
-The pitch for every game: **pay once (US$0.49), then it's yours** — no ads, no
-tracking, no permissions, fully offline, and a download well under 1 MB.
+- `PLAN.md` — the approved plan: catalog, architecture, IAP, footprint strategy, milestones, risks.
+- `docs/JOURNAL.md` — session-by-session history of decisions and results.
+- `docs/ARCHITECTURE.md` — how the code is organised and how to add a game.
+- `docs/QA_CHECKLIST.md`, `docs/BILLING_TESTING.md`, `docs/STORE_LISTING.md` — release material.
 
-## What's here
+## Layout
 
 ```
-README.md            this file
-gradlew[.bat]        ONE shared Gradle wrapper for every game
-gradle/wrapper/      committed wrapper jar + properties
-.github/workflows/build.yml   CI: auto-discovers games/* and builds each (matrix)
-new_game.py          scaffolds a new game into games/<slug>/ from templates/
-agent/
-  AGENT.md           system prompt: role, hard constraints, trademark + pricing rules
-  WORKFLOW.md        step-by-step procedure the agent follows per game
-  BACKLOG.md         vetted, trademark-safe game concepts to work through
-bootstrap/
-  bootstrap_vps.sh   installs JDK 17, Android SDK 35, gh, python on a fresh VPS
-  verify_env.sh      confirms the toolchain is present
-templates/           the per-game starter (a self-contained Gradle app project)
-  settings.gradle.kts  build.gradle.kts  gradle.properties
-  app/ …               pure-Kotlin app skeleton (Game/GameView/Sound/MainActivity)
-  tools/gen_sounds.py  8-bit sound generator
-  LICENSE README.md REVIEW.md STORE_LISTING.md .gitignore
-games/
-  snake/             reference game (Snake) — full project, no own wrapper/CI
-  …                  one folder per game
+core/        Kotlin Multiplatform: game rules, Scene primitives, GameSession, entitlement (178 tests)
+androidApp/  Android app: Views + Canvas, Play Billing 8, no AndroidX UI (see androidApp/README.md)
+iosApp/      iOS app: UIKit + CoreGraphics, StoreKit 2, XcodeGen spec (see iosApp/README.md)
+preview/     Dev-only JVM renderer: every game to PNG, no device needed
+tools/       env.sh, footprint.sh, ios_size.sh, icon and word-list generators
+legacy/      The previous approach (one standalone Android app per game); kept for reference only
 ```
 
-Each game under `games/<slug>/` is a self-contained Gradle build (its own
-`settings.gradle.kts`, `applicationId`, version, icon, docs) so it ships as its
-own Play Store app — it just shares the repo-root wrapper and the root CI.
-
-## Bootstrapping the toolchain
+## Build
 
 ```sh
-cd bootstrap
-./bootstrap_vps.sh        # JDK 17, Android SDK 35, gh, python3
-source ~/.bashrc
-./verify_env.sh           # confirms everything is present
+source tools/env.sh                      # JDK 21 + Android SDK paths (see tools/env.sh)
+./gradlew :core:jvmTest                  # core tests, no Android SDK needed
+./gradlew :androidApp:assembleRelease && tools/footprint.sh
+./gradlew :preview:run                   # PNG previews into preview/out/
 ```
 
-Give the agent `agent/AGENT.md` as its system prompt, `agent/WORKFLOW.md` as its
-operating procedure, and `agent/BACKLOG.md` as its task list.
-
-## Add a game
-
-```sh
-python3 new_game.py snake "Snake" snake   # -> games/snake/ (package com.lightweight.snake)
-# fill the TODOs per WORKFLOW.md: Game.kt + GameTest.kt, GameView.kt, sounds, icon, docs
-cd games/snake && python3 tools/gen_sounds.py && cd -
-./gradlew -p games/snake test
-./gradlew -p games/snake lint
-./gradlew -p games/snake bundleRelease     # AAB to upload to Play
-```
-
-CI then picks the new game up automatically (no workflow edit needed) and runs
-the guardrails, tests, build and size budget for it.
-
-## Hard rules (full text in agent/AGENT.md)
-
-- Pure Kotlin, zero third-party runtime deps, no NDK.
-- SurfaceView+Canvas, SoundPool, SharedPreferences. Single Activity, no AppCompat.
-- targetSdk 35, AAB, R8 full mode, release APK < 1.5 MB.
-- Game logic decoupled from Android and JVM-unit-tested.
-- NEVER a trademarked game name. Generic names only. Flag for legal review.
-- Paid US$0.49, no ads, no IAP, no tracking. (No Play Billing — price is set in
-  Play Console, not in code.)
-
-## What the agent CANNOT do
-
-It can prove a game is correct (JVM tests), builds, and measures its real size.
-It CANNOT judge playability, touch feel, or audio latency — those require a
-human on a physical device. Every game ships with a `REVIEW.md` listing exactly
-what the human must verify before publishing (name/trademark decision, measured
-size, merchant-account/pricing setup).
+iOS needs a Mac: `cd iosApp && xcodegen generate`, then build in Xcode (`iosApp/README.md`).
