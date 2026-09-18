@@ -1,7 +1,6 @@
 # iOS build on a GitHub-hosted Mac: the only way to compile the Swift app and
 # produce an installable IPA without owning a Mac. macOS minutes are billed
-# 10x on private repos, so this runs on demand (workflow_dispatch) and on
-# pushes that touch the iOS app or the shared core.
+# 10x on private repos, so this only ever runs on demand (workflow_dispatch).
 name: ios
 on:
   workflow_dispatch:
