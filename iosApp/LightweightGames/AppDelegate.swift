@@ -8,7 +8,7 @@ import GamesCore
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
-    private let services = Services()
+    private lazy var services = Services()
 
     func application(
         _ application: UIApplication,

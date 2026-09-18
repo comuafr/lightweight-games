@@ -5,6 +5,7 @@ import GamesCore
 /// End-to-end smoke tests for M0 (PLAN.md §8/§9): a `GameSession` for Snake
 /// must run headless for a few seconds without an empty or overflowing
 /// scene, and the catalogue must show exactly one tile per registered game.
+@MainActor
 final class SmokeTests: XCTestCase {
     /// Minimal in-memory `KeyValueStore` so these tests never touch real
     /// `UserDefaults`.

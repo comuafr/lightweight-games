@@ -6,6 +6,11 @@ import GamesCore
 /// from the platform (storage, clock) plus the shared, core-backed models
 /// (`Settings`, `Scores`, `Entitlement`) and the StoreKit 2 façade
 /// (`StoreManager`) so nothing downstream constructs its own.
+///
+/// `@MainActor` because it owns the main-actor-isolated `StoreManager` and
+/// every consumer is UI code; constructing it from a nonisolated context is
+/// a compile error, which is why the tests are `@MainActor` too.
+@MainActor
 final class Services {
     /// `lg.core.store.KeyValueStore` backing settings, best scores, and
     /// resumable-game saves. Named `kvStore` (not `store`) to avoid

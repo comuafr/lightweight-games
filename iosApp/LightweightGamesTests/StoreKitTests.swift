@@ -18,6 +18,7 @@ import GamesCore
 /// touch `services.store` (a `@MainActor` `StoreManager`) directly -- a
 /// standard pattern for StoreKit 2 + XCTest, per Apple's own sample code.
 @MainActor
+@MainActor
 final class StoreKitTests: XCTestCase {
     /// Minimal in-memory `KeyValueStore`, mirroring `SmokeTests.InMemoryStore`
     /// -- kept as a private duplicate rather than shared, since these two
