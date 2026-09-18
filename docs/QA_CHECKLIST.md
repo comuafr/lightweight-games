@@ -4,7 +4,7 @@ Run this before every release, on one physical Android device and one physical i
 
 ## Offline first (airplane mode ON for the whole section)
 - [ ] Cold launch < 1 s, catalog visible immediately, no spinner, no network error.
-- [ ] Snake, 2048 and Bricks are playable end to end (start, play, game over, restart).
+- [ ] Gobbler, Fusion and Wall Smash (the three free games) are playable end to end (start, play, game over, restart).
 - [ ] Locked tiles show a padlock; tapping one opens the unlock screen with the "offline" notice.
 - [ ] The unlock screen never blocks: back/close always returns to the catalog.
 - [ ] Best scores survive a kill + relaunch.
@@ -19,13 +19,13 @@ Run this before every release, on one physical Android device and one physical i
 - [ ] Refund (Play console / StoreKit config): next store check revokes the entitlement.
 
 ## Lifecycle
-- [ ] Rotate during a real-time game (Snake, Bricks): layout adapts, no reset, no crash.
+- [ ] Rotate during a real-time game (Gobbler, Wall Smash): layout adapts, no reset, no crash.
 - [ ] Rotate during a turn-based game: board keeps its state.
 - [ ] Background then foreground during a real-time game: game is paused with a Resume overlay, never auto-resumes.
 - [ ] Incoming call during a game: same behaviour as background.
-- [ ] Resumable games (2048, Sudoku, ...) restore the board after a kill + relaunch.
+- [ ] Resumable games (Fusion, Nine by Nine, ...) restore the board after a kill + relaunch.
 
-## Two-player games (Paddles, Tic-Tac-Toe, Four in a Row, Pairs, Reversi)
+## Two-player games (Paddles, Three in Line, Drop Four, Twins, Flip Discs)
 - [ ] Two fingers at the same time work on both halves.
 - [ ] System edge gestures (back swipe, home indicator) are not triggered by normal play.
 - [ ] Portrait and landscape both give each player a readable, correctly oriented zone.

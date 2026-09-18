@@ -3,9 +3,9 @@
     <string name="app_name">Light Games</string>
 
     <!-- One entry per lg.core.scene.StringKey (see ui/Strings.kt). -->
-    <string name="title_snake">Snake</string>
-    <string name="title_2048">2048</string>
-    <string name="title_breakout">Bricks</string>
+    <string name="title_snake">Gobbler</string>
+    <string name="title_2048">Fusion</string>
+    <string name="title_breakout">Wall Smash</string>
     <string name="score">Score</string>
     <string name="best">Best</string>
     <string name="game_over">Game Over</string>
@@ -34,20 +34,20 @@
     <string name="parental_gate">Ask an adult: hold the button for 3 seconds</string>
 
     <!-- M3: complexity-S unlocked games, plus Four in a Row (M). -->
-    <string name="title_sequence">Color Sequence</string>
-    <string name="title_pairs">Pairs</string>
-    <string name="title_sliding">Sliding Puzzle</string>
-    <string name="title_tictactoe">Tic-Tac-Toe</string>
+    <string name="title_sequence">Color Echo</string>
+    <string name="title_pairs">Twins</string>
+    <string name="title_sliding">Tile Shuffle</string>
+    <string name="title_tictactoe">Three in Line</string>
     <string name="title_paddles">Paddles</string>
-    <string name="title_fourinrow">Four in a Row</string>
+    <string name="title_fourinrow">Drop Four</string>
 
     <!-- M4: complexity-M/C unlocked games. -->
-    <string name="title_bird">Bird</string>
-    <string name="title_mines">Minesweeper</string>
-    <string name="title_hangman">Hangman</string>
-    <string name="title_reversi">Reversi</string>
-    <string name="title_sudoku">Sudoku</string>
-    <string name="title_nonogram">Nonogram</string>
+    <string name="title_bird">Chirp</string>
+    <string name="title_mines">Hidden Bombs</string>
+    <string name="title_hangman">Secret Word</string>
+    <string name="title_reversi">Flip Discs</string>
+    <string name="title_sudoku">Nine by Nine</string>
+    <string name="title_nonogram">Pixel Reveal</string>
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>

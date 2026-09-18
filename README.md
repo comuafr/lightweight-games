@@ -6,6 +6,7 @@ One small mobile app (Android + iOS) with 15 minimal, offline games: 3 free, 12 
 - `docs/JOURNAL.md` — session-by-session history of decisions and results.
 - `docs/ARCHITECTURE.md` — how the code is organised and how to add a game.
 - `docs/QA_CHECKLIST.md`, `docs/BILLING_TESTING.md`, `docs/STORE_LISTING.md` — release material.
+- `docs/GAME_NAMES.md` — the original game titles (EN/FR) and why the classic names are never used.
 
 ## Layout
 

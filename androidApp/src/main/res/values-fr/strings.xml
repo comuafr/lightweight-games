@@ -2,9 +2,9 @@
 <resources>
     <string name="app_name">Jeux Légers</string>
 
-    <string name="title_snake">Serpent</string>
-    <string name="title_2048">2048</string>
-    <string name="title_breakout">Casse-briques</string>
+    <string name="title_snake">Glouton</string>
+    <string name="title_2048">Fusion</string>
+    <string name="title_breakout">Casse-mur</string>
     <string name="score">Score</string>
     <string name="best">Record</string>
     <string name="game_over">Partie terminée</string>
@@ -33,20 +33,20 @@
     <string name="parental_gate">Demande à un adulte : maintenir le bouton 3 secondes</string>
 
     <!-- M3: jeux débloqués de complexité S, plus Quatre en ligne (M). -->
-    <string name="title_sequence">Séquence</string>
-    <string name="title_pairs">Paires</string>
-    <string name="title_sliding">Taquin</string>
-    <string name="title_tictactoe">Morpion</string>
+    <string name="title_sequence">Écho de couleurs</string>
+    <string name="title_pairs">Jumeaux</string>
+    <string name="title_sliding">Glisse-cases</string>
+    <string name="title_tictactoe">Trois alignés</string>
     <string name="title_paddles">Raquettes</string>
-    <string name="title_fourinrow">Quatre en ligne</string>
+    <string name="title_fourinrow">Quatre alignés</string>
 
     <!-- M4: jeux débloqués de complexité M/C. -->
-    <string name="title_bird">Oiseau</string>
-    <string name="title_mines">Démineur</string>
-    <string name="title_hangman">Pendu</string>
-    <string name="title_reversi">Reversi</string>
-    <string name="title_sudoku">Sudoku</string>
-    <string name="title_nonogram">Nonogramme</string>
+    <string name="title_bird">Piou-Piou</string>
+    <string name="title_mines">Bombes cachées</string>
+    <string name="title_hangman">Mot secret</string>
+    <string name="title_reversi">Retourne-pions</string>
+    <string name="title_sudoku">Neuf par neuf</string>
+    <string name="title_nonogram">Pixel caché</string>
     <string name="easy">Facile</string>
     <string name="medium">Moyen</string>
     <string name="hard">Difficile</string>
