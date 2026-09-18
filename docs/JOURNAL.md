@@ -52,3 +52,4 @@ Créer un plan pour une app Android/iOS de mini-jeux : version gratuite avec 3 j
 - Constat : la CI poussée la veille échouait (job Android : action `setup-android` en erreur ; job iOS : nom de tâche Gradle erroné). Le job core passait.
 - Correctifs : `ci.yml` installe les paquets SDK avec le `sdkmanager` préinstallé du runner ; nouveau `ios.yml` (macos-15, XcodeGen, build simulateur, XCTest, archive non signée publiée en artefact `ios-unsigned-ipa`), déclenché à la demande ou sur modification de `iosApp/`/`core/`.
 - README : section « iPhone sans Mac ».
+- Premier retour du runner Mac : Kotlin/Native et XcodeGen passent en 3 min, mais Swift ne trouvait pas `GamesCore` (le spec attendait une tranche `.framework` alors que Gradle produit un `.xcframework`). Correctif : le XCFramework est déclaré comme dépendance de la cible dans `project.yml`, le script de pré-build le construit via `assembleGamesCore{Debug,Release}XCFramework`, README iOS mis à jour.

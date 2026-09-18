@@ -24,10 +24,6 @@ settings:
     DEAD_CODE_STRIPPING: YES
     STRIP_INSTALLED_PRODUCT: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
-    FRAMEWORK_SEARCH_PATHS:
-      - "$(SRCROOT)/../core/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
-      - "$(SRCROOT)/Frameworks"
-    OTHER_LDFLAGS: "-framework GamesCore"
     ENABLE_BITCODE: NO
     # iPhone + iPad (PLAN.md §9 M5: "captures générées" implies both device
     # families); Mac Catalyst is explicitly out of scope (touch-first UI,
@@ -61,13 +57,20 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
+    dependencies:
+      # The shared Kotlin core, as a static XCFramework (device + simulator
+      # slices). Produced by the pre-build script below, or copied in by CI
+      # (see .github/workflows/ios.yml). Static, so nothing to embed.
+      - framework: Frameworks/GamesCore.xcframework
+        embed: false
     preBuildScripts:
-      - name: "Build & embed GamesCore.xcframework (Gradle)"
+      - name: "Build GamesCore.xcframework (Gradle)"
         basedOnDependencyAnalysis: false
         script: |
           set -e
           if [ "$LG_USE_PREBUILT" = "1" ]; then
-            echo "LG_USE_PREBUILT=1: skipping the Gradle embed step; using $SRCROOT/Frameworks/GamesCore.framework instead (see iosApp/README.md)."
+            echo "LG_USE_PREBUILT=1: using the existing $SRCROOT/Frameworks/GamesCore.xcframework (see iosApp/README.md)."
+            test -d "$SRCROOT/Frameworks/GamesCore.xcframework"
             exit 0
           fi
 
@@ -80,8 +83,14 @@ targets:
             export JAVA_HOME="$RESOLVED_JAVA_HOME"
           fi
 
+          # Debug builds use the Debug XCFramework (faster to produce); anything
+          # else (Release, archive) uses the Release one.
+          if [ "$CONFIGURATION" = "Debug" ]; then KIND=Debug; DIR=debug; else KIND=Release; DIR=release; fi
           cd "$SRCROOT/.."
-          ./gradlew :core:embedAndSignAppleFrameworkForXcode
+          ./gradlew ":core:assembleGamesCore${KIND}XCFramework" --quiet
+          rm -rf "$SRCROOT/Frameworks/GamesCore.xcframework"
+          mkdir -p "$SRCROOT/Frameworks"
+          cp -R "core/build/XCFrameworks/$DIR/GamesCore.xcframework" "$SRCROOT/Frameworks/"
 
   LightweightGamesTests:
     type: bundle.unit-test

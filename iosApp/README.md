@@ -58,66 +58,32 @@ Select the `LightweightGames` scheme and Run. The app target has a
 runs before Compile Sources and invokes:
 
 ```sh
-./gradlew :core:embedAndSignAppleFrameworkForXcode
+./gradlew :core:assembleGamesCoreDebugXCFramework     # or ...ReleaseXCFramework for Release / archive
 ```
 
-from the repo root (`$SRCROOT/..`). This is the standard Kotlin/Native ⇄
-Xcode integration: the Gradle task reads the Xcode-provided environment
-(`$CONFIGURATION`, `$SDK_NAME`, `$ARCHS`, `$TARGET_BUILD_DIR`, …), builds the
-right `iosArm64` or `iosSimulatorArm64` framework slice for whatever
-you're building (device vs. simulator, Debug vs. Release), and both embeds
-and code-signs `GamesCore.framework` into the app bundle. It also drops a
-build product at:
-
-```
-core/build/xcode-frameworks/<CONFIGURATION>/<SDK_NAME>/GamesCore.framework
-```
-
-which is why `FRAMEWORK_SEARCH_PATHS` in `project.yml` includes
-`$(SRCROOT)/../core/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)` —
-that's what lets `import GamesCore` and `OTHER_LDFLAGS = -framework GamesCore`
-resolve at compile/link time. The **first** build will be slow (Gradle
-downloads dependencies + compiles Kotlin/Native); subsequent builds are
-incremental.
+from the repo root (`$SRCROOT/..`) and copies the result to
+`iosApp/Frameworks/GamesCore.xcframework`. That XCFramework (device `ios-arm64`
+and simulator `ios-arm64-simulator` slices, static) is declared in
+`project.yml` as a plain framework dependency of the app target, so Xcode
+picks the right slice for whatever you build; nothing is embedded because
+the framework is static. The **first** build is slow (Gradle downloads the
+Kotlin/Native toolchain and compiles both slices); later builds are
+incremental. `iosApp/Frameworks/` is `.gitignore`d.
 
 ## `LG_USE_PREBUILT=1`: skip Gradle (CI / offline / no JDK)
 
-If you don't want Xcode to shell out to Gradle on every build (e.g. CI, or
-a machine without a JDK), set the `LG_USE_PREBUILT` environment variable to
-`1` — either as a scheme environment variable in Xcode, a User-Defined
-build setting on the target, or `xcodebuild ... LG_USE_PREBUILT=1`. The Run
-Script phase then exits immediately without touching Gradle, and the app
-links against a **prebuilt** `GamesCore.framework` you place at
-`iosApp/Frameworks/GamesCore.framework` (the second
-`FRAMEWORK_SEARCH_PATHS` entry, `$(SRCROOT)/Frameworks`, points there; it's
-`.gitignore`d, so this step is always manual/CI-scripted).
-
-To produce it:
+Set the `LG_USE_PREBUILT` environment variable to `1` (scheme environment
+variable, User-Defined build setting, or `xcodebuild ... LG_USE_PREBUILT=1`)
+and the pre-build script only checks that
+`iosApp/Frameworks/GamesCore.xcframework` already exists. Produce it with:
 
 ```sh
-source tools/env.sh   # or otherwise ensure JDK 21 + JAVA_HOME on your Mac
+source tools/env.sh   # JDK 21 on PATH
 ./gradlew :core:assembleGamesCoreReleaseXCFramework
+mkdir -p iosApp/Frameworks && cp -R core/build/XCFrameworks/release/GamesCore.xcframework iosApp/Frameworks/
 ```
 
-This produces `core/build/XCFrameworks/release/GamesCore.xcframework`, a
-multi-platform bundle containing one `GamesCore.framework` per architecture
-slice (device `ios-arm64`, simulator `ios-arm64_x86_64-simulator` — the
-exact slice directory names depend on which architectures
-`core/build.gradle.kts` targets; run `ls` on the `.xcframework` to confirm).
-`OTHER_LDFLAGS -framework GamesCore` + a plain `FRAMEWORK_SEARCH_PATHS`
-directory needs a flat `.framework`, not the `.xcframework` wrapper, so
-copy the slice matching what you're building:
-
-```sh
-mkdir -p iosApp/Frameworks
-# Device build:
-cp -R core/build/XCFrameworks/release/GamesCore.xcframework/ios-arm64/GamesCore.framework iosApp/Frameworks/
-# Simulator build (arm64 Mac):
-# cp -R core/build/XCFrameworks/release/GamesCore.xcframework/ios-arm64_x86_64-simulator/GamesCore.framework iosApp/Frameworks/
-```
-
-You'll need to re-copy the matching slice whenever you switch between
-device and simulator builds while `LG_USE_PREBUILT=1` is set.
+This is exactly what `.github/workflows/ios.yml` does on a GitHub macOS runner.
 
 ## Running tests
 
