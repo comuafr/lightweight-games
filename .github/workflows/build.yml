@@ -1,0 +1,118 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Discover every game under games/* so adding a game needs no CI edit.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      games: ${{ steps.find.outputs.games }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        run: |
+          GAMES=$(ls -d games/*/ 2>/dev/null | sed 's#games/##; s#/$##' | jq -R . | jq -cs .)
+          [ -z "$GAMES" ] && GAMES='[]'
+          echo "games=$GAMES" >> "$GITHUB_OUTPUT"
+          echo "Discovered games: $GAMES"
+
+  build:
+    needs: discover
+    if: ${{ needs.discover.outputs.games != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        game: ${{ fromJSON(needs.discover.outputs.games) }}
+    env:
+      DIR: games/${{ matrix.game }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # --- Guardrail 1: game logic must stay free of Android imports ---
+      - name: Check logic purity (no Android imports in Game.kt)
+        run: |
+          GAME=$(find "$DIR/app/src/main/java" -name 'Game.kt')
+          if [ -z "$GAME" ]; then echo "ERROR: Game.kt not found in $DIR"; exit 1; fi
+          if grep -EnH "import android\.|import androidx\." $GAME; then
+            echo "ERROR: Game.kt must not import Android. Keep logic decoupled and JVM-testable."
+            exit 1
+          fi
+          echo "OK: Game.kt is free of Android imports."
+
+      # --- Guardrail 2: no forbidden runtime dependencies ---
+      - name: Check for forbidden dependencies
+        run: |
+          if grep -nE "androidx|com\.google\.android|compose|appcompat|material|admob|play-services" "$DIR/app/build.gradle.kts" | grep -v "^\s*//"; then
+            echo "ERROR: forbidden dependency detected. This project must be pure Kotlin, zero third-party deps."
+            exit 1
+          fi
+          echo "OK: no forbidden dependencies."
+
+      # --- Guardrail 3: no trademarked names (best-effort lint) ---
+      - name: Check for trademarked names
+        run: |
+          PATTERN="Tetris|Pac-?Man|Space Invaders|Donkey Kong|Frogger|Galaga|Bomberman|Sonic|Q\*bert|Dig Dug"
+          if grep -rEniI "$PATTERN" "$DIR/app" "$DIR/README.md" "$DIR/STORE_LISTING.md" 2>/dev/null; then
+            echo "ERROR: a trademarked name was found in $DIR. Use a generic name."
+            exit 1
+          fi
+          echo "OK: no obvious trademarked names found."
+
+      - name: Unit tests (game logic on JVM)
+        run: ./gradlew -p "$DIR" test --no-daemon
+
+      - name: Lint
+        run: ./gradlew -p "$DIR" lint --no-daemon
+
+      - name: Assemble release APK
+        run: ./gradlew -p "$DIR" assembleRelease --no-daemon
+
+      - name: Build release AAB
+        run: ./gradlew -p "$DIR" bundleRelease --no-daemon
+
+      # --- Guardrail 4: binary size budget (< 1.5 MB; warn over 1 MB) ---
+      - name: Check APK size budget
+        run: |
+          APK=$(find "$DIR/app/build/outputs/apk/release" -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then echo "No APK found"; exit 1; fi
+          SIZE=$(stat -c%s "$APK")
+          MB=$(echo "scale=2; $SIZE/1048576" | bc)
+          echo "Release APK: $APK"
+          echo "APK size: $SIZE bytes ($MB MB)"
+          AAB=$(find "$DIR/app/build/outputs/bundle/release" -name "*.aab" | head -1)
+          [ -n "$AAB" ] && echo "AAB size:  $(stat -c%s "$AAB") bytes"
+          if [ "$SIZE" -gt 1572864 ]; then
+            echo "::error::${{ matrix.game }}: APK exceeds 1.5 MB budget ($MB MB)."
+            exit 1
+          fi
+          if [ "$SIZE" -gt 1048576 ]; then
+            echo "::warning::${{ matrix.game }}: APK over 1 MB ($MB MB) — under the gate but review for bloat."
+          fi
+          echo "OK: within size budget."
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.game }}-release
+          path: |
+            ${{ env.DIR }}/app/build/outputs/apk/release/*.apk
+            ${{ env.DIR }}/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn

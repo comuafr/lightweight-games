@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Icon + window background. Override per game for branding. -->
+    <color name="ic_bg">#FF101418</color>
+    <color name="ic_fg">#FFE8EEF2</color>
+</resources>
