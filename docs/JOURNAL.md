@@ -39,3 +39,9 @@ Créer un plan pour une app Android/iOS de mini-jeux : version gratuite avec 3 j
 - Fusion des historiques avec priorité au travail actuel : wrapper Gradle 9.7.1, `.gitignore` et `gradlew` conservés dans leur version locale.
 - Ancien kit déplacé sous `legacy/` (README, agent/, bootstrap/, games/, templates/, new_game.py) ; ancien workflow CI supprimé (il construisait `games/*`) ; nouveau `README.md` racine décrivant la structure KMP.
 - Poussé sur `origin/main`.
+
+## 2026-09-18 — Procédure de test sur appareils
+
+- Question sur l'emplacement des jeux : `core/src/commonMain/kotlin/lg/core/games/<id>/`, un dossier par jeu, registre dans `GameRegistry.kt`.
+- Ajout au `README.md` d'une procédure de test sur Samsung (débogage USB, `adb install -r`, logcat, tests d'instrumentation, limite des achats sans piste interne Play) et sur iPhone (Mac + Xcode + XcodeGen, signature avec Apple ID gratuit, mode développeur, StoreKit local).
+- `tools/env.sh` ajoute désormais `platform-tools` au PATH pour `adb`.

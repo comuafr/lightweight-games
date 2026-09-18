@@ -10,3 +10,5 @@
 export JAVA_HOME="$HOME/.jdks/jdk-21"
 export PATH="$JAVA_HOME/bin:$PATH"
 export ANDROID_HOME="$HOME/Android/Sdk"
+# adb and the other platform tools, for installing on a phone (adb devices, adb install -r ...).
+export PATH="$ANDROID_HOME/platform-tools:$PATH"

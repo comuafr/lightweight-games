@@ -28,3 +28,55 @@ source tools/env.sh                      # JDK 21 + Android SDK paths (see tools
 ```
 
 iOS needs a Mac: `cd iosApp && xcodegen generate`, then build in Xcode (`iosApp/README.md`).
+
+## Tester sur un appareil (Samsung et iPhone)
+
+Aucun émulateur n'est nécessaire : les deux téléphones se testent en direct. La checklist à dérouler ensuite est `docs/QA_CHECKLIST.md` (mode avion, rotation, deux joueurs, achat).
+
+### Samsung (Android) depuis ce PC Linux
+
+1. **Activer le débogage USB sur le téléphone** : Paramètres > À propos du téléphone > Informations sur le logiciel > appuyer 7 fois sur « Numéro de version ». Puis Paramètres > Options de développement > activer « Débogage USB ».
+2. **Brancher le câble USB**, choisir « Transfert de fichiers » si demandé, puis accepter la fenêtre « Autoriser le débogage USB » sur le téléphone (cocher « Toujours autoriser »).
+3. **Vérifier la connexion** :
+   ```sh
+   source tools/env.sh
+   adb devices          # doit lister le téléphone avec l'état "device" (pas "unauthorized")
+   ```
+4. **Construire et installer** :
+   ```sh
+   ./gradlew :androidApp:assembleRelease
+   adb install -r androidApp/build/outputs/apk/release/androidApp-release.apk
+   ```
+   L'APK release est signé avec la clé de debug tant qu'aucun `androidApp/keystore.properties` n'existe : il s'installe normalement, Play Protect peut afficher un avertissement « application inconnue », accepter.
+5. **Lancer « Light Games »** depuis le tiroir d'applications. Pour voir les textes en français, la langue du téléphone doit être le français.
+6. **Voir les plantages éventuels** pendant le test :
+   ```sh
+   adb logcat -s AndroidRuntime:E
+   ```
+7. **Tests d'instrumentation** (catalogue, Snake, rotation, écran de déblocage) :
+   ```sh
+   ./gradlew :androidApp:connectedDebugAndroidTest
+   ```
+8. **Sans câble** (Android 11+) : Options de développement > Débogage sans fil > « Associer l'appareil avec un code », puis `adb pair IP:PORT` et `adb connect IP:PORT`.
+
+**Achat sur Samsung** : l'écran de déblocage affichera « hors ligne / indisponible » tant que l'application n'est pas publiée sur une piste de test interne de la Play Console avec le même identifiant `fr.regisp.lightgames` et la même signature. Le flux complet (prix, achat, restauration, remboursement) se teste ensuite avec un compte testeur de licence : voir `docs/BILLING_TESTING.md`. Tout le reste (jeux, réglages, hors ligne, barrière parentale) se teste sans Play Console.
+
+### iPhone (iOS) : un Mac est indispensable
+
+Apple n'autorise l'installation que depuis Xcode (ou TestFlight, qui demande un compte développeur payant). Un compte Apple gratuit suffit pour installer sur son propre iPhone pendant 7 jours renouvelables.
+
+1. **Sur le Mac** : installer Xcode 26 (App Store), puis dans un terminal :
+   ```sh
+   brew install xcodegen temurin@21
+   git clone git@github.com:comuafr/lightweight-games.git && cd lightweight-games
+   cd iosApp && xcodegen generate && open LightweightGames.xcodeproj
+   ```
+2. **Signature** : dans Xcode, cible `LightweightGames` > Signing & Capabilities > cocher « Automatically manage signing » et choisir votre Apple ID comme Team (Xcode > Settings > Accounts pour l'ajouter). Si l'identifiant `fr.regisp.lightgames` est refusé, le changer dans `iosApp/project.yml` (clé `PRODUCT_BUNDLE_IDENTIFIER`) et relancer `xcodegen generate`.
+3. **Sur l'iPhone** : brancher le câble, « Se fier à cet ordinateur », puis Réglages > Confidentialité et sécurité > Mode développeur > activer (redémarrage).
+4. **Lancer** : sélectionner l'iPhone dans la barre d'outils Xcode, puis ⌘R. Le premier build lance Gradle (`embedAndSignAppleFrameworkForXcode`) et télécharge le compilateur Kotlin/Native : compter plusieurs minutes.
+5. **Première ouverture** : si iOS refuse de lancer l'app, Réglages > Général > VPN et gestion de l'appareil > faire confiance au certificat de développeur.
+6. **Premier build** : le code Swift n'a jamais été compilé sur Mac. La liste des points à vérifier en cas d'erreur (noms exportés par Kotlin, clé StoreKit du schéma, `CoreConfig.shared`) est dans `iosApp/README.md`, section « Things that may need fixing on first Mac build ».
+7. **Achat sur iPhone** : le schéma utilise la configuration locale `iosApp/Products.storekit`, donc l'achat, la restauration, « Demander à acheter » et le remboursement se testent directement depuis Xcode (menu Debug > StoreKit) sans App Store Connect.
+8. **Tests XCTest** : ⌘U dans Xcode. Rapport de taille : `tools/ios_size.sh`.
+
+Sans Mac sous la main, il n'existe pas d'alternative gratuite : un Mac loué à l'heure dans le cloud permet de compiler, et TestFlight (compte développeur Apple, 99 $/an) permet ensuite d'installer sur l'iPhone sans câble.
