@@ -45,3 +45,10 @@ Créer un plan pour une app Android/iOS de mini-jeux : version gratuite avec 3 j
 - Question sur l'emplacement des jeux : `core/src/commonMain/kotlin/lg/core/games/<id>/`, un dossier par jeu, registre dans `GameRegistry.kt`.
 - Ajout au `README.md` d'une procédure de test sur Samsung (débogage USB, `adb install -r`, logcat, tests d'instrumentation, limite des achats sans piste interne Play) et sur iPhone (Mac + Xcode + XcodeGen, signature avec Apple ID gratuit, mode développeur, StoreKit local).
 - `tools/env.sh` ajoute désormais `platform-tools` au PATH pour `adb`.
+
+## 2026-09-18 — iOS sans Mac : CI macOS
+
+- Question : est-il vraiment impossible de tester sur iPhone sans Mac ? Réponse : compiler et produire un IPA est possible sur un runner macOS GitHub ; installer exige une signature Apple (sideloading avec compte gratuit depuis Linux, ou TestFlight avec compte payant).
+- Constat : la CI poussée la veille échouait (job Android : action `setup-android` en erreur ; job iOS : nom de tâche Gradle erroné). Le job core passait.
+- Correctifs : `ci.yml` installe les paquets SDK avec le `sdkmanager` préinstallé du runner ; nouveau `ios.yml` (macos-15, XcodeGen, build simulateur, XCTest, archive non signée publiée en artefact `ios-unsigned-ipa`), déclenché à la demande ou sur modification de `iosApp/`/`core/`.
+- README : section « iPhone sans Mac ».

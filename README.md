@@ -79,4 +79,18 @@ Apple n'autorise l'installation que depuis Xcode (ou TestFlight, qui demande un 
 7. **Achat sur iPhone** : le schéma utilise la configuration locale `iosApp/Products.storekit`, donc l'achat, la restauration, « Demander à acheter » et le remboursement se testent directement depuis Xcode (menu Debug > StoreKit) sans App Store Connect.
 8. **Tests XCTest** : ⌘U dans Xcode. Rapport de taille : `tools/ios_size.sh`.
 
-Sans Mac sous la main, il n'existe pas d'alternative gratuite : un Mac loué à l'heure dans le cloud permet de compiler, et TestFlight (compte développeur Apple, 99 $/an) permet ensuite d'installer sur l'iPhone sans câble.
+### iPhone sans Mac : compiler sur GitHub, installer depuis Linux
+
+Le workflow `.github/workflows/ios.yml` tourne sur un Mac hébergé par GitHub. Il compile tout le Swift, exécute les XCTest dans le simulateur et publie un artefact `ios-unsigned-ipa` (application non signée). Lancement manuel :
+
+```sh
+gh workflow run ios.yml && gh run watch          # ~15 à 25 min ; sur un dépôt privé, les minutes macOS comptent 10x
+gh run download --name ios-unsigned-ipa          # récupère LightweightGames-unsigned.ipa
+```
+
+Installer cet IPA sur l'iPhone impose une signature Apple. Deux voies, toutes deux sans Mac :
+
+- **Compte Apple gratuit + sideloading depuis Linux** : un outil comme Sideloader (`github.com/Dadoum/Sideloader`) ou AltServer-Linux signe l'IPA avec votre Apple ID et l'installe par USB via libimobiledevice. Validité 7 jours, à refaire ensuite ; outils non officiels, à utiliser avec un Apple ID dédié de préférence. Dans ce mode, la configuration StoreKit locale n'est pas active : l'écran d'achat affichera « indisponible », tout le reste se teste.
+- **Compte développeur Apple (99 $/an) + TestFlight** : le même workflow peut signer et envoyer le build sur TestFlight avec une clé API App Store Connect (à ajouter le moment venu) ; l'installation se fait alors depuis l'app TestFlight, sans câble, et les achats se testent en sandbox.
+
+Un Mac reste plus confortable pour déboguer (points d'arrêt, Instruments, menu StoreKit), mais il n'est pas indispensable pour compiler ni pour tester sur l'appareil.

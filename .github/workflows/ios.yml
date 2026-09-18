@@ -1,0 +1,72 @@
+# iOS build on a GitHub-hosted Mac: the only way to compile the Swift app and
+# produce an installable IPA without owning a Mac. macOS minutes are billed
+# 10x on private repos, so this runs on demand (workflow_dispatch) and on
+# pushes that touch the iOS app or the shared core.
+name: ios
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['iosApp/**', 'core/**', '.github/workflows/ios.yml']
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with: { xcode-version: latest-stable }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Toolchain versions
+        run: |
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen --version
+      - name: Build the GamesCore XCFramework (release, device + simulator)
+        run: ./gradlew :core:assembleGamesCoreReleaseXCFramework --no-daemon
+      - name: Generate the Xcode project
+        working-directory: iosApp
+        run: |
+          mkdir -p Frameworks
+          cp -R ../core/build/XCFrameworks/release/GamesCore.xcframework Frameworks/
+          xcodegen generate
+      - name: Compile for the simulator (Swift type-check of the whole app)
+        working-directory: iosApp
+        env: { LG_USE_PREBUILT: '1' }
+        run: |
+          set -o pipefail
+          xcodebuild build -project LightweightGames.xcodeproj -scheme LightweightGames \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath build/dd | tail -40
+      - name: Run XCTest on a simulator
+        working-directory: iosApp
+        env: { LG_USE_PREBUILT: '1' }
+        run: |
+          set -o pipefail
+          SIM=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | sed -E 's/^ *([^(]+) \(.*/\1/' | xargs)
+          echo "Using simulator: $SIM"
+          xcodebuild test -project LightweightGames.xcodeproj -scheme LightweightGames \
+            -destination "platform=iOS Simulator,name=$SIM" CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath build/dd | tail -60
+      - name: Archive an UNSIGNED device build and package it as an IPA
+        working-directory: iosApp
+        env: { LG_USE_PREBUILT: '1' }
+        run: |
+          set -o pipefail
+          xcodebuild archive -project LightweightGames.xcodeproj -scheme LightweightGames \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath build/LightweightGames.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -20
+          mkdir -p build/ipa/Payload
+          cp -R build/LightweightGames.xcarchive/Products/Applications/LightweightGames.app build/ipa/Payload/
+          (cd build/ipa && zip -qr ../LightweightGames-unsigned.ipa Payload)
+          ls -la build/LightweightGames-unsigned.ipa
+          du -sh build/LightweightGames.xcarchive/Products/Applications/LightweightGames.app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-unsigned-ipa
+          path: iosApp/build/LightweightGames-unsigned.ipa
+          if-no-files-found: ignore
