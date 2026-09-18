@@ -37,9 +37,11 @@ jobs:
         env: { LG_USE_PREBUILT: '1' }
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild build -project LightweightGames.xcodeproj -scheme LightweightGames \
-            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO \
-            -derivedDataPath build/dd | tail -40
+            -destination 'generic/platform=iOS Simulator' ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO -derivedDataPath build/dd 2>&1 | tee build/xcodebuild-sim.log \
+            | grep -E "error:|warning: |BUILD (SUCCEEDED|FAILED)" | grep -v "was built for newer" | head -80
       - name: Run XCTest on a simulator
         working-directory: iosApp
         env: { LG_USE_PREBUILT: '1' }
@@ -48,8 +50,9 @@ jobs:
           SIM=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | sed -E 's/^ *([^(]+) \(.*/\1/' | xargs)
           echo "Using simulator: $SIM"
           xcodebuild test -project LightweightGames.xcodeproj -scheme LightweightGames \
-            -destination "platform=iOS Simulator,name=$SIM" CODE_SIGNING_ALLOWED=NO \
-            -derivedDataPath build/dd | tail -60
+            -destination "platform=iOS Simulator,name=$SIM" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO -derivedDataPath build/dd 2>&1 | tee build/xcodebuild-test.log \
+            | grep -E "error:|Test Case .* (passed|failed)|Test Suite .* (passed|failed)|Executed [0-9]+ test|BUILD|TEST" | head -120
       - name: Archive an UNSIGNED device build and package it as an IPA
         working-directory: iosApp
         env: { LG_USE_PREBUILT: '1' }
@@ -58,7 +61,8 @@ jobs:
           xcodebuild archive -project LightweightGames.xcodeproj -scheme LightweightGames \
             -configuration Release -destination 'generic/platform=iOS' \
             -archivePath build/LightweightGames.xcarchive \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -20
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee build/xcodebuild-archive.log \
+            | grep -E "error:|ARCHIVE (SUCCEEDED|FAILED)" | head -40
           mkdir -p build/ipa/Payload
           cp -R build/LightweightGames.xcarchive/Products/Applications/LightweightGames.app build/ipa/Payload/
           (cd build/ipa && zip -qr ../LightweightGames-unsigned.ipa Payload)
@@ -69,4 +73,10 @@ jobs:
         with:
           name: ios-unsigned-ipa
           path: iosApp/build/LightweightGames-unsigned.ipa
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build-logs
+          path: iosApp/build/xcodebuild-*.log
           if-no-files-found: ignore

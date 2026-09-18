@@ -21,6 +21,11 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+    # The Kotlin core only ships arm64 slices (device and simulator); Intel
+    # simulators are out of scope, and building x86_64 would fail to find
+    # the GamesCore module. Apple-silicon Macs and GitHub's macOS runners
+    # are arm64.
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
     DEAD_CODE_STRIPPING: YES
     STRIP_INSTALLED_PRODUCT: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
