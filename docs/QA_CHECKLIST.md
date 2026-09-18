@@ -14,6 +14,7 @@ Run this before every release, on one physical Android device and one physical i
 - [ ] Parental gate must be passed before the store sheet appears.
 - [ ] Successful purchase unlocks every game immediately, no relaunch needed.
 - [ ] Airplane mode ON, kill + relaunch: still unlocked.
+- [ ] Different Google / Apple account on the phone, app opened online several times: still unlocked (silent checks never revoke).
 - [ ] Uninstall, reinstall, "Restore purchases": unlocked again.
 - [ ] Pending purchase (Play test card "slow", iOS Ask to Buy): app shows "waiting", games stay locked, no crash; approval later unlocks.
 - [ ] Refund (Play console / StoreKit config): next store check revokes the entitlement.

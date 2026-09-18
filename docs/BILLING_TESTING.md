@@ -117,6 +117,14 @@ here with the specific billing angle:
    from the local `Entitlement` cache — no store round-trip is required to
    play.
 
+### 4 bis. A buyer never loses access without acting
+
+The silent 7-day revalidation can only grant or confirm (`allowRevoke = false` in `PlayBilling.silentRevalidate`); only the explicit "Restore purchases" button may revoke after a successful "nothing owned" answer.
+
+- [ ] Buy with the license tester, then switch the phone to a Google account that did not buy. Open the app repeatedly (force the check by moving the date 8 days ahead): every game stays unlocked.
+- [ ] Same account, airplane mode for a week of simulated time: still unlocked.
+- [ ] Explicit "Restore purchases" with the non-buyer account online: the app reports "no purchase found" and locks again (expected: this is the refund path, user-initiated).
+
 ## 5. What only a real device can prove
 
 Everything above requires a physical or emulated Android device signed into

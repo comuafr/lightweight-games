@@ -204,7 +204,9 @@ Le renderer lit `scene.f` via `KotlinFloatArray.get` ; si le profil est défavor
 ## 6. Achat intégré « Débloquer tout »
 
 - Produit non consommable, id identique sur les deux stores : `unlock_all`. `Entitlement.Source { PLAY, APPSTORE, NONE }`.
-- **Règle d'or** : l'état local est la source de vérité pour jouer ; le store ne fait que confirmer ou révoquer sur preuve. Store injoignable ⇒ jeux gratuits jouables, jeux verrouillés visibles avec cadenas + notice « hors ligne », aucun blocage, aucune relance.
+- **Règle d'or** : l'état local (`Entitlement.isUnlocked()`) est la **seule** chose qui décide si un jeu est verrouillé. La boutique n'est jamais consultée pour jouer, ni au lancement, ni à l'ouverture d'un jeu. Un acheteur joue à tout, hors ligne, en avion, avec un autre compte, sans internet pendant des mois : aucun cadenas ne réapparaît tant que l'état local dit « débloqué ». On accepte sans réserve le risque de piratage local ; le pire scénario est un achat inutilisable faute de réseau.
+- **Boutique injoignable** : ne change rien pour un acheteur (rien n'est affiché, rien n'est vérifié). Pour un non-acheteur, les jeux payants gardent leur cadenas (état local « verrouillé ») et l'écran d'achat affiche le prix indisponible avec la notice « hors ligne », bouton d'achat grisé, écran toujours fermable.
+- **Boutique de nouveau joignable** : vérification opportuniste et silencieuse (au plus une fois par 7 jours) qui ne peut que confirmer ou compléter l'état local (accorder un achat trouvé, marquer vérifié). Elle ne retire jamais l'accès. Seuls deux événements peuvent révoquer : un remboursement prouvé par la boutique (transaction révoquée sur iOS ; sur Android, réponse explicite « non possédé » lors d'une restauration demandée par l'utilisateur), ou l'utilisateur lui-même via « Restaurer les achats ».
 - Barrière parentale simple avant tout appel d'achat.
 
 ### Android, `PlayBilling.kt` (Play Billing ≥ 8)
@@ -212,7 +214,7 @@ Le renderer lit `scene.f` via `KotlinFloatArray.get` ; si le profil est défavor
 - `BillingClient` avec `enablePendingPurchases(...enableOneTimeProducts())`. Connexion **paresseuse** : ouverture du paywall, « Restaurer », ou revalidation silencieuse au plus une fois par 7 jours si déjà débloqué. Jamais au lancement.
 - Paywall : `queryProductDetailsAsync` → prix ; erreur → état hors ligne, bouton grisé.
 - Achat : `PURCHASED` → `acknowledgePurchase` → `grant(PLAY, token)` ; `PENDING` → message d'attente + `queryPurchasesAsync` au prochain lancement ; `ITEM_ALREADY_OWNED` → `queryPurchasesAsync` puis grant.
-- Restaurer : `queryPurchasesAsync(INAPP)` ; présent → grant (acquitter si besoin) ; **réponse vide avec succès** → `revoke()` (remboursement) ; erreur → conserver l'état local.
+- Restaurer (geste explicite de l'utilisateur) : `queryPurchasesAsync(INAPP)` ; présent → grant (acquitter si besoin) ; **réponse vide avec succès** → `revoke()` (remboursement) ; erreur → conserver l'état local. La revalidation silencieuse utilise la même requête avec `allowRevoke = false` : elle accorde ou confirme, jamais ne révoque.
 - Tests : testeurs de licence Play Console, piste interne, cartes de test approuvé / en attente / refusé.
 
 ### iOS, `StoreManager.swift` (StoreKit 2, iOS 15+)

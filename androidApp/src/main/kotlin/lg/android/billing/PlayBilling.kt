@@ -230,7 +230,9 @@ internal class PlayBilling(
     // ---------------------------------------------------------------- restore / revalidate
 
     /** Explicit "Restore purchases": queries owned items and reconciles via [reconcile]. Always calls back. */
-    fun restore(callback: (RestoreResult) -> Unit) {
+    fun restore(callback: (RestoreResult) -> Unit) = queryAndReconcile(allowRevoke = true, callback)
+
+    private fun queryAndReconcile(allowRevoke: Boolean, callback: (RestoreResult) -> Unit) {
         connect { ready ->
             val c = client
             if (!ready || c == null) {
@@ -239,27 +241,29 @@ internal class PlayBilling(
             }
             val params = QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()
             c.queryPurchasesAsync(params) { result, purchases ->
-                post { callback(applyRestoreResult(result, purchases)) }
+                post { callback(applyRestoreResult(result, purchases, allowRevoke)) }
             }
         }
     }
 
     /**
-     * Opportunistic, silent revalidation (PLAN.md §6): connects, restores,
+     * Opportunistic, silent revalidation (PLAN.md §6): connects, queries,
      * shows nothing, and swallows every outcome including errors. Called at
      * most once per process by the catalogue, only when
-     * [Entitlement.shouldRevalidate] is true.
+     * [Entitlement.shouldRevalidate] is true. It can only CONFIRM or GRANT,
+     * never revoke: a buyer keeps playing offline, with another account, or
+     * with a stale Play cache. Only the explicit [restore] honours a refund.
      */
     fun silentRevalidate() {
-        restore { /* no UI: outcome (or lack thereof) already applied to Entitlement by applyRestoreResult */ }
+        queryAndReconcile(allowRevoke = false) { /* no UI */ }
     }
 
-    private fun applyRestoreResult(result: BillingResult, purchases: List<Purchase>): RestoreResult {
+    private fun applyRestoreResult(result: BillingResult, purchases: List<Purchase>, allowRevoke: Boolean): RestoreResult {
         val queryOk = result.responseCode == BillingClient.BillingResponseCode.OK
         val ownedTokens = purchases
             .filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && it.products.contains(Entitlement.PRODUCT_ID) }
             .map { it.purchaseToken }
-        return when (val action = reconcile(entitlement.source(), queryOk, ownedTokens)) {
+        return when (val action = reconcile(entitlement.source(), queryOk, ownedTokens, allowRevoke)) {
             is ReconcileAction.Grant -> {
                 purchases.firstOrNull { it.purchaseToken == action.token }?.let(::acknowledgeIfNeeded)
                 entitlement.grant(EntitlementSource.PLAY, action.token)
@@ -271,7 +275,10 @@ internal class PlayBilling(
             }
             ReconcileAction.Keep -> {
                 if (queryOk) {
-                    entitlement.markVerified()
+                    // A silent check that found nothing for a Play-sourced entitlement is NOT a
+                    // confirmation: leave lastVerifiedMs alone so the next catalogue open retries.
+                    val unconfirmedSilentMiss = !allowRevoke && entitlement.source() == EntitlementSource.PLAY
+                    if (!unconfirmedSilentMiss) entitlement.markVerified()
                     RestoreResult.NOTHING_TO_RESTORE
                 } else {
                     RestoreResult.ERROR
