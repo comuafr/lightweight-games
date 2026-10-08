@@ -67,6 +67,8 @@ internal object SettingsDialog {
             },
         )
 
+        DevTools.settingsRow(context, ::dp)?.let { container.addView(it) }
+
         container.addView(
             TextView(context).apply {
                 text = context.getString(R.string.version, versionName(context))
