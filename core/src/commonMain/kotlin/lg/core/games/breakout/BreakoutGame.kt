@@ -8,11 +8,15 @@ import lg.core.Orientation
 import lg.core.Tier
 import lg.core.input.Gesture
 import lg.core.input.PointerPhase
-import lg.core.scene.Palette
+import lg.core.scene.Align
 import lg.core.scene.ArcadeIcons
+import lg.core.scene.Palette
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
+import lg.core.util.Rng
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -45,6 +49,17 @@ import kotlin.math.sqrt
  * finger drag moves the paddle by the finger's horizontal displacement (never
  * jumping to the touch point), clamped to stay on screen. The first `DOWN` received while the ball is not in flight (a
  * fresh [reset] or right after losing a life) also launches it.
+ *
+ * ### Capsules (bonus and malus)
+ *
+ * Destroyed bricks sometimes release a falling capsule (about one in five, and
+ * at least one every [PITY_BRICKS] bricks). Catching it with the paddle applies
+ * its effect: more balls, a bigger ball, a slower ball, an extra life or a
+ * bigger paddle (bonus), or a faster ball or a smaller paddle (malus). Timed
+ * effects live in [effectLeftMs]; a "bigger" and its "smaller" cancel each other.
+ * Balls, capsules and timers are fixed-size arrays advanced in the fixed physics
+ * substeps, so the game stays deterministic and allocation-free. Losing the last
+ * ball or clearing the level drops every effect and capsule.
  */
 public class BreakoutGame : Game {
     override val meta: GameMeta get() = META
@@ -67,11 +82,29 @@ public class BreakoutGame : Game {
     private var paddleCenterX: Float = 0f
 
     private var ballInFlight: Boolean = false
-    private var ballX: Float = 0f
-    private var ballY: Float = 0f
-    private var ballVX: Float = 0f
-    private var ballVY: Float = 0f
+
+    // Up to MAX_BALLS balls (index 0 is the one that rests on the paddle).
+    private val ballX = FloatArray(MAX_BALLS)
+    private val ballY = FloatArray(MAX_BALLS)
+    private val ballVX = FloatArray(MAX_BALLS)
+    private val ballVY = FloatArray(MAX_BALLS)
+    private val ballActive = BooleanArray(MAX_BALLS)
     private var physicsAccumulatorMs: Int = 0
+
+    // Falling capsules.
+    private val capX = FloatArray(MAX_CAPSULES)
+    private val capY = FloatArray(MAX_CAPSULES)
+    private val capType = IntArray(MAX_CAPSULES)
+    private val capActive = BooleanArray(MAX_CAPSULES)
+    private var bricksSinceDrop: Int = 0
+
+    /** Remaining milliseconds of each timed effect, indexed by capsule type (0 = not active). */
+    private val effectLeftMs = IntArray(TYPE_COUNT)
+
+    /** Speed factor the balls' velocities currently include (1, [FAST_FACTOR] or [SLOW_FACTOR]). */
+    private var appliedSpeedFactor: Float = 1f
+
+    private var rng: Rng = Rng(0L)
 
     private val hitPoints = IntArray(BRICK_COLS * BRICK_ROWS)
     private var bricksRemaining: Int = 0
@@ -82,23 +115,47 @@ public class BreakoutGame : Game {
     private var brickHitThisUpdate: Boolean = false
     private var lifeLostThisUpdate: Boolean = false
     private var levelClearedThisUpdate: Boolean = false
+    private var bonusCaughtThisUpdate: Boolean = false
+    private var malusCaughtThisUpdate: Boolean = false
 
     override fun reset(seed: Long, players: Int) {
+        rng = Rng(seed)
         level = 1
         lives = 3
         score = 0
         resetBricks()
+        clearTransients()
         paddleCenterX = 0f
         ballInFlight = false
-        ballX = 0f
-        ballY = 0f
-        ballVX = 0f
-        ballVY = 0f
         physicsAccumulatorMs = 0
         resetEventFlags()
         status = GameStatus.Running
-        // Real paddle/ball placement happens in resize(), which is always
-        // called before the first render (viewWidth/Height are still 0 here).
+        // The play zone has a fixed size known before the first game starts: put the paddle in
+        // the middle and the ball on it right away (resize() does the same if the size changes).
+        if (viewWidth > 0f && viewHeight > 0f) placeAtRest()
+    }
+
+    /** Paddle in the middle of the zone, ball resting on it. */
+    private fun placeAtRest() {
+        paddleCenterX = viewWidth / 2f
+        restBallOnPaddle()
+    }
+
+    private fun restBallOnPaddle() {
+        for (i in 0 until MAX_BALLS) ballActive[i] = false
+        ballActive[0] = true
+        ballX[0] = paddleCenterX
+        ballY[0] = paddleTop() - ballRadius()
+        ballVX[0] = 0f
+        ballVY[0] = 0f
+    }
+
+    /** Drops every effect, capsule and extra ball (new life, new level, new game). */
+    private fun clearTransients() {
+        effectLeftMs.fill(0)
+        capActive.fill(false)
+        appliedSpeedFactor = 1f
+        bricksSinceDrop = 0
     }
 
     override fun resize(width: Float, height: Float) {
@@ -106,12 +163,14 @@ public class BreakoutGame : Game {
         viewHeight = height
         if (viewWidth <= 0f || viewHeight <= 0f) return
         if (!ballInFlight) {
-            paddleCenterX = viewWidth / 2f
-            ballX = paddleCenterX
-            ballY = paddleTop() - BALL_RADIUS_PT
+            placeAtRest()
         } else {
-            paddleCenterX = paddleCenterX.coerceIn(paddleHalfWidth(), viewWidth - paddleHalfWidth())
+            clampPaddle()
         }
+    }
+
+    private fun clampPaddle() {
+        paddleCenterX = paddleCenterX.coerceIn(paddleHalfWidth(), viewWidth - paddleHalfWidth())
     }
 
     override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
@@ -128,12 +187,13 @@ public class BreakoutGame : Game {
             lastPointerX = x
         } else {
             if (id != dragPointerId) return
-            paddleCenterX = (paddleCenterX + (x - lastPointerX)).coerceIn(paddleHalfWidth(), viewWidth - paddleHalfWidth())
+            paddleCenterX += x - lastPointerX
+            clampPaddle()
             lastPointerX = x
         }
         if (!ballInFlight) {
-            ballX = paddleCenterX
-            ballY = paddleTop() - BALL_RADIUS_PT
+            ballX[0] = paddleCenterX
+            ballY[0] = paddleTop() - ballRadius()
             if (phase == PointerPhase.DOWN) launchBall()
         }
     }
@@ -169,59 +229,75 @@ public class BreakoutGame : Game {
         brickHitThisUpdate = false
         lifeLostThisUpdate = false
         levelClearedThisUpdate = false
+        bonusCaughtThisUpdate = false
+        malusCaughtThisUpdate = false
     }
 
     // --- Physics ------------------------------------------------------------
 
     private fun stepPhysics() {
         val dtSec = PHYSICS_STEP_MS / 1000f
-        ballX += ballVX * dtSec
-        ballY += ballVY * dtSec
+        moveCapsules(dtSec)
+        tickEffects(PHYSICS_STEP_MS)
+        for (i in 0 until MAX_BALLS) {
+            if (ballActive[i]) stepBall(i, dtSec)
+        }
+        if (ballInFlight && status == GameStatus.Running && activeBalls() == 0) loseLife()
+    }
 
-        if (ballX - BALL_RADIUS_PT < 0f) {
-            ballX = BALL_RADIUS_PT
-            ballVX = -ballVX
+    private fun activeBalls(): Int {
+        var n = 0
+        for (i in 0 until MAX_BALLS) if (ballActive[i]) n++
+        return n
+    }
+
+    private fun stepBall(i: Int, dtSec: Float) {
+        val r = ballRadius()
+        ballX[i] += ballVX[i] * dtSec
+        ballY[i] += ballVY[i] * dtSec
+
+        if (ballX[i] - r < 0f) {
+            ballX[i] = r
+            ballVX[i] = -ballVX[i]
             wallHitThisUpdate = true
-        } else if (ballX + BALL_RADIUS_PT > viewWidth) {
-            ballX = viewWidth - BALL_RADIUS_PT
-            ballVX = -ballVX
+        } else if (ballX[i] + r > viewWidth) {
+            ballX[i] = viewWidth - r
+            ballVX[i] = -ballVX[i]
             wallHitThisUpdate = true
         }
-        if (ballY - BALL_RADIUS_PT < HUD_TOP_PT) {
-            ballY = HUD_TOP_PT + BALL_RADIUS_PT
-            ballVY = -ballVY
+        if (ballY[i] - r < HUD_TOP_PT) {
+            ballY[i] = HUD_TOP_PT + r
+            ballVY[i] = -ballVY[i]
             wallHitThisUpdate = true
         }
 
-        if (ballVY > 0f && intersectsPaddle()) {
-            ballY = paddleTop() - BALL_RADIUS_PT
-            val offset = (ballX - paddleCenterX) / paddleHalfWidth()
-            setVelocityFromOffset(offset)
+        if (ballVY[i] > 0f && intersectsPaddle(i, r)) {
+            ballY[i] = paddleTop() - r
+            val offset = (ballX[i] - paddleCenterX) / paddleHalfWidth()
+            setVelocityFromOffset(i, offset)
             paddleHitThisUpdate = true
         }
 
-        handleBrickCollisions()
+        handleBrickCollisions(i, r)
 
-        if (ballY - BALL_RADIUS_PT > viewHeight) {
-            loseLife()
-        }
+        if (ballActive[i] && ballY[i] - r > viewHeight) ballActive[i] = false
     }
 
-    private fun intersectsPaddle(): Boolean {
+    private fun intersectsPaddle(i: Int, r: Float): Boolean {
         val pTop = paddleTop()
         val pBottom = pTop + PADDLE_HEIGHT_PT
         val pLeft = paddleCenterX - paddleHalfWidth()
         val pRight = paddleCenterX + paddleHalfWidth()
-        return ballY + BALL_RADIUS_PT >= pTop && ballY - BALL_RADIUS_PT <= pBottom &&
-            ballX + BALL_RADIUS_PT >= pLeft && ballX - BALL_RADIUS_PT <= pRight
+        return ballY[i] + r >= pTop && ballY[i] - r <= pBottom &&
+            ballX[i] + r >= pLeft && ballX[i] - r <= pRight
     }
 
-    /** Resolves at most one brick collision per substep, reflecting on the smaller-penetration axis. */
-    private fun handleBrickCollisions() {
-        val left = ballX - BALL_RADIUS_PT
-        val right = ballX + BALL_RADIUS_PT
-        val top = ballY - BALL_RADIUS_PT
-        val bottom = ballY + BALL_RADIUS_PT
+    /** Resolves at most one brick collision per substep for ball [i], reflecting on the smaller-penetration axis. */
+    private fun handleBrickCollisions(i: Int, r: Float) {
+        val left = ballX[i] - r
+        val right = ballX[i] + r
+        val top = ballY[i] - r
+        val bottom = ballY[i] + r
         val bw = brickWidth()
         for (row in 0 until BRICK_ROWS) {
             val by = brickY(row)
@@ -234,11 +310,32 @@ public class BreakoutGame : Game {
 
                 val overlapX = minOf(right, bx + bw) - maxOf(left, bx)
                 val overlapY = minOf(bottom, by + BRICK_ROW_HEIGHT_PT) - maxOf(top, by)
-                if (overlapX < overlapY) ballVX = -ballVX else ballVY = -ballVY
+                if (overlapX < overlapY) {
+                    ballVX[i] = -ballVX[i]
+                } else {
+                    bounceOffBrickFace(i, bx + bw / 2f, bw / 2f)
+                }
                 destroyBrick(idx)
                 return
             }
         }
+    }
+
+    /**
+     * Bounce on the top or bottom face of a brick: the vertical direction flips and, like on the
+     * paddle, the side of the brick that was hit steers the ball (left part -> to the left, right
+     * part -> to the right, centre -> unchanged), at the same speed. Without this a ball launched
+     * straight up would keep drilling the same column.
+     */
+    private fun bounceOffBrickFace(i: Int, brickCenterX: Float, brickHalfWidth: Float) {
+        val speed = sqrt(ballVX[i] * ballVX[i] + ballVY[i] * ballVY[i])
+        if (speed <= 0f) return
+        val offset = ((ballX[i] - brickCenterX) / brickHalfWidth).coerceIn(-1f, 1f)
+        val limit = speed * MAX_BOUNCE_FRACTION
+        val vx = (ballVX[i] + offset * speed * BRICK_DEFLECT).coerceIn(-limit, limit)
+        val vyMagnitude = sqrt(speed * speed - vx * vx)
+        ballVY[i] = if (ballVY[i] < 0f) vyMagnitude else -vyMagnitude
+        ballVX[i] = vx
     }
 
     private fun destroyBrick(idx: Int) {
@@ -246,6 +343,7 @@ public class BreakoutGame : Game {
         bricksRemaining--
         score += POINTS_PER_BRICK * level
         brickHitThisUpdate = true
+        maybeDropCapsule(idx)
         if (bricksRemaining <= 0) nextLevel()
     }
 
@@ -256,10 +354,8 @@ public class BreakoutGame : Game {
             status = GameStatus.Over(0)
         }
         ballInFlight = false
-        ballVX = 0f
-        ballVY = 0f
-        ballX = paddleCenterX
-        ballY = paddleTop() - BALL_RADIUS_PT
+        clearTransients()
+        restBallOnPaddle()
     }
 
     private fun nextLevel() {
@@ -267,10 +363,8 @@ public class BreakoutGame : Game {
         resetBricks()
         score += LEVEL_CLEAR_BONUS * level
         ballInFlight = false
-        ballVX = 0f
-        ballVY = 0f
-        ballX = paddleCenterX
-        ballY = paddleTop() - BALL_RADIUS_PT
+        clearTransients()
+        restBallOnPaddle()
         levelClearedThisUpdate = true
     }
 
@@ -282,22 +376,158 @@ public class BreakoutGame : Game {
     private fun launchBall() {
         ballInFlight = true
         physicsAccumulatorMs = 0
-        setVelocityFromOffset(0f)
+        setVelocityFromOffset(0, 0f)
     }
 
-    /** Sets ball velocity to the current level's fixed speed, angled by [offset] in `[-1, 1]` (paddle-relative x). */
-    private fun setVelocityFromOffset(offset: Float) {
-        val speed = speedForLevel()
+    /** Sets ball [i]'s velocity to the current fixed speed, angled by [offset] in `[-1, 1]` (paddle-relative x). */
+    private fun setVelocityFromOffset(i: Int, offset: Float) {
+        val speed = speedForLevel() * appliedSpeedFactor
         val vx = offset.coerceIn(-1f, 1f) * speed * MAX_BOUNCE_FRACTION
-        ballVX = vx
-        ballVY = -sqrt(speed * speed - vx * vx)
+        ballVX[i] = vx
+        ballVY[i] = -sqrt(speed * speed - vx * vx)
     }
 
     private fun speedForLevel(): Float = BASE_SPEED_PT_PER_S + (level - 1) * SPEED_INCREMENT_PER_LEVEL
 
+    // --- Capsules and effects ---------------------------------------------------------------
+
+    private fun maybeDropCapsule(brickIdx: Int) {
+        bricksSinceDrop++
+        if (bricksSinceDrop < PITY_BRICKS && rng.nextFloat() >= DROP_CHANCE) return
+        var slot = -1
+        for (k in 0 until MAX_CAPSULES) if (!capActive[k]) { slot = k; break }
+        if (slot < 0) return
+        bricksSinceDrop = 0
+        val row = brickIdx / BRICK_COLS
+        val col = brickIdx % BRICK_COLS
+        capX[slot] = brickX(col) + brickWidth() / 2f
+        capY[slot] = brickY(row) + BRICK_ROW_HEIGHT_PT / 2f
+        capType[slot] = pickType()
+        capActive[slot] = true
+    }
+
+    private fun pickType(): Int {
+        var roll = rng.nextInt(TYPE_WEIGHT_TOTAL)
+        for (t in 0 until TYPE_COUNT) {
+            roll -= TYPE_WEIGHTS[t]
+            if (roll < 0) return t
+        }
+        return TYPE_MULTI
+    }
+
+    private fun moveCapsules(dtSec: Float) {
+        for (k in 0 until MAX_CAPSULES) {
+            if (!capActive[k]) continue
+            capY[k] += CAPSULE_SPEED_PT_PER_S * dtSec
+            val pTop = paddleTop()
+            val caught = capY[k] + CAPSULE_H_PT / 2f >= pTop && capY[k] - CAPSULE_H_PT / 2f <= pTop + PADDLE_HEIGHT_PT &&
+                capX[k] + CAPSULE_W_PT / 2f >= paddleCenterX - paddleHalfWidth() &&
+                capX[k] - CAPSULE_W_PT / 2f <= paddleCenterX + paddleHalfWidth()
+            if (caught) {
+                capActive[k] = false
+                applyEffect(capType[k])
+            } else if (capY[k] - CAPSULE_H_PT / 2f > viewHeight) {
+                capActive[k] = false
+            }
+        }
+    }
+
+    private fun applyEffect(type: Int) {
+        if (isBonus(type)) bonusCaughtThisUpdate = true else malusCaughtThisUpdate = true
+        when (type) {
+            TYPE_MULTI -> spawnExtraBalls()
+            TYPE_LIFE -> if (lives < MAX_LIVES) lives++
+            TYPE_BIG_BALL -> effectLeftMs[TYPE_BIG_BALL] = BIG_BALL_MS
+            TYPE_SLOW -> {
+                effectLeftMs[TYPE_SLOW] = SLOW_MS
+                effectLeftMs[TYPE_FAST] = 0
+            }
+            TYPE_FAST -> {
+                effectLeftMs[TYPE_FAST] = FAST_MS
+                effectLeftMs[TYPE_SLOW] = 0
+            }
+            TYPE_BIG_PADDLE -> {
+                effectLeftMs[TYPE_BIG_PADDLE] = BIG_PADDLE_MS
+                effectLeftMs[TYPE_SMALL_PADDLE] = 0
+            }
+            TYPE_SMALL_PADDLE -> {
+                effectLeftMs[TYPE_SMALL_PADDLE] = SMALL_PADDLE_MS
+                effectLeftMs[TYPE_BIG_PADDLE] = 0
+            }
+        }
+        refreshSpeed()
+        clampPaddle()
+    }
+
+    /** Adds two balls (when there is room) leaving the first active ball at +/- [SPLIT_ANGLE] rad. */
+    private fun spawnExtraBalls() {
+        var src = -1
+        for (i in 0 until MAX_BALLS) if (ballActive[i]) { src = i; break }
+        if (src < 0) return
+        var added = 0
+        for (i in 0 until MAX_BALLS) {
+            if (added >= 2) break
+            if (ballActive[i]) continue
+            val angle = if (added == 0) SPLIT_ANGLE else -SPLIT_ANGLE
+            val c = cos(angle)
+            val sn = sin(angle)
+            ballX[i] = ballX[src]
+            ballY[i] = ballY[src]
+            ballVX[i] = ballVX[src] * c - ballVY[src] * sn
+            ballVY[i] = ballVX[src] * sn + ballVY[src] * c
+            ballActive[i] = true
+            added++
+        }
+    }
+
+    private fun tickEffects(dtMs: Int) {
+        var expired = false
+        for (t in 0 until TYPE_COUNT) {
+            if (effectLeftMs[t] > 0) {
+                effectLeftMs[t] -= dtMs
+                if (effectLeftMs[t] <= 0) {
+                    effectLeftMs[t] = 0
+                    expired = true
+                }
+            }
+        }
+        if (expired) {
+            refreshSpeed()
+            clampPaddle()
+        }
+    }
+
+    /** Rescales every ball's velocity when the speed effect in force changes. */
+    private fun refreshSpeed() {
+        val factor = speedFactor()
+        if (factor == appliedSpeedFactor) return
+        val ratio = factor / appliedSpeedFactor
+        for (i in 0 until MAX_BALLS) {
+            if (!ballActive[i]) continue
+            ballVX[i] *= ratio
+            ballVY[i] *= ratio
+        }
+        appliedSpeedFactor = factor
+    }
+
+    private fun isBonus(type: Int): Boolean = type != TYPE_FAST && type != TYPE_SMALL_PADDLE
+
+    private fun speedFactor(): Float = when {
+        effectLeftMs[TYPE_FAST] > 0 -> FAST_FACTOR
+        effectLeftMs[TYPE_SLOW] > 0 -> SLOW_FACTOR
+        else -> 1f
+    }
+
+    private fun ballRadius(): Float =
+        if (effectLeftMs[TYPE_BIG_BALL] > 0) BALL_RADIUS_PT * BIG_BALL_FACTOR else BALL_RADIUS_PT
+
     // --- Layout helpers (pure functions of current viewWidth/viewHeight/level) --------------------
 
-    private fun paddleWidth(): Float = viewWidth * PADDLE_WIDTH_FRACTION
+    private fun paddleWidth(): Float = viewWidth * PADDLE_WIDTH_FRACTION * when {
+        effectLeftMs[TYPE_BIG_PADDLE] > 0 -> BIG_PADDLE_FACTOR
+        effectLeftMs[TYPE_SMALL_PADDLE] > 0 -> SMALL_PADDLE_FACTOR
+        else -> 1f
+    }
     private fun paddleHalfWidth(): Float = paddleWidth() / 2f
     private fun paddleTop(): Float = viewHeight - PADDLE_BOTTOM_MARGIN_PT - PADDLE_HEIGHT_PT
     private fun brickWidth(): Float = (viewWidth - (BRICK_COLS + 1) * BRICK_GAP_PT) / BRICK_COLS
@@ -328,7 +558,12 @@ public class BreakoutGame : Game {
             radius = PADDLE_RADIUS_PT,
         )
 
-        scene.circle(ballX, ballY, BALL_RADIUS_PT, Palette.FG)
+        val r = ballRadius()
+        for (i in 0 until MAX_BALLS) {
+            if (ballActive[i]) scene.circle(ballX[i], ballY[i], r, Palette.FG)
+        }
+        renderCapsules(scene)
+        renderEffects(scene)
 
         val dotY = HUD_TOP_PT + LIFE_DOT_RADIUS_PT + LIFE_DOT_TOP_MARGIN_PT
         for (i in 0 until lives) {
@@ -337,6 +572,8 @@ public class BreakoutGame : Game {
         }
 
         if (wallHitThisUpdate || paddleHitThisUpdate) scene.sound(SoundId.HIT)
+        if (bonusCaughtThisUpdate) scene.sound(SoundId.BONUS)
+        if (malusCaughtThisUpdate) scene.sound(SoundId.HIT)
         if (brickHitThisUpdate) scene.sound(SoundId.EAT)
         if (levelClearedThisUpdate) scene.sound(SoundId.WIN)
         if (lifeLostThisUpdate) {
@@ -345,13 +582,37 @@ public class BreakoutGame : Game {
         }
     }
 
+    private fun renderCapsules(scene: Scene) {
+        for (k in 0 until MAX_CAPSULES) {
+            if (!capActive[k]) continue
+            val color = if (isBonus(capType[k])) Palette.NEON_GREEN else Palette.NEON_RED
+            scene.rect(capX[k] - CAPSULE_W_PT / 2f, capY[k] - CAPSULE_H_PT / 2f, CAPSULE_W_PT, CAPSULE_H_PT, color, radius = CAPSULE_H_PT / 2f)
+            scene.label(capX[k], capY[k], TYPE_LABELS[capType[k]], Palette.BEZEL, CAPSULE_TEXT_PT, Align.CENTER)
+        }
+    }
+
+    /** One small bar per timed effect in force, along the bottom edge, shrinking as it runs out. */
+    private fun renderEffects(scene: Scene) {
+        var slot = 0
+        for (t in 0 until TYPE_COUNT) {
+            val left = effectLeftMs[t]
+            if (left <= 0) continue
+            val color = if (isBonus(t)) Palette.NEON_GREEN else Palette.NEON_RED
+            val x = EFFECT_BAR_MARGIN_PT + slot * (EFFECT_BAR_W_PT + EFFECT_BAR_GAP_PT)
+            val y = viewHeight - EFFECT_BAR_BOTTOM_PT
+            scene.label(x + EFFECT_BAR_W_PT / 2f, y - 7f, TYPE_LABELS[t], Palette.FG_DIM, EFFECT_TEXT_PT, Align.CENTER)
+            scene.rect(x, y, EFFECT_BAR_W_PT * left / TYPE_DURATIONS[t], EFFECT_BAR_H_PT, color, radius = 2f)
+            slot++
+        }
+    }
+
     // --- Test-only accessors (internal: exercised by BreakoutRulesTest) ----
 
     internal fun debugBallInFlight(): Boolean = ballInFlight
-    internal fun debugBallX(): Float = ballX
-    internal fun debugBallY(): Float = ballY
-    internal fun debugBallVX(): Float = ballVX
-    internal fun debugBallVY(): Float = ballVY
+    internal fun debugBallX(): Float = ballX[0]
+    internal fun debugBallY(): Float = ballY[0]
+    internal fun debugBallVX(): Float = ballVX[0]
+    internal fun debugBallVY(): Float = ballVY[0]
     internal fun debugPaddleX(): Float = paddleCenterX
     internal fun debugLives(): Int = lives
     internal fun debugLevel(): Int = level
@@ -364,12 +625,33 @@ public class BreakoutGame : Game {
     internal fun debugBrickHeight(): Float = BRICK_ROW_HEIGHT_PT
 
     internal fun debugSetBall(x: Float, y: Float, vx: Float, vy: Float, inFlight: Boolean = true) {
-        ballX = x
-        ballY = y
-        ballVX = vx
-        ballVY = vy
+        ballActive[0] = true
+        ballX[0] = x
+        ballY[0] = y
+        ballVX[0] = vx
+        ballVY[0] = vy
         ballInFlight = inFlight
         physicsAccumulatorMs = 0
+    }
+
+    internal fun debugActiveBalls(): Int = activeBalls()
+    internal fun debugBallSpeed(): Float = sqrt(ballVX[0] * ballVX[0] + ballVY[0] * ballVY[0])
+    internal fun debugBallRadius(): Float = ballRadius()
+    internal fun debugPaddleWidth(): Float = paddleWidth()
+    internal fun debugEffectLeftMs(type: Int): Int = effectLeftMs[type]
+    internal fun debugApplyEffect(type: Int) = applyEffect(type)
+    internal fun debugCapsuleCount(): Int = capActive.count { it }
+    internal fun debugBricksSinceDrop(): Int = bricksSinceDrop
+
+    internal fun debugSpawnCapsule(type: Int, x: Float, y: Float) {
+        for (k in 0 until MAX_CAPSULES) {
+            if (capActive[k]) continue
+            capActive[k] = true
+            capType[k] = type
+            capX[k] = x
+            capY[k] = y
+            return
+        }
     }
 
     /** Destroys the brick at ([row], [col]) directly, exercising the same scoring/level-clear path as physics collisions. */
@@ -387,12 +669,64 @@ public class BreakoutGame : Game {
         public const val BRICK_COLS: Int = 8
         public const val BRICK_ROWS: Int = 6
 
+        internal const val TYPE_MULTI: Int = 0
+        internal const val TYPE_BIG_BALL: Int = 1
+        internal const val TYPE_SLOW: Int = 2
+        internal const val TYPE_LIFE: Int = 3
+        internal const val TYPE_BIG_PADDLE: Int = 4
+        internal const val TYPE_FAST: Int = 5
+        internal const val TYPE_SMALL_PADDLE: Int = 6
+        private const val TYPE_COUNT: Int = 7
+
+        /** Relative drop odds per type: bonus 10, malus 6 out of 16. */
+        private val TYPE_WEIGHTS: IntArray = intArrayOf(3, 2, 2, 1, 2, 3, 3)
+        private val TYPE_WEIGHT_TOTAL: Int = TYPE_WEIGHTS.sum()
+        private val TYPE_LABELS: Array<String> = arrayOf("x3", "O+", "<<", "+1", "<->", ">>", ">-<")
+
+        private const val BIG_BALL_MS: Int = 12000
+        private const val SLOW_MS: Int = 10000
+        private const val FAST_MS: Int = 8000
+        private const val BIG_PADDLE_MS: Int = 14000
+        private const val SMALL_PADDLE_MS: Int = 10000
+
+        /** Durations by type, for the shrinking bars (instant effects have none). */
+        private val TYPE_DURATIONS: FloatArray = floatArrayOf(
+            1f, BIG_BALL_MS.toFloat(), SLOW_MS.toFloat(), 1f,
+            BIG_PADDLE_MS.toFloat(), FAST_MS.toFloat(), SMALL_PADDLE_MS.toFloat(),
+        )
+
+        private const val MAX_BALLS: Int = 5
+        private const val MAX_CAPSULES: Int = 4
+        private const val MAX_LIVES: Int = 5
+        private const val DROP_CHANCE: Float = 0.2f
+        private const val PITY_BRICKS: Int = 7
+        private const val CAPSULE_SPEED_PT_PER_S: Float = 110f
+        private const val CAPSULE_W_PT: Float = 34f
+        private const val CAPSULE_H_PT: Float = 16f
+        private const val CAPSULE_TEXT_PT: Float = 11f
+        private const val SPLIT_ANGLE: Float = 0.35f
+        private const val BIG_BALL_FACTOR: Float = 1.7f
+        private const val SLOW_FACTOR: Float = 0.7f
+        private const val FAST_FACTOR: Float = 1.4f
+        private const val BIG_PADDLE_FACTOR: Float = 1.5f
+        private const val SMALL_PADDLE_FACTOR: Float = 0.62f
+
+        private const val EFFECT_BAR_MARGIN_PT: Float = 8f
+        private const val EFFECT_BAR_W_PT: Float = 44f
+        private const val EFFECT_BAR_H_PT: Float = 4f
+        private const val EFFECT_BAR_GAP_PT: Float = 8f
+        private const val EFFECT_BAR_BOTTOM_PT: Float = 10f
+        private const val EFFECT_TEXT_PT: Float = 10f
+
         private const val PHYSICS_STEP_MS: Int = 4
         private const val MAX_STEPS_PER_UPDATE: Int = 32
 
         private const val BASE_SPEED_PT_PER_S: Float = 220f
         private const val SPEED_INCREMENT_PER_LEVEL: Float = 18f
         private const val MAX_BOUNCE_FRACTION: Float = 0.9f
+
+        /** How strongly the hit position on a brick steers the ball (1 = like the paddle edge). */
+        private const val BRICK_DEFLECT: Float = 0.6f
 
         private const val POINTS_PER_BRICK: Int = 10
         private const val LEVEL_CLEAR_BONUS: Int = 50

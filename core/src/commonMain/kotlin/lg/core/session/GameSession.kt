@@ -335,31 +335,10 @@ public class GameSession(
         buttonCount++
     }
 
-    /** Arcade cabinet: dark page, a double neon outline around the screen, yellow corner brackets (view coordinates). */
+    /** Dark page and a thin dark bezel right around the play zone (view coordinates). */
     private fun renderFrame(scene: Scene) {
         scene.rect(0f, 0f, viewW, viewH, Palette.BEZEL)
-        // Cabinet body, then a pink and a cyan neon line (each a colored rect with a body-colored rect inset on it).
-        scene.rect(frameX, frameY, frameW, frameH, Palette.NEON_PINK, radius = FRAME_RADIUS_PT)
-        scene.rect(frameX + 2f, frameY + 2f, frameW - 4f, frameH - 4f, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT - 2f)
-        scene.rect(frameX + 5f, frameY + 5f, frameW - 10f, frameH - 10f, Palette.NEON_CYAN, radius = FRAME_RADIUS_PT - 5f)
-        scene.rect(frameX + 7f, frameY + 7f, frameW - 14f, frameH - 14f, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT - 7f)
-        // Black screen bezel right around the game.
-        scene.rect(originX - 3f, originY - 3f, zoneW + 6f, zoneH + 6f, Palette.BEZEL, radius = 4f)
-        // Yellow corner brackets, like the marks on an old monitor.
-        val l = BRACKET_LEN_PT
-        val x0 = frameX - 1f
-        val y0 = frameY - 1f
-        val x1 = frameX + frameW + 1f
-        val y1 = frameY + frameH + 1f
-        val w = BRACKET_WIDTH_PT
-        scene.line(x0, y0 + l, x0, y0, Palette.NEON_YELLOW, w)
-        scene.line(x0, y0, x0 + l, y0, Palette.NEON_YELLOW, w)
-        scene.line(x1 - l, y0, x1, y0, Palette.NEON_YELLOW, w)
-        scene.line(x1, y0, x1, y0 + l, Palette.NEON_YELLOW, w)
-        scene.line(x0, y1 - l, x0, y1, Palette.NEON_YELLOW, w)
-        scene.line(x0, y1, x0 + l, y1, Palette.NEON_YELLOW, w)
-        scene.line(x1 - l, y1, x1, y1, Palette.NEON_YELLOW, w)
-        scene.line(x1, y1, x1, y1 - l, Palette.NEON_YELLOW, w)
+        scene.rect(frameX, frameY, frameW, frameH, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT)
     }
 
     /** Faint horizontal CRT scanlines over the whole play zone (view coordinates, fixed spacing on screen). */
@@ -450,15 +429,13 @@ public class GameSession(
 
         const val FRAME_MARGIN_PT = 10f
         const val TOP_MARGIN_PT = 28f
-        const val FRAME_BORDER_PT = 14f
-        const val FRAME_RADIUS_PT = 18f
+        const val FRAME_BORDER_PT = 5f
+        const val FRAME_RADIUS_PT = 8f
         const val BAR_HEIGHT_PT = 52f
         const val BAR_MARGIN_PT = 16f
         const val BAR_MAX_WIDTH_PT = 380f
         const val BAR_GAP_PT = 12f
         const val HELP_SHARE = 0.38f
-        const val BRACKET_LEN_PT = 18f
-        const val BRACKET_WIDTH_PT = 3f
         const val SCANLINE_STEP_PT = 4f
         const val SCANLINE_ALPHA = 0.07f
 

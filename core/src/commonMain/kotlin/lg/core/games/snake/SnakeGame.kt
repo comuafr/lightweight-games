@@ -66,7 +66,11 @@ public class SnakeGame : Game {
     private var length: Int = 0
 
     private var direction: Direction = Direction.RIGHT
-    private var nextDirection: Direction = Direction.RIGHT
+
+    // Turns waiting for their tick (at most two, so quick swipes are not lost). Each is checked
+    // against the one before it, or against the direction actually travelled when the queue is empty.
+    private val queuedTurns: Array<Direction?> = arrayOfNulls(MAX_QUEUED_TURNS)
+    private var queuedCount: Int = 0
 
     private var foodX: Int = -1
     private var foodY: Int = -1
@@ -102,7 +106,7 @@ public class SnakeGame : Game {
         ateBonusThisTick = false
         tickAccumulatorMs = 0
         direction = Direction.RIGHT
-        nextDirection = Direction.RIGHT
+        queuedCount = 0
         ateThisTick = false
         diedThisTick = false
 
@@ -164,11 +168,14 @@ public class SnakeGame : Game {
             GestureKind.SWIPE_RIGHT -> Direction.RIGHT
             else -> return
         }
-        // Compare against the already-queued direction (not the current one) so
-        // two swipes issued within the same tick window cannot combine into an
-        // effective 180-degree reversal.
-        if (!desired.isOppositeOf(nextDirection)) {
-            nextDirection = desired
+        // A turn is judged against what the head will be doing when it is applied: the last queued
+        // turn, or the direction currently travelled. Judging only against the queued one let
+        // "up, then left" within a single tick turn a right-moving snake back into itself.
+        val base = if (queuedCount > 0) queuedTurns[queuedCount - 1]!! else direction
+        if (desired == base || desired.isOppositeOf(base)) return
+        if (queuedCount < MAX_QUEUED_TURNS) {
+            queuedTurns[queuedCount] = desired
+            queuedCount++
         }
     }
 
@@ -233,7 +240,12 @@ public class SnakeGame : Game {
         diedThisTick = false
         ateBonusThisTick = false
 
-        direction = nextDirection
+        if (queuedCount > 0) {
+            direction = queuedTurns[0]!!
+            queuedTurns[0] = queuedTurns[1]
+            queuedTurns[1] = null
+            queuedCount--
+        }
         // Torus: leaving one edge re-enters from the opposite one.
         val nx = (bodyX[headIdx] + direction.dx + cols) % cols
         val ny = (bodyY[headIdx] + direction.dy + rows) % rows
@@ -415,6 +427,7 @@ public class SnakeGame : Game {
         private const val MIN_TICK_MS: Int = 70
         private const val TICK_DECAY_PER_POINT: Int = 5
         private const val MAX_FOOD_ATTEMPTS: Int = 64
+        private const val MAX_QUEUED_TURNS: Int = 2
 
         /** Bonus: worth this many points, on screen this long, then a random pause before the next. */
         public const val BONUS_POINTS: Int = 5

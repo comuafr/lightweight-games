@@ -160,4 +160,43 @@ public class SnakeRulesTest {
             assertTrue(game.debugFoodX() != game.debugBonusX() || game.debugFoodY() != game.debugBonusY() || game.debugBonusX() < 0)
         }
     }
+
+    @Test
+    public fun twoQuickSwipesCannotMakeAUTurnInsideOneTick(): Unit {
+        val game = newGame()
+        // Moving RIGHT: "up" then "left" before the next tick used to reverse the snake into itself.
+        game.onGesture(gestureOf(GestureKind.SWIPE_UP))
+        game.onGesture(gestureOf(GestureKind.SWIPE_LEFT))
+        game.update(160)
+        assertEquals(GameStatus.Running, game.status)
+        game.update(160)
+        assertEquals(GameStatus.Running, game.status, "the second turn is applied one tick later, not in the same tick")
+    }
+
+    @Test
+    public fun queuedTurnsAreAppliedOneTickAtATime(): Unit {
+        val game = newGame()
+        val hx = game.debugHeadX()
+        val hy = game.debugHeadY()
+        game.onGesture(gestureOf(GestureKind.SWIPE_UP))
+        game.onGesture(gestureOf(GestureKind.SWIPE_LEFT))
+        game.update(160)
+        assertEquals(hx, game.debugHeadX())
+        assertEquals(hy - 1, game.debugHeadY())
+        game.update(160)
+        assertEquals(hx - 1, game.debugHeadX())
+        assertEquals(hy - 1, game.debugHeadY())
+    }
+
+    @Test
+    public fun aSwipeOppositeToTheQueuedTurnIsIgnored(): Unit {
+        val game = newGame()
+        val hy = game.debugHeadY()
+        game.onGesture(gestureOf(GestureKind.SWIPE_UP))
+        game.onGesture(gestureOf(GestureKind.SWIPE_DOWN)) // would reverse the queued "up"
+        game.update(160)
+        game.update(160)
+        assertEquals(hy - 2, game.debugHeadY())
+        assertEquals(GameStatus.Running, game.status)
+    }
 }

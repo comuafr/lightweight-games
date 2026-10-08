@@ -12,6 +12,7 @@ public class BreakoutRulesTest {
         const val VIEW_W = 360f
         const val VIEW_H = 640f
         const val PADDLE_WIDTH_FRACTION = 0.22f
+        const val BOTTOM_ROW = BreakoutGame.BRICK_ROWS - 1
     }
 
     private fun newGame(seed: Long = 1L): BreakoutGame {
@@ -137,5 +138,180 @@ public class BreakoutRulesTest {
         game.onPointer(1, PointerPhase.DOWN, 300f, VIEW_H - 50f)
         game.onPointer(1, PointerPhase.MOVE, 350f, VIEW_H - 50f)
         assertEquals(x, game.debugPaddleX(), 0.01f)
+    }
+
+    // --- Start position -----------------------------------------------------------------------
+
+    @Test
+    public fun paddleStartsInTheMiddleWhenTheSizeIsKnownBeforeTheGameStarts(): Unit {
+        // GameSession tells the game its fixed size once, before any start/restart.
+        val game = BreakoutGame()
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        assertEquals(VIEW_W / 2f, game.debugPaddleX(), 0.01f)
+        assertEquals(VIEW_W / 2f, game.debugBallX(), 0.01f)
+        assertEquals(game.debugPaddleTop() - 6f, game.debugBallY(), 0.01f)
+    }
+
+    // --- Capsules: bonus and malus --------------------------------------------------------------
+
+    /** A ball hanging still in the middle of the zone, so only the timers and capsules move. */
+    private fun floatingBallGame(vy: Float = 0f): BreakoutGame {
+        val game = newGame()
+        game.debugSetBall(x = VIEW_W / 2f, y = 350f, vx = 0f, vy = vy, inFlight = true)
+        return game
+    }
+
+    @Test
+    public fun multiBallAddsTwoBallsAndLosingOneDoesNotCostALife(): Unit {
+        val game = floatingBallGame(vy = -100f)
+        game.debugApplyEffect(BreakoutGame.TYPE_MULTI)
+        assertEquals(3, game.debugActiveBalls())
+        val lives = game.debugLives()
+        // Let the balls fly: they leave through the top only by bouncing, so none is lost yet.
+        game.update(50)
+        assertEquals(lives, game.debugLives())
+    }
+
+    @Test
+    public fun lifeIsLostOnlyWhenTheLastBallFalls(): Unit {
+        val game = newGame()
+        game.debugSetBall(x = VIEW_W / 2f, y = VIEW_H + 50f, vx = 0f, vy = 20f, inFlight = true)
+        game.debugApplyEffect(BreakoutGame.TYPE_MULTI)
+        val lives = game.debugLives()
+        game.update(50)
+        // All three copies sit below the zone, so the life goes now, effects and extras with it.
+        assertEquals(lives - 1, game.debugLives())
+        assertEquals(1, game.debugActiveBalls())
+        assertFalse(game.debugBallInFlight())
+    }
+
+    @Test
+    public fun bigBallGrowsThenReturnsToNormalSize(): Unit {
+        val game = floatingBallGame()
+        game.debugApplyEffect(BreakoutGame.TYPE_BIG_BALL)
+        assertTrue(game.debugBallRadius() > 6f * 1.5f)
+        repeat(260) { game.update(50) } // 13 s > 12 s
+        assertEquals(6f, game.debugBallRadius(), 0.01f)
+        assertEquals(0, game.debugEffectLeftMs(BreakoutGame.TYPE_BIG_BALL))
+    }
+
+    @Test
+    public fun fastAndSlowScaleTheBallSpeedAndCancelEachOther(): Unit {
+        val game = floatingBallGame(vy = -100f)
+        game.debugApplyEffect(BreakoutGame.TYPE_FAST)
+        assertEquals(140f, game.debugBallSpeed(), 0.5f)
+        game.debugApplyEffect(BreakoutGame.TYPE_SLOW)
+        assertEquals(70f, game.debugBallSpeed(), 0.5f)
+        assertEquals(0, game.debugEffectLeftMs(BreakoutGame.TYPE_FAST))
+    }
+
+    @Test
+    public fun speedGoesBackToNormalWhenTheEffectEnds(): Unit {
+        val game = floatingBallGame(vy = -1f)
+        game.debugApplyEffect(BreakoutGame.TYPE_SLOW)
+        assertEquals(0.7f, game.debugBallSpeed(), 0.01f)
+        repeat(220) { game.update(50) } // 11 s > 10 s
+        assertEquals(1f, game.debugBallSpeed(), 0.01f)
+    }
+
+    @Test
+    public fun biggerAndSmallerPaddleReplaceEachOther(): Unit {
+        val game = floatingBallGame()
+        val normal = game.debugPaddleWidth()
+        game.debugApplyEffect(BreakoutGame.TYPE_BIG_PADDLE)
+        assertEquals(normal * 1.5f, game.debugPaddleWidth(), 0.01f)
+        game.debugApplyEffect(BreakoutGame.TYPE_SMALL_PADDLE)
+        assertEquals(normal * 0.62f, game.debugPaddleWidth(), 0.01f)
+        assertEquals(0, game.debugEffectLeftMs(BreakoutGame.TYPE_BIG_PADDLE))
+    }
+
+    @Test
+    public fun extraLifeIsCappedAtFive(): Unit {
+        val game = floatingBallGame()
+        repeat(6) { game.debugApplyEffect(BreakoutGame.TYPE_LIFE) }
+        assertEquals(5, game.debugLives())
+    }
+
+    @Test
+    public fun aCapsuleCaughtByThePaddleApplies(): Unit {
+        val game = floatingBallGame()
+        val lives = game.debugLives()
+        game.debugSpawnCapsule(BreakoutGame.TYPE_LIFE, game.debugPaddleX(), game.debugPaddleTop() - 5f)
+        assertEquals(1, game.debugCapsuleCount())
+        game.update(50)
+        assertEquals(lives + 1, game.debugLives())
+        assertEquals(0, game.debugCapsuleCount())
+    }
+
+    @Test
+    public fun aMissedCapsuleFallsOutAndDisappears(): Unit {
+        val game = floatingBallGame()
+        val lives = game.debugLives()
+        game.debugSpawnCapsule(BreakoutGame.TYPE_LIFE, 10f, game.debugPaddleTop())
+        repeat(200) { game.update(50) }
+        assertEquals(0, game.debugCapsuleCount())
+        assertEquals(lives, game.debugLives())
+    }
+
+    @Test
+    public fun capsulesKeepComingEvenWithBadLuck(): Unit {
+        val game = newGame()
+        repeat(7) { game.debugDestroyBrick(0, it) }
+        assertTrue(game.debugCapsuleCount() >= 1, "at least one capsule within every 7 bricks")
+    }
+
+    @Test
+    public fun losingALifeDropsEveryEffect(): Unit {
+        val game = floatingBallGame(vy = -100f)
+        game.debugApplyEffect(BreakoutGame.TYPE_BIG_BALL)
+        game.debugApplyEffect(BreakoutGame.TYPE_FAST)
+        game.debugSetBall(x = VIEW_W / 2f, y = VIEW_H + 50f, vx = 0f, vy = 20f, inFlight = true)
+        game.update(50)
+        assertEquals(0, game.debugEffectLeftMs(BreakoutGame.TYPE_BIG_BALL))
+        assertEquals(0, game.debugEffectLeftMs(BreakoutGame.TYPE_FAST))
+        assertEquals(6f, game.debugBallRadius(), 0.01f)
+    }
+
+    // --- Bounce off bricks depends on where the ball hits --------------------------------------
+
+    /** Ball just below the bottom row's brick in [col], moving straight up, hitting at [fraction] of the brick width (0 = left edge, 1 = right edge). */
+    private fun hitBrickFrom(col: Int, fraction: Float): BreakoutGame {
+        val game = newGame()
+        val x = game.debugBrickLeft(col) + game.debugBrickWidth() * fraction
+        val y = game.debugBrickTop(BOTTOM_ROW) + game.debugBrickHeight() + 5f
+        game.debugSetBall(x = x, y = y, vx = 0f, vy = -220f, inFlight = true)
+        game.update(30)
+        return game
+    }
+
+    @Test
+    public fun hittingTheLeftPartOfABrickSendsTheBallLeft(): Unit {
+        val game = hitBrickFrom(col = 3, fraction = 0.1f)
+        assertEquals(0, game.debugHitPoints(BOTTOM_ROW, 3))
+        assertTrue(game.debugBallVX() < -20f, "vx was ${game.debugBallVX()}")
+        assertTrue(game.debugBallVY() > 0f, "ball must come back down")
+    }
+
+    @Test
+    public fun hittingTheRightPartOfABrickSendsTheBallRight(): Unit {
+        val game = hitBrickFrom(col = 3, fraction = 0.9f)
+        assertTrue(game.debugBallVX() > 20f, "vx was ${game.debugBallVX()}")
+        assertTrue(game.debugBallVY() > 0f)
+    }
+
+    @Test
+    public fun hittingTheCentreOfABrickKeepsTheBallStraight(): Unit {
+        val game = hitBrickFrom(col = 3, fraction = 0.5f)
+        assertEquals(0f, game.debugBallVX(), 5f)
+        assertTrue(game.debugBallVY() > 0f)
+    }
+
+    @Test
+    public fun theBrickBounceKeepsTheBallSpeed(): Unit {
+        val left = hitBrickFrom(col = 3, fraction = 0.1f)
+        val right = hitBrickFrom(col = 5, fraction = 0.8f)
+        assertEquals(220f, left.debugBallSpeed(), 1f)
+        assertEquals(220f, right.debugBallSpeed(), 1f)
     }
 }
