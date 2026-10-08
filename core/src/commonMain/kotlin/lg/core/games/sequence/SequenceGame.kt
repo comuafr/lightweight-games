@@ -9,6 +9,7 @@ import lg.core.Tier
 import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
+import lg.core.scene.Align
 import lg.core.scene.Palette
 import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
@@ -26,7 +27,9 @@ import lg.core.util.Rng
  *
  * [sequence] is a fixed `IntArray(64)` of pad indices (0..3); [sequenceLength]
  * entries are active. A round starts by appending one random pad ([growSequence])
- * and entering [Phase.WATCH]: pads light up one at a time ([ON_MS] on,
+ * and a "3, 2, 1" countdown ([Phase.COUNTDOWN], taps ignored) so the player can
+ * tell the end of their last answer from the start of the new sequence; then
+ * [Phase.WATCH]: pads light up one at a time ([ON_MS] on,
  * [OFF_MS] off) via [update]. Once the whole sequence has been shown, the
  * game enters [Phase.INPUT] and waits for taps (ignored during [Phase.WATCH]).
  * Each correct tap advances [inputIndex]; completing the whole sequence
@@ -43,9 +46,9 @@ public class SequenceGame : Game {
         private set
 
     override val wantsFrames: Boolean
-        get() = status == GameStatus.Running && phase == Phase.WATCH
+        get() = status == GameStatus.Running && (phase == Phase.WATCH || phase == Phase.COUNTDOWN)
 
-    private enum class Phase { WATCH, INPUT }
+    private enum class Phase { COUNTDOWN, WATCH, INPUT }
 
     private var viewWidth: Float = 0f
     private var viewHeight: Float = 0f
@@ -55,7 +58,10 @@ public class SequenceGame : Game {
     private var sequenceLength: Int = 0
 
     private var rng: Rng = Rng(0L)
-    private var phase: Phase = Phase.WATCH
+    private var phase: Phase = Phase.COUNTDOWN
+
+    // Countdown sub-state: milliseconds left before the sequence is shown.
+    private var countdownMs: Int = 0
 
     // Watch-phase sub-state.
     private var watchIndex: Int = 0
@@ -71,16 +77,13 @@ public class SequenceGame : Game {
     private var correctTapThisFrame: Boolean = false
     private var roundCompleteThisFrame: Boolean = false
     private var wrongTapThisFrame: Boolean = false
+    private var countdownTickThisFrame: Boolean = false
 
     override fun reset(seed: Long, players: Int) {
         rng = Rng(seed)
         score = 0
         sequenceLength = 0
-        phase = Phase.WATCH
-        watchIndex = 0
-        watchLit = false
-        watchTimerMs = 0
-        litPad = -1
+        startCountdown()
         inputIndex = 0
         tappedPadThisFrame = -1
         correctTapThisFrame = false
@@ -125,13 +128,22 @@ public class SequenceGame : Game {
             score++
             roundCompleteThisFrame = true
             growSequence()
-            phase = Phase.WATCH
-            watchIndex = 0
-            watchLit = false
-            watchTimerMs = 0
-            litPad = -1
+            startCountdown()
         }
     }
+
+    /** Next round: pads at rest, the 3-2-1 countdown runs, then the sequence is shown from its start. */
+    private fun startCountdown() {
+        phase = Phase.COUNTDOWN
+        countdownMs = COUNTDOWN_FROM * COUNTDOWN_STEP_MS
+        inputIndex = 0
+        watchIndex = 0
+        watchLit = false
+        watchTimerMs = 0
+        litPad = -1
+    }
+
+    private fun countdownDigit(): Int = (countdownMs + COUNTDOWN_STEP_MS - 1) / COUNTDOWN_STEP_MS
 
     private fun growSequence() {
         if (sequenceLength >= MAX_ROUNDS) return
@@ -145,6 +157,19 @@ public class SequenceGame : Game {
         correctTapThisFrame = false
         roundCompleteThisFrame = false
         wrongTapThisFrame = false
+        countdownTickThisFrame = false
+        if (phase == Phase.COUNTDOWN) {
+            val before = countdownDigit()
+            countdownMs -= dtMs
+            if (countdownMs <= 0) {
+                countdownMs = 0
+                phase = Phase.WATCH
+                watchTimerMs = 0
+            } else if (countdownDigit() != before) {
+                countdownTickThisFrame = true
+            }
+            return true
+        }
         if (phase != Phase.WATCH) return false
 
         watchTimerMs += dtMs
@@ -198,7 +223,7 @@ public class SequenceGame : Game {
     /** Fast-forwards the watch animation until input is accepted (bounded to avoid an infinite loop). */
     internal fun debugSkipToInput() {
         var guard = 0
-        while (phase == Phase.WATCH && status == GameStatus.Running && guard < 100_000) {
+        while (phase != Phase.INPUT && status == GameStatus.Running && guard < 100_000) {
             update(16)
             guard++
         }
@@ -223,6 +248,18 @@ public class SequenceGame : Game {
             scene.rect(px, py, padSize, padSize, padColor(pad), radius = padSize * 0.12f, alpha = alpha)
         }
 
+        if (phase == Phase.COUNTDOWN) {
+            scene.number(
+                boardRect.x + boardRect.w / 2f,
+                boardRect.y + boardRect.h / 2f,
+                countdownDigit(),
+                Palette.FG,
+                COUNTDOWN_TEXT_PT,
+                Align.CENTER,
+            )
+        }
+
+        if (countdownTickThisFrame) scene.sound(SoundId.TICK)
         if (correctTapThisFrame) scene.sound(SoundId.EAT)
         if (roundCompleteThisFrame) scene.sound(SoundId.WIN)
         if (wrongTapThisFrame) {
@@ -244,6 +281,9 @@ public class SequenceGame : Game {
         private const val ON_MS: Int = 450
         private const val OFF_MS: Int = 150
         private const val PAD_GAP_FRACTION: Float = 0.06f
+        private const val COUNTDOWN_FROM: Int = 3
+        private const val COUNTDOWN_STEP_MS: Int = 700
+        private const val COUNTDOWN_TEXT_PT: Float = 120f
 
         /** Vertical strip reserved for the session HUD (score / best). */
         private const val HUD_TOP_PT: Float = 32f
