@@ -54,4 +54,47 @@
 
     <string name="version">Version %1$s</string>
     <string name="unlocked_check">Débloqué ✓</string>
+
+    <!-- Splash screen and first-open help (read by SplashActivity / HelpView). -->
+    <string name="help_rules">Règles</string>
+    <string name="help_controls">Commandes</string>
+    <string name="help_got_it">Compris, on joue !</string>
+    <string name="splash_play">Jouer</string>
+    <string name="splash_close">Fermer</string>
+    <string name="splash_tagline">Des petits jeux, un grand plaisir.</string>
+    <string name="splash_motto">Pas de pub
+Pas d\'achat dans les jeux
+Pas besoin d\'internet
+Pas de compte, pas de suivi
+Un seul achat débloque tout, pour toujours</string>
+    <string name="rules_snake">Guide le serpent vers les pommes pour grandir. Ne te mords pas la queue. Il n\'y a pas de murs : en sortant d\'un bord, tu réapparais de l\'autre côté.</string>
+    <string name="controls_snake">Glisse le doigt vers le haut, le bas, la gauche ou la droite pour tourner.</string>
+    <string name="rules_g2048">Fais glisser les tuiles : deux tuiles identiques qui se touchent fusionnent en une seule de valeur double. Atteins 2048. La partie se termine quand la grille est pleine et que plus rien ne peut fusionner.</string>
+    <string name="controls_g2048">Glisse le doigt dans une direction pour faire glisser toutes les tuiles.</string>
+    <string name="rules_breakout">Fais rebondir la balle sur la raquette pour casser toutes les briques. Tu as 3 vies : ne laisse pas tomber la balle.</string>
+    <string name="controls_breakout">Fais glisser ton doigt à gauche ou à droite pour déplacer la raquette. Touche l\'écran pour lancer la balle.</string>
+    <string name="rules_sequence">Regarde les couleurs s\'allumer, puis répète la même séquence. Elle s\'allonge d\'un pas à chaque manche. Une erreur et c\'est fini.</string>
+    <string name="controls_sequence">Touche les pastilles de couleur dans le même ordre.</string>
+    <string name="rules_pairs">Retrouve toutes les paires de cartes identiques en un minimum d\'essais. À deux joueurs, tu rejoues après chaque paire trouvée.</string>
+    <string name="controls_pairs">Touche une carte pour la retourner, puis une deuxième.</string>
+    <string name="rules_sliding">Remets les tuiles dans l\'ordre, de 1 à 15, grâce à la case vide. Moins de coups, c\'est mieux.</string>
+    <string name="controls_sliding">Touche une tuile à côté de la case vide, ou glisse le doigt pour la pousser dedans.</string>
+    <string name="rules_tictactoe">Sois le premier à aligner trois de tes marques, en ligne, en colonne ou en diagonale. Seul, tu joues contre un ordinateur qui ne se trompe jamais.</string>
+    <string name="controls_tictactoe">Touche une case vide pour y placer ta marque.</string>
+    <string name="rules_paddles">Envoie la balle derrière la raquette adverse. Le premier à 7 points gagne. Seul, tu joues contre l\'ordinateur ; à deux, vous partagez l\'écran.</string>
+    <string name="controls_paddles">Fais glisser ta raquette avec le doigt. Chaque joueur utilise sa moitié de l\'écran.</string>
+    <string name="rules_fourinrow">Fais tomber des jetons dans les colonnes. Le premier à aligner quatre jetons, en ligne, en colonne ou en diagonale, gagne. Seul, tu joues contre l\'ordinateur.</string>
+    <string name="controls_fourinrow">Touche une colonne pour y faire tomber ton jeton.</string>
+    <string name="rules_bird">Vole entre les tuyaux sans les toucher. Chaque tuyau franchi rapporte un point.</string>
+    <string name="controls_bird">Touche l\'écran pour battre des ailes et prendre de la hauteur. L\'oiseau tombe si tu ne fais rien.</string>
+    <string name="rules_mines">Découvre toutes les cases qui ne cachent pas de bombe. Un chiffre indique combien de bombes touchent la case. Il y a 10 bombes. Ton premier toucher est toujours sans danger.</string>
+    <string name="controls_mines">Touche une case pour la découvrir. Appuie longuement pour poser un drapeau. Touche un chiffre entouré d\'assez de drapeaux pour découvrir le reste.</string>
+    <string name="rules_hangman">Trouve le mot secret en proposant des lettres. Sept mauvaises lettres et tu as perdu.</string>
+    <string name="controls_hangman">Touche une lettre du clavier.</string>
+    <string name="rules_reversi">Pose des pions pour encadrer ceux de l\'adversaire : ils prennent ta couleur. Celui qui a le plus de pions à la fin gagne. Si tu ne peux pas jouer, ton tour est passé.</string>
+    <string name="controls_reversi">Touche une case où tu retournes au moins un pion.</string>
+    <string name="rules_sudoku">Remplis la grille pour que chaque ligne, chaque colonne et chaque bloc de 3x3 contienne une seule fois les chiffres de 1 à 9. Les chiffres faux s\'affichent en rouge.</string>
+    <string name="controls_sudoku">Choisis une difficulté, touche une case vide, puis un chiffre sur le pavé. La touche gomme efface une case.</string>
+    <string name="rules_nonogram">Fais apparaître l\'image cachée. Les nombres à côté de chaque ligne et colonne donnent la longueur des suites de cases pleines. Marque d\'une croix les cases que tu sais vides.</string>
+    <string name="controls_nonogram">Touche ou fais glisser le doigt pour remplir des cases. Appuie longuement pour poser une croix.</string>
 </resources>

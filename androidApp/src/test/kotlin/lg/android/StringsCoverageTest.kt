@@ -31,4 +31,16 @@ class StringsCoverageTest {
         val map = Strings.ORDINAL_TO_RES
         assertEquals(map.size, map.toSet().size)
     }
+
+    @Test
+    fun `every game has rules and controls texts in every language`() {
+        for (dir in listOf("values", "values-fr")) {
+            val xml = java.io.File("src/main/res/$dir/strings.xml").readText()
+            for (game in lg.core.GameRegistry.all) {
+                for (prefix in listOf("rules_", "controls_")) {
+                    assertTrue("$dir is missing $prefix${game.id}", xml.contains("name=\"$prefix${game.id}\""))
+                }
+            }
+        }
+    }
 }

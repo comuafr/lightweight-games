@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -533,17 +534,7 @@ public class Game2048 : Game {
             complexity = Complexity.M,
             resumable = true,
             factory = { Game2048() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.fusion(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val gap = size * 0.08f
-            val cell = (size - 3 * gap) / 2f
-            val radius = cell * 0.15f
-            scene.rect(gap, gap, cell, cell, Palette.TILE_1, radius = radius)
-            scene.rect(gap * 2 + cell, gap, cell, cell, Palette.ACCENT, radius = radius)
-            scene.rect(gap, gap * 2 + cell, cell, cell, Palette.ACCENT, radius = radius)
-            scene.rect(gap * 2 + cell, gap * 2 + cell, cell, cell, Palette.TILE_3, radius = radius)
-        }
     }
 }

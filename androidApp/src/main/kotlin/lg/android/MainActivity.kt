@@ -155,6 +155,7 @@ class MainActivity : Activity() {
         val locked = meta.tier == Tier.UNLOCKED && !unlocked
         val tile = TileView(this, meta)
         tile.locked = locked
+        tile.borderIndex = GameRegistry.all.indexOf(meta)
         tile.setOnClickListener { onTileClicked(meta, locked) }
         return tile
     }

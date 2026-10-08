@@ -46,6 +46,16 @@ internal object PreviewPalette {
         0xFF862E9C.toInt(), // TILE_9
         0xFF5F3DC4.toInt(), // TILE_10
         0xFF364FC7.toInt(), // TILE_11
+        0xFF0B0B1E.toInt(), // BEZEL
+        0xFF241447.toInt(), // BEZEL_EDGE
+        0xFFFF2E97.toInt(), // NEON_PINK
+        0xFF16E0FF.toInt(), // NEON_CYAN
+        0xFFFFE600.toInt(), // NEON_YELLOW
+        0xFF39FF14.toInt(), // NEON_GREEN
+        0xFFFF8A1F.toInt(), // NEON_ORANGE
+        0xFFFF3B3B.toInt(), // NEON_RED
+        0xFFF4F4FF.toInt(), // NEON_WHITE
+        0xFF9B5CFF.toInt(), // NEON_PURPLE
     )
 
     val DARK: IntArray = intArrayOf(
@@ -71,6 +81,16 @@ internal object PreviewPalette {
         0xFF6E3585.toInt(), // TILE_9
         0xFF4E3CA8.toInt(), // TILE_10
         0xFF3A4BB0.toInt(), // TILE_11
+        0xFF0B0B1E.toInt(), // BEZEL
+        0xFF241447.toInt(), // BEZEL_EDGE
+        0xFFFF2E97.toInt(), // NEON_PINK
+        0xFF16E0FF.toInt(), // NEON_CYAN
+        0xFFFFE600.toInt(), // NEON_YELLOW
+        0xFF39FF14.toInt(), // NEON_GREEN
+        0xFFFF8A1F.toInt(), // NEON_ORANGE
+        0xFFFF3B3B.toInt(), // NEON_RED
+        0xFFF4F4FF.toInt(), // NEON_WHITE
+        0xFF9B5CFF.toInt(), // NEON_PURPLE
     )
 
     init {

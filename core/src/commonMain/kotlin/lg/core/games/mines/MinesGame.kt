@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -334,18 +335,8 @@ public class MinesGame : Game {
             complexity = Complexity.M,
             resumable = true,
             factory = { MinesGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.hiddenBombs(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val gap = size * 0.08f
-            val cell = (size - 3 * gap) / 2f
-            scene.rect(gap, gap, cell, cell, Palette.GRID, radius = cell * 0.1f)
-            scene.rect(gap * 2 + cell, gap, cell, cell, Palette.GRID, radius = cell * 0.1f)
-            scene.rect(gap, gap * 2 + cell, cell, cell, Palette.GRID, radius = cell * 0.1f)
-            scene.circle(gap * 2 + cell + cell / 2f, gap * 2 + cell + cell / 2f, cell * 0.32f, Palette.FG)
-            scene.number(gap + cell / 2f, gap + cell / 2f, 1, Palette.TILE_0, cell * 0.55f, Align.CENTER)
-        }
     }
 
     // --- Rendering ------------------------------------------------------------

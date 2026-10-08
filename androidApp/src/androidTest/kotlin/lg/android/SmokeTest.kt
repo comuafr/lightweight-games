@@ -50,6 +50,8 @@ class SmokeTest {
     @Test
     fun snakeGameRespondsToInputAndSurvivesLifecycleAndRotation() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        // The first-open help page would cover the game; pretend it was already read.
+        App.from(instrumentation.targetContext).store.putBoolean("help.seen.snake", true)
         val intent = Intent(instrumentation.targetContext, GameActivity::class.java).apply {
             putExtra(GameActivity.EXTRA_GAME_ID, "snake")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

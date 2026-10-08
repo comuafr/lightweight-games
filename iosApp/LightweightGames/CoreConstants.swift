@@ -39,9 +39,19 @@ enum PaletteIndex {
     static let tile9 = 19
     static let tile10 = 20
     static let tile11 = 21
+    static let bezel = 22
+    static let bezelEdge = 23
+    static let neonPink = 24
+    static let neonCyan = 25
+    static let neonYellow = 26
+    static let neonGreen = 27
+    static let neonOrange = 28
+    static let neonRed = 29
+    static let neonWhite = 30
+    static let neonPurple = 31
 
     /// Total number of palette entries; `ScenePalette.colors.count` must equal this.
-    static let count = 22
+    static let count = 32
 }
 
 /// Mirrors `lg.core.scene.Prim` (values stored in `Scene.kind`, a `ByteArray`

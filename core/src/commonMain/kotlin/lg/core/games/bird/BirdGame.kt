@@ -10,6 +10,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -278,14 +279,7 @@ public class BirdGame : Game {
             complexity = Complexity.M,
             resumable = false,
             factory = { BirdGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.chirp(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.rect(size * 0.62f, 0f, size * 0.16f, size * 0.32f, Palette.TILE_3)
-            scene.rect(size * 0.62f, size * 0.62f, size * 0.16f, size * 0.38f, Palette.TILE_3)
-            scene.circle(size * 0.32f, size * 0.5f, size * 0.18f, Palette.ACCENT)
-            scene.circle(size * 0.39f, size * 0.44f, size * 0.03f, Palette.BG)
-        }
     }
 }

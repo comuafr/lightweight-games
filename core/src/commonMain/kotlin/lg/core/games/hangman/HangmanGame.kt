@@ -12,6 +12,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -300,15 +301,7 @@ public class HangmanGame : Game {
             complexity = Complexity.M,
             resumable = false,
             factory = { HangmanGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.secretWord(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.line(size * 0.2f, size * 0.9f, size * 0.6f, size * 0.9f, Palette.FG_DIM, width = size * 0.04f)
-            scene.line(size * 0.3f, size * 0.9f, size * 0.3f, size * 0.1f, Palette.FG_DIM, width = size * 0.04f)
-            scene.line(size * 0.3f, size * 0.1f, size * 0.65f, size * 0.1f, Palette.FG_DIM, width = size * 0.04f)
-            scene.circle(size * 0.65f, size * 0.22f, size * 0.1f, Palette.ACCENT)
-            scene.line(size * 0.65f, size * 0.32f, size * 0.65f, size * 0.55f, Palette.ACCENT, width = size * 0.04f)
-        }
     }
 }

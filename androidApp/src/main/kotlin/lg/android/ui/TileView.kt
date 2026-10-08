@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.text.TextPaint
 import android.text.TextUtils
 import android.view.View
@@ -38,6 +39,9 @@ internal class TileView(
         strokeCap = Paint.Cap.ROUND
     }
     private val rect = RectF()
+
+    /** Position in the catalogue; picks the neon outline color. */
+    var borderIndex: Int = 0
 
     var locked: Boolean = false
         set(value) {
@@ -77,9 +81,14 @@ internal class TileView(
 
         val corner = sizeDp * CORNER_FRACTION
         rect.set(0f, 0f, sizeDp, sizeDp)
-        bgPaint.color = colors[CorePalette.SURFACE]
+        // Arcade card: neon outline around a dark body, colour cycling with the game's position.
+        bgPaint.color = colors[NEON_BORDERS[borderIndex % NEON_BORDERS.size]]
         bgPaint.alpha = if (isPressed) PRESSED_ALPHA else 255
         canvas.drawRoundRect(rect, corner, corner, bgPaint)
+        rect.set(BORDER_DP, BORDER_DP, sizeDp - BORDER_DP, sizeDp - BORDER_DP)
+        bgPaint.color = colors[CorePalette.BEZEL]
+        canvas.drawRoundRect(rect, corner - BORDER_DP, corner - BORDER_DP, bgPaint)
+        rect.set(0f, 0f, sizeDp, sizeDp)
 
         canvas.save()
         canvas.translate(pad, pad)
@@ -88,7 +97,8 @@ internal class TileView(
         CanvasRenderer.draw(canvas, iconScene, colors, strings)
         canvas.restore()
 
-        titlePaint.color = colors[CorePalette.FG]
+        titlePaint.color = colors[CorePalette.NEON_WHITE]
+        titlePaint.typeface = Typeface.DEFAULT_BOLD
         titlePaint.textSize = titleAreaDp * TITLE_TEXT_SIZE_FRACTION
         val titleCenterY = sizeDp - titleAreaDp / 2f
         val baseline = titleCenterY - (titlePaint.ascent() + titlePaint.descent()) / 2f
@@ -98,7 +108,7 @@ internal class TileView(
         // Ellipsize instead of clipping/overflowing so every tile stays
         // legible and the same size (PLAN.md §9 M5 "catalog layout sanity").
         val availableWidth = sizeDp - 2 * pad
-        val title = TextUtils.ellipsize(strings.get(meta.titleKey), titlePaint, availableWidth, TextUtils.TruncateAt.END)
+        val title = TextUtils.ellipsize(strings.get(meta.titleKey).uppercase(), titlePaint, availableWidth, TextUtils.TruncateAt.END)
         canvas.drawText(title, 0, title.length, sizeDp / 2f, baseline, titlePaint)
 
         if (locked) {
@@ -137,6 +147,13 @@ internal class TileView(
         const val CORNER_FRACTION = 0.08f
         const val PRESSED_ALPHA = 180
         const val LOCK_SCRIM_ALPHA = 140
-        const val ICON_SCENE_CAPACITY = 64
+        const val ICON_SCENE_CAPACITY = 160
+        const val BORDER_DP = 2.5f
+        val NEON_BORDERS = intArrayOf(
+            CorePalette.NEON_CYAN,
+            CorePalette.NEON_PINK,
+            CorePalette.NEON_YELLOW,
+            CorePalette.NEON_GREEN,
+        )
     }
 }

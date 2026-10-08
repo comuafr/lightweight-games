@@ -12,6 +12,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -444,17 +445,7 @@ public class FourInRowGame : Game {
             complexity = Complexity.M,
             resumable = false,
             factory = { FourInRowGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.dropFour(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.rect(size * 0.06f, size * 0.1f, size * 0.88f, size * 0.8f, Palette.ACCENT, radius = size * 0.06f)
-            scene.circle(size * 0.28f, size * 0.3f, size * 0.12f, Palette.BG)
-            scene.circle(size * 0.5f, size * 0.3f, size * 0.12f, Palette.P1)
-            scene.circle(size * 0.72f, size * 0.3f, size * 0.12f, Palette.BG)
-            scene.circle(size * 0.28f, size * 0.55f, size * 0.12f, Palette.P1)
-            scene.circle(size * 0.5f, size * 0.55f, size * 0.12f, Palette.P2)
-            scene.circle(size * 0.72f, size * 0.55f, size * 0.12f, Palette.P1)
-        }
     }
 }

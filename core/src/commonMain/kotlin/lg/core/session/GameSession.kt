@@ -179,6 +179,7 @@ public class GameSession(
         if (!settings.hapticsEnabled) scene.muteHaptic()
         renderHud(scene)
         renderOverlay(scene)
+        renderScanlines(scene)
         scene.translateFrom(mark, originX, originY)
         renderQuitBar(scene)
     }
@@ -298,41 +299,47 @@ public class GameSession(
         buttonCount++
     }
 
-    /** Page background, then the decorated border around the play area (view coordinates). */
+    /** Arcade cabinet: dark page, a double neon outline around the screen, yellow corner brackets (view coordinates). */
     private fun renderFrame(scene: Scene) {
-        scene.rect(0f, 0f, viewW, viewH, Palette.BG)
-        scene.rect(frameX, frameY, frameW, frameH, Palette.ACCENT, radius = FRAME_RADIUS_PT)
-        scene.rect(originX - 2f, originY - 2f, width + 4f, height + 4f, Palette.BG, radius = 4f)
-        // Studs along the border, alternating colours, plus a bigger one in each corner.
-        val half = FRAME_BORDER_PT / 2f
-        val colors = STUD_COLORS
-        var n = 0
-        var x = frameX + FRAME_BORDER_PT + STUD_STEP_PT / 2f
-        while (x < frameX + frameW - FRAME_BORDER_PT) {
-            val c = colors[n % colors.size]
-            scene.circle(x, frameY + half, STUD_RADIUS_PT, c)
-            scene.circle(x, frameY + frameH - half, STUD_RADIUS_PT, c)
-            x += STUD_STEP_PT
-            n++
-        }
-        var y = frameY + FRAME_BORDER_PT + STUD_STEP_PT / 2f
-        while (y < frameY + frameH - FRAME_BORDER_PT) {
-            val c = colors[n % colors.size]
-            scene.circle(frameX + half, y, STUD_RADIUS_PT, c)
-            scene.circle(frameX + frameW - half, y, STUD_RADIUS_PT, c)
-            y += STUD_STEP_PT
-            n++
-        }
-        scene.circle(frameX + half, frameY + half, CORNER_RADIUS_PT, Palette.FG)
-        scene.circle(frameX + frameW - half, frameY + half, CORNER_RADIUS_PT, Palette.FG)
-        scene.circle(frameX + half, frameY + frameH - half, CORNER_RADIUS_PT, Palette.FG)
-        scene.circle(frameX + frameW - half, frameY + frameH - half, CORNER_RADIUS_PT, Palette.FG)
+        scene.rect(0f, 0f, viewW, viewH, Palette.BEZEL)
+        // Cabinet body, then a pink and a cyan neon line (each a colored rect with a body-colored rect inset on it).
+        scene.rect(frameX, frameY, frameW, frameH, Palette.NEON_PINK, radius = FRAME_RADIUS_PT)
+        scene.rect(frameX + 2f, frameY + 2f, frameW - 4f, frameH - 4f, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT - 2f)
+        scene.rect(frameX + 5f, frameY + 5f, frameW - 10f, frameH - 10f, Palette.NEON_CYAN, radius = FRAME_RADIUS_PT - 5f)
+        scene.rect(frameX + 7f, frameY + 7f, frameW - 14f, frameH - 14f, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT - 7f)
+        // Black screen bezel right around the game.
+        scene.rect(originX - 3f, originY - 3f, width + 6f, height + 6f, Palette.BEZEL, radius = 4f)
+        // Yellow corner brackets, like the marks on an old monitor.
+        val l = BRACKET_LEN_PT
+        val x0 = frameX - 1f
+        val y0 = frameY - 1f
+        val x1 = frameX + frameW + 1f
+        val y1 = frameY + frameH + 1f
+        val w = BRACKET_WIDTH_PT
+        scene.line(x0, y0 + l, x0, y0, Palette.NEON_YELLOW, w)
+        scene.line(x0, y0, x0 + l, y0, Palette.NEON_YELLOW, w)
+        scene.line(x1 - l, y0, x1, y0, Palette.NEON_YELLOW, w)
+        scene.line(x1, y0, x1, y0 + l, Palette.NEON_YELLOW, w)
+        scene.line(x0, y1 - l, x0, y1, Palette.NEON_YELLOW, w)
+        scene.line(x0, y1, x0 + l, y1, Palette.NEON_YELLOW, w)
+        scene.line(x1 - l, y1, x1, y1, Palette.NEON_YELLOW, w)
+        scene.line(x1, y1, x1, y1 - l, Palette.NEON_YELLOW, w)
     }
 
-    /** The permanent bottom control: a Quit button (view coordinates). */
+    /** Faint horizontal CRT scanlines over the whole play area (inner coordinates). */
+    private fun renderScanlines(scene: Scene) {
+        var y = SCANLINE_STEP_PT / 2f
+        while (y < height) {
+            scene.rect(0f, y, width, 1f, Palette.BEZEL, alpha = SCANLINE_ALPHA)
+            y += SCANLINE_STEP_PT
+        }
+    }
+
+    /** The permanent bottom control: an arcade-style Quit button (view coordinates). */
     private fun renderQuitBar(scene: Scene) {
-        scene.rect(quitX, barY, quitW, BAR_HEIGHT_PT, Palette.SURFACE, radius = BUTTON_RADIUS_PT)
-        scene.text(quitX + quitW / 2f, barY + BAR_HEIGHT_PT / 2f, StringKey.QUIT, Palette.FG, BUTTON_TEXT_SIZE_PT, Align.CENTER)
+        scene.rect(quitX, barY, quitW, BAR_HEIGHT_PT, Palette.NEON_YELLOW, radius = BUTTON_RADIUS_PT)
+        scene.rect(quitX + 2f, barY + 2f, quitW - 4f, BAR_HEIGHT_PT - 4f, Palette.BEZEL_EDGE, radius = BUTTON_RADIUS_PT - 2f)
+        scene.text(quitX + quitW / 2f, barY + BAR_HEIGHT_PT / 2f, StringKey.QUIT, Palette.NEON_YELLOW, BUTTON_TEXT_SIZE_PT, Align.CENTER)
     }
 
     private fun renderHud(scene: Scene) {
@@ -401,10 +408,10 @@ public class GameSession(
         const val FRAME_RADIUS_PT = 18f
         const val BAR_HEIGHT_PT = 52f
         const val BAR_MARGIN_PT = 16f
-        const val STUD_STEP_PT = 28f
-        const val STUD_RADIUS_PT = 3.5f
-        const val CORNER_RADIUS_PT = 5.5f
-        val STUD_COLORS = intArrayOf(Palette.P1, Palette.DANGER, Palette.OK, Palette.P2)
+        const val BRACKET_LEN_PT = 18f
+        const val BRACKET_WIDTH_PT = 3f
+        const val SCANLINE_STEP_PT = 4f
+        const val SCANLINE_ALPHA = 0.07f
 
         const val ACTION_START_1P = 1
         const val ACTION_START_2P = 2

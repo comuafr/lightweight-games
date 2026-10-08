@@ -10,6 +10,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -332,18 +333,7 @@ public class PairsGame : Game {
             complexity = Complexity.S,
             resumable = false,
             factory = { PairsGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.twins(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val gap = size * 0.1f
-            val cell = (size - gap * 3f) / 2f
-            scene.rect(gap, gap, cell, cell, Palette.GRID, radius = cell * 0.12f)
-            scene.rect(gap * 2 + cell, gap, cell, cell, Palette.GRID, radius = cell * 0.12f)
-            scene.rect(gap, gap * 2 + cell, cell, cell, Palette.GRID, radius = cell * 0.12f)
-            scene.rect(gap * 2 + cell, gap * 2 + cell, cell, cell, Palette.GRID, radius = cell * 0.12f)
-            scene.circle(gap + cell / 2f, gap + cell / 2f, cell * 0.32f, Palette.TILE_0)
-            scene.circle(gap * 2 + cell + cell / 2f, gap * 2 + cell + cell / 2f, cell * 0.32f, Palette.TILE_0)
-        }
     }
 }

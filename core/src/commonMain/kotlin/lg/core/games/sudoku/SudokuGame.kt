@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -403,18 +404,7 @@ public class SudokuGame : Game {
             complexity = Complexity.C,
             resumable = true,
             factory = { SudokuGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.nineByNine(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.rect(size * 0.08f, size * 0.08f, size * 0.84f, size * 0.84f, Palette.SURFACE, radius = size * 0.04f)
-            for (i in 1..2) {
-                val p = size * 0.08f + i * (size * 0.84f / 3f)
-                scene.line(p, size * 0.08f, p, size * 0.92f, Palette.GRID, width = size * 0.02f)
-                scene.line(size * 0.08f, p, size * 0.92f, p, Palette.GRID, width = size * 0.02f)
-            }
-            scene.number(size * 0.28f, size * 0.28f, 5, Palette.ACCENT, size * 0.2f, Align.CENTER)
-            scene.number(size * 0.72f, size * 0.72f, 9, Palette.FG, size * 0.2f, Align.CENTER)
-        }
     }
 }

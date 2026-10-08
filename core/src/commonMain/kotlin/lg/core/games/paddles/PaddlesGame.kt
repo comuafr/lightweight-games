@@ -10,6 +10,7 @@ import lg.core.input.Gesture
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -402,13 +403,7 @@ public class PaddlesGame : Game {
             complexity = Complexity.S,
             resumable = false,
             factory = { PaddlesGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.paddles(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.line(size * 0.15f, size * 0.2f, size * 0.15f, size * 0.4f, Palette.P1, width = size * 0.08f)
-            scene.line(size * 0.85f, size * 0.6f, size * 0.85f, size * 0.8f, Palette.P2, width = size * 0.08f)
-            scene.circle(size * 0.5f, size * 0.5f, size * 0.06f, Palette.FG)
-        }
     }
 }

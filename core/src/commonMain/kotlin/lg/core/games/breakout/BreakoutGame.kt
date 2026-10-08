@@ -9,6 +9,7 @@ import lg.core.Tier
 import lg.core.input.Gesture
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -40,9 +41,9 @@ import kotlin.math.sqrt
  *
  * ### Paddle input
  *
- * The paddle is driven directly by raw pointer events, not gestures: any
- * `DOWN`/`MOVE` sets the paddle center to the pointer's `x`, clamped to stay
- * on screen. The first `DOWN` received while the ball is not in flight (a
+ * The paddle is driven directly by raw pointer events, not gestures: a
+ * finger drag moves the paddle by the finger's horizontal displacement (never
+ * jumping to the touch point), clamped to stay on screen. The first `DOWN` received while the ball is not in flight (a
  * fresh [reset] or right after losing a life) also launches it.
  */
 public class BreakoutGame : Game {
@@ -115,14 +116,30 @@ public class BreakoutGame : Game {
 
     override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
         if (status != GameStatus.Running || viewWidth <= 0f) return
-        if (phase != PointerPhase.DOWN && phase != PointerPhase.MOVE) return
-        paddleCenterX = x.coerceIn(paddleHalfWidth(), viewWidth - paddleHalfWidth())
+        if (phase == PointerPhase.UP || phase == PointerPhase.CANCEL) {
+            if (id == dragPointerId) dragPointerId = NO_POINTER
+            return
+        }
+        // Relative drag: the paddle moves by how far the finger moves, so a tap
+        // elsewhere never teleports it. Only the first finger down steers.
+        if (phase == PointerPhase.DOWN) {
+            if (dragPointerId != NO_POINTER) return
+            dragPointerId = id
+            lastPointerX = x
+        } else {
+            if (id != dragPointerId) return
+            paddleCenterX = (paddleCenterX + (x - lastPointerX)).coerceIn(paddleHalfWidth(), viewWidth - paddleHalfWidth())
+            lastPointerX = x
+        }
         if (!ballInFlight) {
             ballX = paddleCenterX
             ballY = paddleTop() - BALL_RADIUS_PT
             if (phase == PointerPhase.DOWN) launchBall()
         }
     }
+
+    private var dragPointerId: Int = NO_POINTER
+    private var lastPointerX: Float = 0f
 
     override fun onGesture(gesture: Gesture) {
         // Breakout is drag-driven only (see onPointer); gestures are ignored.
@@ -366,6 +383,7 @@ public class BreakoutGame : Game {
     }
 
     public companion object {
+        private const val NO_POINTER: Int = -1
         public const val BRICK_COLS: Int = 8
         public const val BRICK_ROWS: Int = 6
 
@@ -408,17 +426,7 @@ public class BreakoutGame : Game {
             complexity = Complexity.M,
             resumable = false,
             factory = { BreakoutGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.wallSmash(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val rowH = size * 0.14f
-            scene.rect(size * 0.08f, size * 0.12f, size * 0.35f, rowH, Palette.TILE_1, radius = rowH * 0.3f)
-            scene.rect(size * 0.48f, size * 0.12f, size * 0.35f, rowH, Palette.TILE_2, radius = rowH * 0.3f)
-            scene.rect(size * 0.08f, size * 0.30f, size * 0.35f, rowH, Palette.TILE_3, radius = rowH * 0.3f)
-            scene.rect(size * 0.48f, size * 0.30f, size * 0.35f, rowH, Palette.TILE_4, radius = rowH * 0.3f)
-            scene.circle(size * 0.5f, size * 0.62f, size * 0.05f, Palette.FG)
-            scene.rect(size * 0.35f, size * 0.82f, size * 0.3f, size * 0.06f, Palette.ACCENT, radius = size * 0.02f)
-        }
     }
 }

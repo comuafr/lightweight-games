@@ -111,17 +111,31 @@ public class BreakoutRulesTest {
     }
 
     @Test
-    public fun paddleFollowsPointerXAndIsClamped(): Unit {
+    public fun paddleMovesByTheDragDistanceAndIsClamped(): Unit {
         val game = newGame()
+        val start = game.debugPaddleX()
 
-        game.onPointer(0, PointerPhase.DOWN, -1000f, VIEW_H - 50f)
+        // Touching far from the paddle must not teleport it.
+        game.onPointer(0, PointerPhase.DOWN, 5f, VIEW_H - 50f)
+        assertEquals(start, game.debugPaddleX(), 0.01f)
+
+        game.onPointer(0, PointerPhase.MOVE, 25f, VIEW_H - 50f)
+        assertEquals(start + 20f, game.debugPaddleX(), 0.01f)
+
+        game.onPointer(0, PointerPhase.MOVE, -1_000_000f, VIEW_H - 50f)
         assertEquals(paddleHalfWidth(), game.debugPaddleX(), 0.01f)
 
         game.onPointer(0, PointerPhase.MOVE, 1_000_000f, VIEW_H - 50f)
         assertEquals(VIEW_W - paddleHalfWidth(), game.debugPaddleX(), 0.01f)
+    }
 
-        val midX = VIEW_W / 2f
-        game.onPointer(0, PointerPhase.MOVE, midX, VIEW_H - 50f)
-        assertEquals(midX, game.debugPaddleX(), 0.01f)
+    @Test
+    public fun aSecondFingerDoesNotSteerThePaddle(): Unit {
+        val game = newGame()
+        game.onPointer(0, PointerPhase.DOWN, 100f, VIEW_H - 50f)
+        val x = game.debugPaddleX()
+        game.onPointer(1, PointerPhase.DOWN, 300f, VIEW_H - 50f)
+        game.onPointer(1, PointerPhase.MOVE, 350f, VIEW_H - 50f)
+        assertEquals(x, game.debugPaddleX(), 0.01f)
     }
 }

@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -318,18 +319,7 @@ public class SlidingGame : Game {
             complexity = Complexity.S,
             resumable = true,
             factory = { SlidingGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.tileShuffle(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val gap = size * 0.08f
-            val cell = (size - gap * 3f) / 2f
-            scene.rect(gap, gap, cell, cell, Palette.TILE_1, radius = cell * 0.1f)
-            scene.rect(gap * 2 + cell, gap, cell, cell, Palette.TILE_1, radius = cell * 0.1f)
-            scene.rect(gap, gap * 2 + cell, cell, cell, Palette.TILE_1, radius = cell * 0.1f)
-            scene.number(gap + cell / 2f, gap + cell / 2f, 1, Palette.FG, cell * 0.5f, Align.CENTER)
-            scene.number(gap * 2 + cell + cell / 2f, gap + cell / 2f, 2, Palette.FG, cell * 0.5f, Align.CENTER)
-            scene.number(gap + cell / 2f, gap * 2 + cell + cell / 2f, 3, Palette.FG, cell * 0.5f, Align.CENTER)
-        }
     }
 }

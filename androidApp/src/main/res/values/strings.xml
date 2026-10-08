@@ -56,4 +56,47 @@
     <!-- App-only strings, not part of StringKey. -->
     <string name="version">Version %1$s</string>
     <string name="unlocked_check">Unlocked ✓</string>
+
+    <!-- Splash screen and first-open help (read by SplashActivity / HelpView). -->
+    <string name="help_rules">Rules</string>
+    <string name="help_controls">Controls</string>
+    <string name="help_got_it">Got it, let\'s play</string>
+    <string name="splash_play">Play</string>
+    <string name="splash_close">Close</string>
+    <string name="splash_tagline">Small games, big fun.</string>
+    <string name="splash_motto">No ads
+No in-game purchases
+No internet required
+No account, no tracking
+One purchase unlocks everything, forever</string>
+    <string name="rules_snake">Guide the snake to the apples to grow. Don\'t bite your own tail. There are no walls: leaving one edge brings you back on the opposite side.</string>
+    <string name="controls_snake">Swipe up, down, left or right to turn.</string>
+    <string name="rules_g2048">Slide the tiles: two equal tiles that touch merge into one with double the value. Reach 2048. The game ends when the board is full and nothing can merge.</string>
+    <string name="controls_g2048">Swipe in any direction to slide all tiles.</string>
+    <string name="rules_breakout">Bounce the ball off the paddle to break every brick. You have 3 lives: don\'t let the ball fall.</string>
+    <string name="controls_breakout">Drag your finger left or right to move the paddle. Tap to launch the ball.</string>
+    <string name="rules_sequence">Watch the colors light up, then repeat the same sequence. It gets one step longer every round. One mistake and it\'s over.</string>
+    <string name="controls_sequence">Tap the colored pads in the same order.</string>
+    <string name="rules_pairs">Find all the matching pairs of cards with as few attempts as possible. In two players, you play again after a match.</string>
+    <string name="controls_pairs">Tap a card to flip it, then tap a second one.</string>
+    <string name="rules_sliding">Put the tiles back in order, from 1 to 15, using the empty space. Fewer moves is better.</string>
+    <string name="controls_sliding">Tap a tile next to the empty space, or swipe to slide a tile into it.</string>
+    <string name="rules_tictactoe">Be the first to line up three of your marks, in a row, column or diagonal. Alone, you play against a computer that never makes a mistake.</string>
+    <string name="controls_tictactoe">Tap an empty square to place your mark.</string>
+    <string name="rules_paddles">Send the ball past your opponent\'s paddle. First to 7 points wins. Alone, you play against the computer; with two players, you share the screen.</string>
+    <string name="controls_paddles">Drag your paddle with your finger. Each player uses their own half of the screen.</string>
+    <string name="rules_fourinrow">Drop discs into the columns. The first to line up four discs, in a row, column or diagonal, wins. Alone, you play against the computer.</string>
+    <string name="controls_fourinrow">Tap a column to drop your disc.</string>
+    <string name="rules_bird">Fly between the pipes without touching them. Each pipe passed scores one point.</string>
+    <string name="controls_bird">Tap the screen to flap and gain height. The bird falls when you do nothing.</string>
+    <string name="rules_mines">Uncover every square that hides no bomb. A number tells how many bombs touch that square. There are 10 bombs. Your first tap is always safe.</string>
+    <string name="controls_mines">Tap a square to uncover it. Press and hold to put a flag. Tap a number with enough flags around it to uncover the rest.</string>
+    <string name="rules_hangman">Find the secret word by guessing letters. Seven wrong letters and you lose.</string>
+    <string name="controls_hangman">Tap a letter on the keyboard.</string>
+    <string name="rules_reversi">Place discs to trap your opponent\'s discs between yours: they flip to your color. Whoever has the most discs at the end wins. If you can\'t play, your turn is skipped.</string>
+    <string name="controls_reversi">Tap a square where you can flip at least one disc.</string>
+    <string name="rules_sudoku">Fill the grid so that every row, every column and every 3x3 block contains the digits 1 to 9 once. Wrong digits show in red.</string>
+    <string name="controls_sudoku">Choose a difficulty, tap an empty square, then tap a digit on the pad. Use the erase key to clear a square.</string>
+    <string name="rules_nonogram">Reveal the hidden picture. The numbers beside each row and column tell the lengths of the runs of filled squares in it. Cross the squares you know are empty.</string>
+    <string name="controls_nonogram">Tap or drag to fill squares. Press and hold to put a cross.</string>
 </resources>

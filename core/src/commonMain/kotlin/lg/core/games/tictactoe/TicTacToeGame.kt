@@ -12,6 +12,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -305,24 +306,7 @@ public class TicTacToeGame : Game {
             complexity = Complexity.S,
             resumable = false,
             factory = { TicTacToeGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.threeInLine(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val third = size / 3f
-            scene.line(third, 0f, third, size, Palette.GRID, width = 2f)
-            scene.line(third * 2, 0f, third * 2, size, Palette.GRID, width = 2f)
-            scene.line(0f, third, size, third, Palette.GRID, width = 2f)
-            scene.line(0f, third * 2, size, third * 2, Palette.GRID, width = 2f)
-            val r = third * 0.32f
-            val cx1 = third * 0.5f
-            val cy1 = third * 0.5f
-            scene.line(cx1 - r, cy1 - r, cx1 + r, cy1 + r, Palette.P1, width = size * 0.03f)
-            scene.line(cx1 - r, cy1 + r, cx1 + r, cy1 - r, Palette.P1, width = size * 0.03f)
-            val cx2 = third * 1.5f
-            val cy2 = third * 1.5f
-            scene.circle(cx2, cy2, r, Palette.P2)
-            scene.circle(cx2, cy2, r * 0.6f, Palette.BG)
-        }
     }
 }

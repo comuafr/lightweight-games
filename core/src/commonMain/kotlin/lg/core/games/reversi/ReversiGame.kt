@@ -13,6 +13,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -467,15 +468,7 @@ public class ReversiGame : Game {
             complexity = Complexity.C,
             resumable = false,
             factory = { ReversiGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.flipDiscs(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.rect(size * 0.05f, size * 0.05f, size * 0.9f, size * 0.9f, Palette.SURFACE, radius = size * 0.05f)
-            scene.circle(size * 0.35f, size * 0.35f, size * 0.16f, Palette.P1)
-            scene.circle(size * 0.65f, size * 0.35f, size * 0.16f, Palette.P2)
-            scene.circle(size * 0.35f, size * 0.65f, size * 0.16f, Palette.P2)
-            scene.circle(size * 0.65f, size * 0.65f, size * 0.16f, Palette.P1)
-        }
     }
 }

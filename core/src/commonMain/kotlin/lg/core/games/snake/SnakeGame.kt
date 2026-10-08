@@ -10,6 +10,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -326,33 +327,7 @@ public class SnakeGame : Game {
             complexity = Complexity.S,
             resumable = false,
             factory = { SnakeGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.snake(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            // A fat S-shaped snake (round segments, big head with eyes) next to an apple.
-            val r = size * 0.085f
-            val body = floatArrayOf(
-                0.78f, 0.78f, 0.62f, 0.80f, 0.46f, 0.80f, 0.30f, 0.76f, 0.20f, 0.64f,
-                0.24f, 0.50f, 0.38f, 0.44f, 0.54f, 0.42f, 0.66f, 0.34f, 0.68f, 0.22f,
-            )
-            var k = body.size / 2 - 1
-            while (k >= 0) {
-                val shade = if (k % 2 == 0) Palette.P1 else Palette.OK
-                scene.circle(size * body[k * 2], size * body[k * 2 + 1], r * (0.85f + 0.015f * (9 - k)), shade)
-                k--
-            }
-            // Head (last point), looking up-left, with a tongue.
-            val hx = size * 0.68f
-            val hy = size * 0.20f
-            scene.circle(hx, hy, r * 1.25f, Palette.ACCENT)
-            scene.circle(hx - r * 0.5f, hy - r * 0.15f, r * 0.42f, Palette.FG)
-            scene.circle(hx + r * 0.5f, hy - r * 0.15f, r * 0.42f, Palette.FG)
-            scene.circle(hx - r * 0.5f, hy - r * 0.15f, r * 0.2f, Palette.BG)
-            scene.circle(hx + r * 0.5f, hy - r * 0.15f, r * 0.2f, Palette.BG)
-            // Apple.
-            scene.circle(size * 0.86f, size * 0.56f, r * 1.1f, Palette.DANGER)
-            scene.line(size * 0.86f, size * 0.56f - r, size * 0.88f, size * 0.56f - r * 1.7f, Palette.OK, size * 0.025f)
-        }
     }
 }

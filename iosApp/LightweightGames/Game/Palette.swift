@@ -4,7 +4,7 @@ import UIKit
 /// index (see `PaletteIndex` in CoreConstants.swift), light- and
 /// dark-appearance aware via `UIColor`'s dynamic-provider initializer.
 enum ScenePalette {
-    /// Indexed exactly like `PaletteIndex` (BG=0 ... TILE_11=21).
+    /// Indexed exactly like `PaletteIndex` (BG=0 ... NEON_PURPLE=31).
     /// `colors.count == PaletteIndex.count` is asserted by SmokeTests.
     static let colors: [UIColor] = [
         // BG
@@ -82,6 +82,16 @@ enum ScenePalette {
         UIColor(red: 0.90, green: 0.55, blue: 0.85, alpha: 1), // tile9 pink
         UIColor(red: 0.80, green: 0.65, blue: 0.50, alpha: 1), // tile10 tan
         UIColor(red: 0.65, green: 0.70, blue: 0.75, alpha: 1), // tile11 slate
+        UIColor(red: 0.043, green: 0.043, blue: 0.118, alpha: 1), // bezel
+        UIColor(red: 0.141, green: 0.078, blue: 0.278, alpha: 1), // bezel_edge
+        UIColor(red: 1.000, green: 0.180, blue: 0.592, alpha: 1), // neon_pink
+        UIColor(red: 0.086, green: 0.878, blue: 1.000, alpha: 1), // neon_cyan
+        UIColor(red: 1.000, green: 0.902, blue: 0.000, alpha: 1), // neon_yellow
+        UIColor(red: 0.224, green: 1.000, blue: 0.078, alpha: 1), // neon_green
+        UIColor(red: 1.000, green: 0.541, blue: 0.122, alpha: 1), // neon_orange
+        UIColor(red: 1.000, green: 0.231, blue: 0.231, alpha: 1), // neon_red
+        UIColor(red: 0.957, green: 0.957, blue: 1.000, alpha: 1), // neon_white
+        UIColor(red: 0.608, green: 0.361, blue: 1.000, alpha: 1), // neon_purple
     ]
 
     /// Resolves `colors` against `traitCollection` (light/dark) into a flat

@@ -10,6 +10,7 @@ import lg.core.input.Gesture
 import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -257,16 +258,7 @@ public class SequenceGame : Game {
             complexity = Complexity.S,
             resumable = false,
             factory = { SequenceGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.colorEcho(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            val gap = size * 0.08f
-            val cell = (size - gap * 3f) / 2f
-            scene.rect(gap, gap, cell, cell, Palette.P1, radius = cell * 0.15f)
-            scene.rect(gap * 2 + cell, gap, cell, cell, Palette.P2, radius = cell * 0.15f)
-            scene.rect(gap, gap * 2 + cell, cell, cell, Palette.OK, radius = cell * 0.15f)
-            scene.rect(gap * 2 + cell, gap * 2 + cell, cell, cell, Palette.DANGER, radius = cell * 0.15f)
-        }
     }
 }

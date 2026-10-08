@@ -29,6 +29,18 @@ public object Palette {
     public const val TILE_10: Int = 20
     public const val TILE_11: Int = 21
 
+    // 80s-arcade colors: identical in light and dark themes (the cabinet is always dark).
+    public const val BEZEL: Int = 22
+    public const val BEZEL_EDGE: Int = 23
+    public const val NEON_PINK: Int = 24
+    public const val NEON_CYAN: Int = 25
+    public const val NEON_YELLOW: Int = 26
+    public const val NEON_GREEN: Int = 27
+    public const val NEON_ORANGE: Int = 28
+    public const val NEON_RED: Int = 29
+    public const val NEON_WHITE: Int = 30
+    public const val NEON_PURPLE: Int = 31
+
     /** Total number of palette entries; platform color tables must have this size. */
-    public const val COUNT: Int = 22
+    public const val COUNT: Int = 32
 }

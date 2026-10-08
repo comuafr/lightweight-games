@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
@@ -468,25 +469,7 @@ public class NonogramGame : Game {
             complexity = Complexity.C,
             resumable = true,
             factory = { NonogramGame() },
-            icon = { scene, size -> drawIcon(scene, size) },
+            icon = { scene, size -> ArcadeIcons.pixelReveal(scene, size) },
         )
-
-        private fun drawIcon(scene: Scene, size: Float) {
-            scene.rect(size * 0.1f, size * 0.1f, size * 0.8f, size * 0.8f, Palette.SURFACE, radius = size * 0.04f)
-            val cell = size * 0.8f / 4f
-            val pattern = booleanArrayOf(
-                true, false, true, false,
-                false, true, true, false,
-                false, true, true, false,
-                true, false, false, true,
-            )
-            for (r in 0 until 4) {
-                for (c in 0 until 4) {
-                    if (pattern[r * 4 + c]) {
-                        scene.rect(size * 0.1f + c * cell, size * 0.1f + r * cell, cell, cell, Palette.ACCENT)
-                    }
-                }
-            }
-        }
     }
 }

@@ -6,9 +6,14 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.FrameLayout
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import lg.android.ui.GameView
+import lg.android.ui.HelpView
+import lg.android.ui.Strings
+import lg.core.GameMeta
 import lg.core.GameRegistry
 import lg.core.Orientation
 import lg.core.session.GameSession
@@ -55,10 +60,10 @@ class GameActivity : Activity() {
             it.session = session
             it.soundSink = app.soundSink
         }
-        setContentView(
-            gameView,
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
-        )
+        val root = FrameLayout(this)
+        root.addView(gameView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        setContentView(root, ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        showHelpFirstTime(root, meta, app)
         EdgeToEdge.enterImmersiveSticky(window)
 
         if (meta.players.last >= 2) {
@@ -70,6 +75,19 @@ class GameActivity : Activity() {
         }
 
         setupBackHandling()
+    }
+
+    /** First time this game is opened: rules and controls on top of the game, until dismissed. */
+    private fun showHelpFirstTime(root: FrameLayout, meta: GameMeta, app: App) {
+        val seenKey = HelpView.seenKey(meta.id)
+        if (app.store.getBoolean(seenKey, false) || !HelpView.hasHelp(this, meta.id)) return
+        val title = getString(Strings.ORDINAL_TO_RES[meta.titleKey.ordinal])
+        var help: HelpView? = null
+        help = HelpView(this, meta.id, title) {
+            app.store.putBoolean(seenKey, true)
+            help?.let { root.removeView(it) }
+        }
+        root.addView(help, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
     }
 
     override fun onPause() {
