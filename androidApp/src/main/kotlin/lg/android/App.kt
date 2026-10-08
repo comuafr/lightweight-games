@@ -51,7 +51,7 @@ class App : Application() {
     // `Application.onCreate` never touches this property, so building the
     // AudioTrack set doesn't delay app start -- it only happens the first
     // time a GameActivity actually needs a SoundSink.
-    internal val soundSink: SoundSink by lazy { Beeper() }
+    internal val soundSink: SoundSink by lazy { Beeper(this) }
 
     // Lazy on purpose (PLAN.md §6 "connexion paresseuse"): building this
     // does not touch Play Billing at all, and nothing here connects to the

@@ -60,6 +60,7 @@ enum Strings {
         "medium", // 42 MEDIUM
         "hard", // 43 HARD
         "quit", // 44 QUIT
+        "help", // 45 HELP
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps

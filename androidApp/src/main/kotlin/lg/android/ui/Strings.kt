@@ -73,6 +73,7 @@ internal class Strings(context: Context) {
             R.string.medium, // MEDIUM
             R.string.hard, // HARD
             R.string.quit, // QUIT
+            R.string.help, // HELP
         )
     }
 }

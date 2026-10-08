@@ -20,13 +20,13 @@ class BeeperToneTest {
     )
 
     @Test
-    fun `buffer lengths match their nominal duration at 22050 Hz`() {
+    fun `buffer lengths match their nominal duration at the sample rate`() {
         val expectedMs = mapOf(
-            "tick" to 30,
-            "eat" to 90,
-            "hit" to 50,
-            "win" to 240,
-            "lose" to 300,
+            "tick" to 90,
+            "eat" to 260,
+            "hit" to 150,
+            "win" to 850,
+            "lose" to 850,
         )
         for ((name, samples) in allTones) {
             val expectedSamples = Tones.SAMPLE_RATE_HZ.toLong() * expectedMs.getValue(name) / 1000L
@@ -48,7 +48,7 @@ class BeeperToneTest {
 
     @Test
     fun `envelope starts and ends near zero to avoid clicks`() {
-        // Threshold: well under peak amplitude (0.6 * Short.MAX_VALUE ~= 19660),
+        // Threshold: well under peak amplitude (0.55 * Short.MAX_VALUE),
         // loose enough to tolerate the first/last sample not being exactly 0.
         val threshold = (0.1 * Short.MAX_VALUE).toInt()
         for ((name, samples) in allTones) {

@@ -44,6 +44,9 @@ public class GameSession(
     /** Called when the player taps the permanent "Quit" button; the platform leaves the game screen. */
     public var onQuit: (() -> Unit)? = null
 
+    /** Called when the player taps the permanent "Help" button; the platform shows the rules and controls. */
+    public var onHelp: (() -> Unit)? = null
+
     // Full view size, and the inner play area handed to the game and to the
     // overlays (`width` x `height`, drawn at `originX`/`originY` in the view).
     private var viewW: Float = 0f
@@ -58,6 +61,8 @@ public class GameSession(
     private var frameW: Float = 0f
     private var frameH: Float = 0f
     private var barY: Float = 0f
+    private var helpX: Float = 0f
+    private var helpW: Float = 0f
     private var quitX: Float = 0f
     private var quitW: Float = 0f
     private var players: Int = 1
@@ -124,8 +129,11 @@ public class GameSession(
         originY = frameY + FRAME_BORDER_PT
         width = (frameW - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
         height = (frameH - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
-        quitW = (viewW * 0.6f).coerceAtMost(viewW - 2 * FRAME_MARGIN_PT)
-        quitX = (viewW - quitW) / 2f
+        val barW = (viewW - 2 * FRAME_MARGIN_PT).coerceIn(0f, BAR_MAX_WIDTH_PT)
+        helpW = barW * HELP_SHARE
+        quitW = barW - helpW - BAR_GAP_PT
+        helpX = (viewW - barW) / 2f
+        quitX = helpX + helpW + BAR_GAP_PT
     }
 
     /** Routes a raw pointer event to the overlay (via gesture detection) or the game. */
@@ -221,7 +229,14 @@ public class GameSession(
 
     private fun handleGesture(gesture: Gesture) {
         if (gesture.y >= barY) {
-            if (gesture.kind == GestureKind.TAP && gesture.x >= quitX && gesture.x <= quitX + quitW) onQuit?.invoke()
+            if (gesture.kind == GestureKind.TAP) {
+                if (gesture.x >= quitX && gesture.x <= quitX + quitW) {
+                    onQuit?.invoke()
+                } else if (gesture.x >= helpX && gesture.x <= helpX + helpW) {
+                    pause()
+                    onHelp?.invoke()
+                }
+            }
             return
         }
         val gx = gesture.x
@@ -335,11 +350,16 @@ public class GameSession(
         }
     }
 
-    /** The permanent bottom control: an arcade-style Quit button (view coordinates). */
+    /** The permanent bottom controls: arcade-style Help and Quit buttons (view coordinates). */
     private fun renderQuitBar(scene: Scene) {
-        scene.rect(quitX, barY, quitW, BAR_HEIGHT_PT, Palette.NEON_YELLOW, radius = BUTTON_RADIUS_PT)
-        scene.rect(quitX + 2f, barY + 2f, quitW - 4f, BAR_HEIGHT_PT - 4f, Palette.BEZEL_EDGE, radius = BUTTON_RADIUS_PT - 2f)
-        scene.text(quitX + quitW / 2f, barY + BAR_HEIGHT_PT / 2f, StringKey.QUIT, Palette.NEON_YELLOW, BUTTON_TEXT_SIZE_PT, Align.CENTER)
+        arcadeButton(scene, helpX, helpW, StringKey.HELP, Palette.NEON_CYAN)
+        arcadeButton(scene, quitX, quitW, StringKey.QUIT, Palette.NEON_YELLOW)
+    }
+
+    private fun arcadeButton(scene: Scene, x: Float, w: Float, label: StringKey, neon: Int) {
+        scene.rect(x, barY, w, BAR_HEIGHT_PT, neon, radius = BUTTON_RADIUS_PT)
+        scene.rect(x + 2f, barY + 2f, w - 4f, BAR_HEIGHT_PT - 4f, Palette.BEZEL_EDGE, radius = BUTTON_RADIUS_PT - 2f)
+        scene.text(x + w / 2f, barY + BAR_HEIGHT_PT / 2f, label, neon, BUTTON_TEXT_SIZE_PT, Align.CENTER)
     }
 
     private fun renderHud(scene: Scene) {
@@ -408,6 +428,9 @@ public class GameSession(
         const val FRAME_RADIUS_PT = 18f
         const val BAR_HEIGHT_PT = 52f
         const val BAR_MARGIN_PT = 16f
+        const val BAR_MAX_WIDTH_PT = 380f
+        const val BAR_GAP_PT = 12f
+        const val HELP_SHARE = 0.38f
         const val BRACKET_LEN_PT = 18f
         const val BRACKET_WIDTH_PT = 3f
         const val SCANLINE_STEP_PT = 4f

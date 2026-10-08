@@ -75,6 +75,9 @@ internal class TileView(
         val pad = sizeDp * PADDING_FRACTION
         val titleAreaDp = sizeDp * TITLE_AREA_FRACTION
         val iconSizeDp = (sizeDp - 2 * pad - titleAreaDp).coerceAtLeast(1f)
+        // Top of the title letters (capitals, centred in the title area): the icon is centred
+        // between the top of the card and that line.
+        val titleTopDp = sizeDp - titleAreaDp / 2f - titleAreaDp * TITLE_TEXT_SIZE_FRACTION * CAP_HEIGHT_HALF
 
         canvas.save()
         canvas.scale(density, density)
@@ -91,7 +94,7 @@ internal class TileView(
         rect.set(0f, 0f, sizeDp, sizeDp)
 
         canvas.save()
-        canvas.translate(pad, pad)
+        canvas.translate((sizeDp - iconSizeDp) / 2f, (titleTopDp - iconSizeDp) / 2f)
         iconScene.clear()
         meta.icon(iconScene, iconSizeDp)
         CanvasRenderer.draw(canvas, iconScene, colors, strings)
@@ -144,6 +147,8 @@ internal class TileView(
         const val PADDING_FRACTION = 0.1f
         const val TITLE_AREA_FRACTION = 0.22f
         const val TITLE_TEXT_SIZE_FRACTION = 0.55f
+        /** Half the cap height of the title font, as a fraction of its text size. */
+        const val CAP_HEIGHT_HALF = 0.36f
         const val CORNER_FRACTION = 0.08f
         const val PRESSED_ALPHA = 180
         const val LOCK_SCRIM_ALPHA = 140

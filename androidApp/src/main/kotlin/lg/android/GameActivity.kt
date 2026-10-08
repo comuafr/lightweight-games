@@ -63,6 +63,10 @@ class GameActivity : Activity() {
         val root = FrameLayout(this)
         root.addView(gameView, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
         setContentView(root, ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        session.onHelp = {
+            gameView.stopFrameLoop()
+            showHelp(root, meta, app)
+        }
         showHelpFirstTime(root, meta, app)
         EdgeToEdge.enterImmersiveSticky(window)
 
@@ -77,17 +81,26 @@ class GameActivity : Activity() {
         setupBackHandling()
     }
 
+    private var helpView: HelpView? = null
+
     /** First time this game is opened: rules and controls on top of the game, until dismissed. */
     private fun showHelpFirstTime(root: FrameLayout, meta: GameMeta, app: App) {
-        val seenKey = HelpView.seenKey(meta.id)
-        if (app.store.getBoolean(seenKey, false) || !HelpView.hasHelp(this, meta.id)) return
+        if (app.store.getBoolean(HelpView.seenKey(meta.id), false)) return
+        showHelp(root, meta, app)
+    }
+
+    /** Rules and controls over the whole screen; the game stays paused underneath. */
+    private fun showHelp(root: FrameLayout, meta: GameMeta, app: App) {
+        if (helpView != null || !HelpView.hasHelp(this, meta.id)) return
         val title = getString(Strings.ORDINAL_TO_RES[meta.titleKey.ordinal])
-        var help: HelpView? = null
-        help = HelpView(this, meta.id, title) {
-            app.store.putBoolean(seenKey, true)
-            help?.let { root.removeView(it) }
+        val view = HelpView(this, meta.id, title) {
+            app.store.putBoolean(HelpView.seenKey(meta.id), true)
+            helpView?.let { root.removeView(it) }
+            helpView = null
+            gameView.invalidate()
         }
-        root.addView(help, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+        helpView = view
+        root.addView(view, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
     }
 
     override fun onPause() {
@@ -136,6 +149,10 @@ class GameActivity : Activity() {
     }
 
     private fun handleBack() {
+        helpView?.let {
+            it.dismiss()
+            return
+        }
         if (session.overlay == Overlay.None) {
             session.pause()
             gameView.stopFrameLoop()

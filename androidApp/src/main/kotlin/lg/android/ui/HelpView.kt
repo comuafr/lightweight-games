@@ -59,6 +59,9 @@ internal class HelpView(
         addView(column, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
+    /** Closes the page exactly as the "Got it" button does. */
+    fun dismiss() = onDismiss()
+
     private fun LinearLayout.addSection(heading: String, body: String) {
         addView(
             TextView(context).apply {
