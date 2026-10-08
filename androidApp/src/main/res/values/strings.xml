@@ -53,6 +53,7 @@
     <string name="hard">Hard</string>
     <string name="quit">Quit</string>
     <string name="help">Help</string>
+    <string name="level">Level</string>
 
     <!-- App-only strings, not part of StringKey. -->
     <string name="version">Version %1$s</string>
@@ -74,7 +75,7 @@ One purchase unlocks everything, forever</string>
     <string name="controls_snake">Swipe up, down, left or right to turn.</string>
     <string name="rules_g2048">Slide the tiles: two equal tiles that touch merge into one with double the value. Reach 2048. The game ends when the board is full and nothing can merge.</string>
     <string name="controls_g2048">Swipe in any direction to slide all tiles.</string>
-    <string name="rules_breakout">Bounce the ball off the paddle to break every brick: where it touches the paddle or a brick changes its angle. You have 3 lives: don\'t let the ball fall. Broken bricks sometimes drop capsules: catch the green ones (x3 balls, big ball, slow ball, big paddle, extra life) and dodge the red ones (fast ball, small paddle).</string>
+    <string name="rules_breakout">Bounce the ball off the paddle to break every brick: where it touches the paddle or a brick changes its angle. You have 3 lives: don\'t let the ball fall. Ten different levels: some bricks take two or three hits, grey steel bricks never break (clear all the others to move on). Once you have reached a level, you can pick it from the level screen when you start a game. Broken bricks sometimes drop capsules: catch the green ones (x3 balls, big ball, slow ball, big paddle, extra life) and dodge the red ones (fast ball, small paddle).</string>
     <string name="controls_breakout">Drag your finger left or right to move the paddle. Tap to launch the ball.</string>
     <string name="rules_sequence">Watch the colors light up, then repeat the same sequence. It gets one step longer every round. One mistake and it\'s over.</string>
     <string name="controls_sequence">Tap the colored pads in the same order.</string>

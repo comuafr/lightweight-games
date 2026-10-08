@@ -52,6 +52,7 @@
     <string name="hard">Difficile</string>
     <string name="quit">Quitter</string>
     <string name="help">Aide</string>
+    <string name="level">Niveau</string>
 
     <string name="version">Version %1$s</string>
     <string name="unlocked_check">Débloqué ✓</string>
@@ -72,7 +73,7 @@ Un seul achat débloque tout, pour toujours</string>
     <string name="controls_snake">Glisse le doigt vers le haut, le bas, la gauche ou la droite pour tourner.</string>
     <string name="rules_g2048">Fais glisser les tuiles : deux tuiles identiques qui se touchent fusionnent en une seule de valeur double. Atteins 2048. La partie se termine quand la grille est pleine et que plus rien ne peut fusionner.</string>
     <string name="controls_g2048">Glisse le doigt dans une direction pour faire glisser toutes les tuiles.</string>
-    <string name="rules_breakout">Fais rebondir la balle sur la raquette pour casser toutes les briques : l\'endroit où elle touche la raquette ou une brique change son angle. Tu as 3 vies : ne laisse pas tomber la balle. Les briques cassées lâchent parfois des capsules : attrape les vertes (3 balles, grosse balle, balle lente, grande raquette, vie en plus) et évite les rouges (balle rapide, petite raquette).</string>
+    <string name="rules_breakout">Fais rebondir la balle sur la raquette pour casser toutes les briques : l\'endroit où elle touche la raquette ou une brique change son angle. Tu as 3 vies : ne laisse pas tomber la balle. Dix niveaux différents : certaines briques demandent deux ou trois coups, les briques d\'acier grises ne cassent jamais (détruis toutes les autres pour passer au niveau suivant). Un niveau atteint peut être choisi sur l\'écran des niveaux au début d\'une partie. Les briques cassées lâchent parfois des capsules : attrape les vertes (3 balles, grosse balle, balle lente, grande raquette, vie en plus) et évite les rouges (balle rapide, petite raquette).</string>
     <string name="controls_breakout">Fais glisser ton doigt à gauche ou à droite pour déplacer la raquette. Touche l\'écran pour lancer la balle.</string>
     <string name="rules_sequence">Regarde les couleurs s\'allumer, puis répète la même séquence. Elle s\'allonge d\'un pas à chaque manche. Une erreur et c\'est fini.</string>
     <string name="controls_sequence">Touche les pastilles de couleur dans le même ordre.</string>

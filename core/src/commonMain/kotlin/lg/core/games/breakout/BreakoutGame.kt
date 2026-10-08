@@ -7,6 +7,7 @@ import lg.core.GameStatus
 import lg.core.Orientation
 import lg.core.Tier
 import lg.core.input.Gesture
+import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.ArcadeIcons
@@ -25,7 +26,9 @@ import kotlin.math.sqrt
  * ### Data layout
  *
  * [hitPoints] is a fixed `BRICK_COLS * BRICK_ROWS` array of remaining hit
- * points per brick (0 = destroyed); every brick starts with 1 hit point.
+ * points per brick: 0 = no brick (never there, or destroyed), 1 to 3 = hits
+ * still needed, [STEEL] = indestructible. [LEVELS] holds ten hand-made layouts
+ * (shapes, tougher bricks, steel blocks); after the tenth they repeat, ever faster.
  * Ball, paddle and per-tick event flags are plain preallocated `Float`/`Int`/
  * `Boolean` fields — nothing is allocated by [onPointer], [update] or
  * [render].
@@ -79,6 +82,18 @@ public class BreakoutGame : Game {
     private var level: Int = 1
     private var lives: Int = 3
 
+    /** Furthest level ever reached; survives restarts and app launches via [progress]. */
+    private var furthestLevel: Int = 1
+
+    /** True while the level-choice screen is shown: always at the start of a game, all ten levels visible. */
+    private var choosing: Boolean = false
+
+    override val progress: Int get() = furthestLevel
+
+    override fun restoreProgress(value: Int) {
+        furthestLevel = maxOf(furthestLevel, value)
+    }
+
     private var paddleCenterX: Float = 0f
 
     private var ballInFlight: Boolean = false
@@ -120,18 +135,25 @@ public class BreakoutGame : Game {
 
     override fun reset(seed: Long, players: Int) {
         rng = Rng(seed)
-        level = 1
+        choosing = true
+        startLevel(1)
+        status = GameStatus.Running
+        // The play zone has a fixed size known before the first game starts: put the paddle in
+        // the middle and the ball on it right away (resize() does the same if the size changes).
+        if (viewWidth > 0f && viewHeight > 0f) placeAtRest()
+    }
+
+    /** Begins a fresh game (3 lives, score 0) at [startLevel]. */
+    private fun startLevel(startLevel: Int) {
+        level = startLevel
         lives = 3
         score = 0
-        resetBricks()
+        loadLevelBricks()
         clearTransients()
         paddleCenterX = 0f
         ballInFlight = false
         physicsAccumulatorMs = 0
         resetEventFlags()
-        status = GameStatus.Running
-        // The play zone has a fixed size known before the first game starts: put the paddle in
-        // the middle and the ball on it right away (resize() does the same if the size changes).
         if (viewWidth > 0f && viewHeight > 0f) placeAtRest()
     }
 
@@ -174,7 +196,7 @@ public class BreakoutGame : Game {
     }
 
     override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
-        if (status != GameStatus.Running || viewWidth <= 0f) return
+        if (status != GameStatus.Running || viewWidth <= 0f || choosing) return
         if (phase == PointerPhase.UP || phase == PointerPhase.CANCEL) {
             if (id == dragPointerId) dragPointerId = NO_POINTER
             return
@@ -202,7 +224,24 @@ public class BreakoutGame : Game {
     private var lastPointerX: Float = 0f
 
     override fun onGesture(gesture: Gesture) {
-        // Breakout is drag-driven only (see onPointer); gestures are ignored.
+        // Breakout is drag-driven (see onPointer); the only gestures are taps on the level-choice screen.
+        if (!choosing || gesture.kind != GestureKind.TAP) return
+        val n = levelAt(gesture.x, gesture.y)
+        if (n in 1..minOf(furthestLevel, LEVELS.size)) {
+            choosing = false
+            startLevel(n)
+        }
+    }
+
+    /** The level number whose tile contains ([x], [y]) on the choice screen, or 0. */
+    private fun levelAt(x: Float, y: Float): Int {
+        val col = ((x - CHOICE_X_PT) / (CHOICE_TILE_PT + CHOICE_GAP_PT)).toInt()
+        val row = ((y - CHOICE_Y_PT) / (CHOICE_TILE_PT + CHOICE_GAP_PT)).toInt()
+        if (x < CHOICE_X_PT || y < CHOICE_Y_PT || col !in 0 until CHOICE_COLS || row !in 0 until CHOICE_ROWS) return 0
+        val localX = x - CHOICE_X_PT - col * (CHOICE_TILE_PT + CHOICE_GAP_PT)
+        val localY = y - CHOICE_Y_PT - row * (CHOICE_TILE_PT + CHOICE_GAP_PT)
+        if (localX > CHOICE_TILE_PT || localY > CHOICE_TILE_PT) return 0
+        return row * CHOICE_COLS + col + 1
     }
 
     override fun update(dtMs: Int): Boolean {
@@ -304,7 +343,7 @@ public class BreakoutGame : Game {
             if (bottom <= by || top >= by + BRICK_ROW_HEIGHT_PT) continue
             for (col in 0 until BRICK_COLS) {
                 val idx = row * BRICK_COLS + col
-                if (hitPoints[idx] <= 0) continue
+                if (hitPoints[idx] == 0) continue
                 val bx = brickX(col)
                 if (right <= bx || left >= bx + bw) continue
 
@@ -315,10 +354,20 @@ public class BreakoutGame : Game {
                 } else {
                     bounceOffBrickFace(i, bx + bw / 2f, bw / 2f)
                 }
-                destroyBrick(idx)
+                damageBrick(idx)
                 return
             }
         }
+    }
+
+    /** A hit on brick [idx]: steel only clanks, other bricks lose a hit point and break at zero. */
+    private fun damageBrick(idx: Int) {
+        if (hitPoints[idx] == STEEL) {
+            wallHitThisUpdate = true
+            return
+        }
+        hitPoints[idx]--
+        if (hitPoints[idx] <= 0) destroyBrick(idx) else wallHitThisUpdate = true
     }
 
     /**
@@ -360,7 +409,8 @@ public class BreakoutGame : Game {
 
     private fun nextLevel() {
         level++
-        resetBricks()
+        if (level > furthestLevel) furthestLevel = level
+        loadLevelBricks()
         score += LEVEL_CLEAR_BONUS * level
         ballInFlight = false
         clearTransients()
@@ -368,9 +418,22 @@ public class BreakoutGame : Game {
         levelClearedThisUpdate = true
     }
 
-    private fun resetBricks() {
-        hitPoints.fill(1)
-        bricksRemaining = BRICK_COLS * BRICK_ROWS
+    /** Fills the brick grid from the layout of the current [level] (layouts repeat after the last one). */
+    private fun loadLevelBricks() {
+        val layout = LEVELS[(level - 1) % LEVELS.size]
+        var destructible = 0
+        for (row in 0 until BRICK_ROWS) {
+            for (col in 0 until BRICK_COLS) {
+                val hp = when (val c = layout[row][col]) {
+                    '.' -> 0
+                    '#' -> STEEL
+                    else -> c - '0'
+                }
+                hitPoints[row * BRICK_COLS + col] = hp
+                if (hp in 1..3) destructible++
+            }
+        }
+        bricksRemaining = destructible
     }
 
     private fun launchBall() {
@@ -387,7 +450,8 @@ public class BreakoutGame : Game {
         ballVY[i] = -sqrt(speed * speed - vx * vx)
     }
 
-    private fun speedForLevel(): Float = BASE_SPEED_PT_PER_S + (level - 1) * SPEED_INCREMENT_PER_LEVEL
+    private fun speedForLevel(): Float =
+        minOf(BASE_SPEED_PT_PER_S + (level - 1) * SPEED_INCREMENT_PER_LEVEL, MAX_SPEED_PT_PER_S)
 
     // --- Capsules and effects ---------------------------------------------------------------
 
@@ -538,14 +602,27 @@ public class BreakoutGame : Game {
 
     override fun render(scene: Scene) {
         scene.rect(0f, 0f, viewWidth.coerceAtLeast(0f), viewHeight.coerceAtLeast(0f), Palette.BG)
+        if (choosing) {
+            renderLevelChoice(scene)
+            return
+        }
 
         val bw = brickWidth()
         for (row in 0 until BRICK_ROWS) {
             val by = brickY(row)
-            val color = Palette.TILE_0 + row
             for (col in 0 until BRICK_COLS) {
-                if (hitPoints[row * BRICK_COLS + col] <= 0) continue
+                val hp = hitPoints[row * BRICK_COLS + col]
+                if (hp == 0) continue
+                val color = when (hp) {
+                    STEEL -> Palette.FG_DIM
+                    3 -> Palette.TILE_10
+                    2 -> Palette.TILE_9
+                    else -> Palette.TILE_0 + row
+                }
                 scene.rect(brickX(col), by, bw, BRICK_ROW_HEIGHT_PT, color, radius = BRICK_RADIUS_PT)
+                if (hp == STEEL) {
+                    scene.rect(brickX(col) + 3f, by + 3f, bw - 6f, BRICK_ROW_HEIGHT_PT - 6f, Palette.GRID, radius = 2f)
+                }
             }
         }
 
@@ -572,6 +649,9 @@ public class BreakoutGame : Game {
         }
 
         if (wallHitThisUpdate || paddleHitThisUpdate) scene.sound(SoundId.HIT)
+        scene.text(LEVEL_LABEL_X_PT, LEVEL_Y_PT, StringKey.LEVEL, Palette.FG_DIM, LEVEL_TEXT_PT)
+        scene.number(LEVEL_LABEL_X_PT + LEVEL_NUMBER_OFFSET_PT, LEVEL_Y_PT, level, Palette.FG, LEVEL_TEXT_PT)
+
         if (bonusCaughtThisUpdate) scene.sound(SoundId.BONUS)
         if (malusCaughtThisUpdate) scene.sound(SoundId.HIT)
         if (brickHitThisUpdate) scene.sound(SoundId.EAT)
@@ -580,6 +660,39 @@ public class BreakoutGame : Game {
             scene.sound(SoundId.LOSE)
             scene.haptic()
         }
+    }
+
+    /** One tile per level: the ones reached are tappable (finished ones in green, the furthest in orange). */
+    private fun renderLevelChoice(scene: Scene) {
+        scene.text(viewWidth / 2f, CHOICE_TITLE_Y_PT, StringKey.LEVEL, Palette.FG, CHOICE_TITLE_PT, Align.CENTER)
+        val reachable = minOf(furthestLevel, LEVELS.size)
+        for (n in 1..LEVELS.size) {
+            val col = (n - 1) % CHOICE_COLS
+            val row = (n - 1) / CHOICE_COLS
+            val x = CHOICE_X_PT + col * (CHOICE_TILE_PT + CHOICE_GAP_PT)
+            val y = CHOICE_Y_PT + row * (CHOICE_TILE_PT + CHOICE_GAP_PT)
+            val color = when {
+                n > reachable -> Palette.GRID
+                n < furthestLevel -> Palette.OK
+                else -> Palette.ACCENT
+            }
+            scene.rect(x, y, CHOICE_TILE_PT, CHOICE_TILE_PT, color, radius = 8f)
+            if (n > reachable) {
+                // Locked: small number on top, a padlock below.
+                scene.number(x + CHOICE_TILE_PT / 2f, y + 11f, n, Palette.FG_DIM, CHOICE_LOCKED_NUMBER_PT, Align.CENTER)
+                renderPadlock(scene, x + CHOICE_TILE_PT / 2f, y + 31f, color)
+            } else {
+                scene.number(x + CHOICE_TILE_PT / 2f, y + CHOICE_TILE_PT / 2f, n, Palette.BG, CHOICE_NUMBER_PT, Align.CENTER)
+            }
+        }
+    }
+
+    /** A small padlock whose body top-centre is at ([cx], [top]); [tileColor] punches the shackle's hole. */
+    private fun renderPadlock(scene: Scene, cx: Float, top: Float, tileColor: Int) {
+        scene.arc(cx, top, 7.5f, 180f, 180f, Palette.FG_DIM)
+        scene.arc(cx, top, 4.5f, 180f, 180f, tileColor)
+        scene.rect(cx - 10f, top, 20f, 14f, Palette.FG_DIM, radius = 3f)
+        scene.circle(cx, top + 6f, 1.8f, tileColor)
     }
 
     private fun renderCapsules(scene: Scene) {
@@ -634,6 +747,10 @@ public class BreakoutGame : Game {
         physicsAccumulatorMs = 0
     }
 
+    internal fun debugChoosing(): Boolean = choosing
+    internal fun debugFurthestLevel(): Int = furthestLevel
+    internal fun debugChoiceTileCenterX(n: Int): Float = CHOICE_X_PT + ((n - 1) % CHOICE_COLS) * (CHOICE_TILE_PT + CHOICE_GAP_PT) + CHOICE_TILE_PT / 2f
+    internal fun debugChoiceTileCenterY(n: Int): Float = CHOICE_Y_PT + ((n - 1) / CHOICE_COLS) * (CHOICE_TILE_PT + CHOICE_GAP_PT) + CHOICE_TILE_PT / 2f
     internal fun debugActiveBalls(): Int = activeBalls()
     internal fun debugBallSpeed(): Float = sqrt(ballVX[0] * ballVX[0] + ballVY[0] * ballVY[0])
     internal fun debugBallRadius(): Float = ballRadius()
@@ -657,7 +774,7 @@ public class BreakoutGame : Game {
     /** Destroys the brick at ([row], [col]) directly, exercising the same scoring/level-clear path as physics collisions. */
     internal fun debugDestroyBrick(row: Int, col: Int) {
         val idx = row * BRICK_COLS + col
-        if (hitPoints[idx] > 0) destroyBrick(idx)
+        if (hitPoints[idx] in 1..3) destroyBrick(idx)
     }
 
     internal fun debugSetLives(n: Int) {
@@ -667,7 +784,28 @@ public class BreakoutGame : Game {
     public companion object {
         private const val NO_POINTER: Int = -1
         public const val BRICK_COLS: Int = 8
-        public const val BRICK_ROWS: Int = 6
+        public const val BRICK_ROWS: Int = 8
+
+        /** Hit-point value of an indestructible brick. */
+        internal const val STEEL: Int = 99
+
+        /**
+         * Ten layouts, top row first, 8 columns each: `.` empty, `1`-`3` hits to break, `#` steel.
+         * The lowest rows are the ones the ball meets first, so steel and tough bricks higher up
+         * shield what lies behind them.
+         */
+        private val LEVELS: Array<Array<String>> = arrayOf(
+            arrayOf("11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "........", "........"),
+            arrayOf("1.1.1.1.", ".1.1.1.1", "1.1.1.1.", ".1.1.1.1", "1.1.1.1.", ".1.1.1.1", "........", "........"),
+            arrayOf("...11...", "..1111..", ".111111.", "11111111", "11111111", "11111111", "........", "........"),
+            arrayOf("22222222", "11111111", "11111111", "11111111", "22222222", "11111111", "........", "........"),
+            arrayOf("11111111", "1#1111#1", "1#1111#1", "1#1111#1", "1#1111#1", "11111111", "........", "........"),
+            arrayOf("...22...", "..1111..", ".111111.", "11111111", "11111111", ".111111.", "..1111..", "...11..."),
+            arrayOf("22222222", "2......2", "2.1111.2", "2.1##1.2", "2.1111.2", "2......2", "22222222", "........"),
+            arrayOf("1......1", ".1....1.", "..1111..", ".111111.", "11.11.11", "11111111", "1.1..1.1", "1......1"),
+            arrayOf("11111111", "######.#", "11111111", "#.######", "11111111", "........", "........", "........"),
+            arrayOf("#......#", ".222222.", ".233332.", ".233332.", ".222222.", "11111111", "........", "........"),
+        )
 
         internal const val TYPE_MULTI: Int = 0
         internal const val TYPE_BIG_BALL: Int = 1
@@ -723,6 +861,7 @@ public class BreakoutGame : Game {
 
         private const val BASE_SPEED_PT_PER_S: Float = 220f
         private const val SPEED_INCREMENT_PER_LEVEL: Float = 18f
+        private const val MAX_SPEED_PT_PER_S: Float = 460f
         private const val MAX_BOUNCE_FRACTION: Float = 0.9f
 
         /** How strongly the hit position on a brick steers the ball (1 = like the paddle edge). */
@@ -741,6 +880,22 @@ public class BreakoutGame : Game {
         private const val BRICK_TOP_MARGIN_PT: Float = 8f
         private const val BRICK_ROW_HEIGHT_PT: Float = 18f
         private const val BRICK_RADIUS_PT: Float = 3f
+
+        private const val CHOICE_COLS: Int = 5
+        private const val CHOICE_ROWS: Int = 2
+        private const val CHOICE_TILE_PT: Float = 56f
+        private const val CHOICE_GAP_PT: Float = 10f
+        private const val CHOICE_X_PT: Float = 20f
+        private const val CHOICE_Y_PT: Float = 210f
+        private const val CHOICE_TITLE_Y_PT: Float = 150f
+        private const val CHOICE_TITLE_PT: Float = 28f
+        private const val CHOICE_NUMBER_PT: Float = 24f
+        private const val CHOICE_LOCKED_NUMBER_PT: Float = 14f
+
+        private const val LEVEL_LABEL_X_PT: Float = 132f
+        private const val LEVEL_NUMBER_OFFSET_PT: Float = 62f
+        private const val LEVEL_Y_PT: Float = 8f
+        private const val LEVEL_TEXT_PT: Float = 16f
 
         private const val LIFE_DOT_RADIUS_PT: Float = 4f
         private const val LIFE_DOT_GAP_PT: Float = 6f

@@ -97,7 +97,10 @@ public class GameSession(
     private val buttonAction = IntArray(MAX_BUTTONS)
     private var buttonCount = 0
 
+    private var savedProgress: Int = scores.progress(meta.id)
+
     init {
+        game.restoreProgress(savedProgress)
         // The game's play zone has a fixed size, known from the start.
         game.resize(width, height)
         layoutButtons()
@@ -179,6 +182,7 @@ public class GameSession(
 
         val changed = game.update(clampedDt)
         if (changed) eventsArmed = true
+        saveProgressIfAny()
         val status = game.status
         if (status is GameStatus.Over) {
             scores.submit(meta.id, game.score)
@@ -188,6 +192,14 @@ public class GameSession(
             return true
         }
         return changed
+    }
+
+    private fun saveProgressIfAny() {
+        val p = game.progress
+        if (p > savedProgress) {
+            savedProgress = p
+            scores.saveProgress(meta.id, p)
+        }
     }
 
     /** Draws the game, then the HUD, then any active overlay, into [scene]. */

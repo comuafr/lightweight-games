@@ -38,6 +38,16 @@ public interface Game {
     /** Draws the current state into [scene]. Must not allocate. */
     public fun render(scene: Scene)
 
+    /**
+     * A game-defined counter that only ever grows and outlives restarts and app launches, such as the
+     * furthest level reached. [lg.core.session.GameSession] saves it whenever it increases and hands the
+     * saved value back through [restoreProgress] when the game is created. 0 means "none".
+     */
+    public val progress: Int get() = 0
+
+    /** Gives the game the progress saved earlier; called once, before the first [reset]. */
+    public fun restoreProgress(value: Int) {}
+
     /** Serializes resumable state as `"k=v;k=v"`, or null if this game is not resumable / has nothing to save. */
     public fun snapshot(): String? = null
 

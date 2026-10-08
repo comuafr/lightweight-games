@@ -56,4 +56,5 @@ public enum class StringKey {
     HARD,
     QUIT,
     HELP,
+    LEVEL,
 }

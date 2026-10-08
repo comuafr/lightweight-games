@@ -19,5 +19,13 @@ public class Scores(private val store: KeyValueStore) {
         return false
     }
 
+    /** Returns the saved progress counter of [gameId] (e.g. the furthest level reached), or 0 if none. */
+    public fun progress(gameId: String): Int = store.getInt("progress.$gameId", 0)
+
+    /** Saves [value] as the progress of [gameId] if it is higher than the one already saved. */
+    public fun saveProgress(gameId: String, value: Int) {
+        if (value > progress(gameId)) store.putInt("progress.$gameId", value)
+    }
+
     private fun keyFor(gameId: String): String = "score.$gameId"
 }

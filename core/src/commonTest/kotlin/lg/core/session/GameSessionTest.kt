@@ -145,6 +145,40 @@ private class RecordingGame : Game {
     }
 }
 
+/** Raises its progress when updated, like a game whose player reaches a further level. */
+private class ProgressGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override val score: Int = 0
+    override val wantsFrames: Boolean = true
+    override var progress: Int = 0
+        private set
+    var restoredWith: Int = -1
+
+    override fun restoreProgress(value: Int) {
+        restoredWith = value
+        progress = maxOf(progress, value)
+    }
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture): Unit = Unit
+
+    override fun update(dtMs: Int): Boolean {
+        progress++
+        return true
+    }
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
 public class GameSessionTest {
     private val screens = listOf(360f to 640f, 412f to 915f, 768f to 1024f, 320f to 480f)
 
@@ -343,5 +377,45 @@ public class GameSessionTest {
         assertEquals(true, session.needsFrameLoop)
         session.pause()
         assertEquals(false, session.needsFrameLoop)
+    }
+
+    @Test
+    public fun progressIsSavedWhenItGrowsAndHandedBackToTheNextSession(): Unit {
+        val store = FakeStore()
+        val game = ProgressGame()
+        val meta = GameMeta(
+            id = "progressing",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.PORTRAIT,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { game },
+            icon = { _, _ -> },
+        )
+        val session = GameSession(meta, Scores(store), Settings(store), FakeClock())
+        assertEquals(0, game.restoredWith)
+        session.resize(400f, 800f)
+        session.start(players = 1, seed = 1L)
+        session.update(16)
+        session.update(16)
+        assertEquals(2, Scores(store).progress("progressing"))
+
+        // A new session (next app launch) gets the saved value back before anything else happens.
+        val game2 = ProgressGame()
+        val meta2 = GameMeta(
+            id = "progressing",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.PORTRAIT,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { game2 },
+            icon = { _, _ -> },
+        )
+        GameSession(meta2, Scores(store), Settings(store), FakeClock())
+        assertEquals(2, game2.restoredWith)
     }
 }

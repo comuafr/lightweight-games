@@ -171,6 +171,23 @@
         }
       }
     },
+    "level": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niveau"
+          }
+        }
+      }
+    },
     "locked": {
       "extractionState": "manual",
       "localizations": {

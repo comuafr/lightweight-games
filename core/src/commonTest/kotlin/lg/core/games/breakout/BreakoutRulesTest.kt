@@ -12,13 +12,16 @@ public class BreakoutRulesTest {
         const val VIEW_W = 360f
         const val VIEW_H = 640f
         const val PADDLE_WIDTH_FRACTION = 0.22f
-        const val BOTTOM_ROW = BreakoutGame.BRICK_ROWS - 1
+        /** Lowest row of the first level (the one the ball meets first). */
+        const val BOTTOM_ROW = 5
     }
 
     private fun newGame(seed: Long = 1L): BreakoutGame {
         val game = BreakoutGame()
         game.reset(seed)
         game.resize(VIEW_W, VIEW_H)
+        // A game always opens on the level-choice screen; pick level 1, the only one open at first.
+        tap(game, game.debugChoiceTileCenterX(1), game.debugChoiceTileCenterY(1))
         return game
     }
 
@@ -90,9 +93,10 @@ public class BreakoutRulesTest {
     }
 
     @Test
-    public fun clearingAllBricksStartsLevelTwoWithBricksRestored(): Unit {
+    public fun clearingAllBricksStartsLevelTwoWithItsOwnLayout(): Unit {
         val game = newGame()
-        val total = BreakoutGame.BRICK_COLS * BreakoutGame.BRICK_ROWS
+        val total = game.debugBricksRemaining()
+        assertEquals(48, total) // level 1: six full rows of eight
         for (row in 0 until BreakoutGame.BRICK_ROWS) {
             for (col in 0 until BreakoutGame.BRICK_COLS) {
                 game.debugDestroyBrick(row, col)
@@ -100,15 +104,54 @@ public class BreakoutRulesTest {
         }
 
         assertEquals(2, game.debugLevel())
-        assertEquals(total, game.debugBricksRemaining())
-        for (row in 0 until BreakoutGame.BRICK_ROWS) {
-            for (col in 0 until BreakoutGame.BRICK_COLS) {
-                assertEquals(1, game.debugHitPoints(row, col), "brick ($row,$col) must be restored for the new level")
-            }
-        }
+        // Level 2 is a checkerboard: 24 bricks in the first six rows, each one hit.
+        assertEquals(24, game.debugBricksRemaining())
+        assertEquals(1, game.debugHitPoints(0, 0))
+        assertEquals(0, game.debugHitPoints(0, 1))
         // 48 bricks at level 1 (10 pts each) + the level-clear bonus at the new level (2).
         assertEquals(total * 10 + 50 * 2, game.score)
         assertFalse(game.debugBallInFlight())
+    }
+
+    @Test
+    public fun everyLevelCanBeClearedAndLoopsAfterTheTenth(): Unit {
+        val game = newGame()
+        repeat(12) {
+            val level = game.debugLevel()
+            assertTrue(game.debugBricksRemaining() > 0, "level $level must have destructible bricks")
+            for (row in 0 until BreakoutGame.BRICK_ROWS) {
+                for (col in 0 until BreakoutGame.BRICK_COLS) game.debugDestroyBrick(row, col)
+            }
+            assertEquals(level + 1, game.debugLevel(), "level $level must end once its destructible bricks are gone")
+        }
+        assertEquals(13, game.debugLevel())
+    }
+
+    @Test
+    public fun toughBricksNeedSeveralHitsAndSteelNeverBreaks(): Unit {
+        val game = newGame()
+        // Jump to level 4 (top row = two-hit bricks) and level 5 (steel pillars).
+        fun clearLevel() {
+            for (row in 0 until BreakoutGame.BRICK_ROWS) {
+                for (col in 0 until BreakoutGame.BRICK_COLS) game.debugDestroyBrick(row, col)
+            }
+        }
+        repeat(3) { clearLevel() }
+        assertEquals(4, game.debugLevel())
+        assertEquals(2, game.debugHitPoints(0, 0))
+        clearLevel()
+        assertEquals(5, game.debugLevel())
+        assertEquals(BreakoutGame.STEEL, game.debugHitPoints(1, 1))
+
+        // Hit the steel pillar from below: it stays, the ball bounces.
+        val x = game.debugBrickLeft(1) + game.debugBrickWidth() / 2f
+        val y = game.debugBrickTop(4) + game.debugBrickHeight() + 5f
+        game.debugSetBall(x = x, y = y, vx = 0f, vy = -220f, inFlight = true)
+        val remaining = game.debugBricksRemaining()
+        game.update(30)
+        assertEquals(BreakoutGame.STEEL, game.debugHitPoints(4, 1))
+        assertEquals(remaining, game.debugBricksRemaining())
+        assertTrue(game.debugBallVY() > 0f, "ball must bounce back off the steel")
     }
 
     @Test
@@ -313,5 +356,93 @@ public class BreakoutRulesTest {
         val right = hitBrickFrom(col = 5, fraction = 0.8f)
         assertEquals(220f, left.debugBallSpeed(), 1f)
         assertEquals(220f, right.debugBallSpeed(), 1f)
+    }
+
+    // --- Level choice ---------------------------------------------------------------------------
+
+    private fun tap(game: BreakoutGame, x: Float, y: Float) {
+        val g = lg.core.input.Gesture()
+        g.kind = lg.core.input.GestureKind.TAP
+        g.x = x
+        g.y = y
+        game.onGesture(g)
+    }
+
+    @Test
+    public fun theFirstGameShowsAllTenLevelsWithOnlyTheFirstOpen(): Unit {
+        val game = BreakoutGame()
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        assertTrue(game.debugChoosing())
+        assertEquals(1, game.progress)
+
+        // Level 2 is shown but locked: tapping it does nothing.
+        tap(game, game.debugChoiceTileCenterX(2), game.debugChoiceTileCenterY(2))
+        assertTrue(game.debugChoosing())
+
+        tap(game, game.debugChoiceTileCenterX(1), game.debugChoiceTileCenterY(1))
+        assertFalse(game.debugChoosing())
+        assertEquals(1, game.debugLevel())
+    }
+
+    @Test
+    public fun reachingALevelRaisesTheProgress(): Unit {
+        val game = newGame()
+        for (row in 0 until BreakoutGame.BRICK_ROWS) {
+            for (col in 0 until BreakoutGame.BRICK_COLS) game.debugDestroyBrick(row, col)
+        }
+        assertEquals(2, game.progress)
+    }
+
+    @Test
+    public fun withProgressTheGameOffersALevelChoiceAndAReachedTileStartsThatLevel(): Unit {
+        val game = BreakoutGame()
+        game.restoreProgress(4)
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        assertTrue(game.debugChoosing())
+        assertFalse(game.wantsFrames)
+
+        tap(game, game.debugChoiceTileCenterX(3), game.debugChoiceTileCenterY(3))
+        assertFalse(game.debugChoosing())
+        assertEquals(3, game.debugLevel())
+        assertEquals(3, game.debugLives())
+        assertEquals(0, game.score)
+        assertEquals(VIEW_W / 2f, game.debugPaddleX(), 0.01f)
+    }
+
+    @Test
+    public fun aLevelNotReachedYetCannotBeChosen(): Unit {
+        val game = BreakoutGame()
+        game.restoreProgress(3)
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        tap(game, game.debugChoiceTileCenterX(8), game.debugChoiceTileCenterY(8))
+        assertTrue(game.debugChoosing())
+        tap(game, 1f, 1f) // outside every tile
+        assertTrue(game.debugChoosing())
+    }
+
+    @Test
+    public fun touchesDoNotLaunchTheBallBehindTheChoiceScreen(): Unit {
+        val game = BreakoutGame()
+        game.restoreProgress(2)
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        game.onPointer(0, PointerPhase.DOWN, 100f, 100f)
+        assertFalse(game.debugBallInFlight())
+    }
+
+    @Test
+    public fun restartingAfterGameOverOffersTheChoiceAgain(): Unit {
+        val game = BreakoutGame()
+        game.restoreProgress(5)
+        game.resize(VIEW_W, VIEW_H)
+        game.reset(1L)
+        tap(game, game.debugChoiceTileCenterX(5), game.debugChoiceTileCenterY(5))
+        assertEquals(5, game.debugLevel())
+        game.reset(2L)
+        assertTrue(game.debugChoosing())
+        assertEquals(5, game.progress)
     }
 }

@@ -74,6 +74,7 @@ internal class Strings(context: Context) {
             R.string.hard, // HARD
             R.string.quit, // QUIT
             R.string.help, // HELP
+            R.string.level, // LEVEL
         )
     }
 }
