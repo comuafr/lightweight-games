@@ -177,7 +177,7 @@ public class PairsGame : Game {
             val winner = when {
                 pairsFound[1] > pairsFound[2] -> 1
                 pairsFound[2] > pairsFound[1] -> 2
-                else -> 0
+                else -> GameStatus.DRAW
             }
             GameStatus.Over(winner)
         }

@@ -3,6 +3,7 @@ package lg.core.session
 import lg.core.Game
 import lg.core.GameMeta
 import lg.core.GameStatus
+import lg.core.Orientation
 import lg.core.input.Gesture
 import lg.core.input.GestureDetector
 import lg.core.input.GestureKind
@@ -48,14 +49,15 @@ public class GameSession(
     public var onHelp: (() -> Unit)? = null
 
     // Full view size (screen dp). The game and the overlays always work in a fixed
-    // logical play zone of `width` x `height` ([LOGICAL_W] x [LOGICAL_H]) so that
+    // logical play zone of `width` x `height` ([LOGICAL_SHORT] x [LOGICAL_LONG], swapped for a landscape game) so that
     // every player gets the same game whatever the screen; the session scales that
     // zone uniformly by `scale` and draws it at `originX`/`originY` in the view.
     private var viewW: Float = 0f
     private var viewH: Float = 0f
     private var safeTop: Float = 0f
-    private var width: Float = LOGICAL_W
-    private var height: Float = LOGICAL_H
+    private val landscape: Boolean = meta.orientation == Orientation.LANDSCAPE
+    private var width: Float = if (landscape) LOGICAL_LONG else LOGICAL_SHORT
+    private var height: Float = if (landscape) LOGICAL_SHORT else LOGICAL_LONG
     private var scale: Float = 1f
     private var zoneW: Float = 0f
     private var zoneH: Float = 0f
@@ -65,10 +67,13 @@ public class GameSession(
     private var frameY: Float = 0f
     private var frameW: Float = 0f
     private var frameH: Float = 0f
-    private var barY: Float = 0f
+    /** Where the controls start: top edge of the bottom bar (portrait) or left edge of the side column (landscape). */
+    private var controlsEdge: Float = 0f
     private var helpX: Float = 0f
+    private var helpY: Float = 0f
     private var helpW: Float = 0f
     private var quitX: Float = 0f
+    private var quitY: Float = 0f
     private var quitW: Float = 0f
     private var players: Int = 1
     private var ignoredPointer: Int = NO_POINTER
@@ -137,35 +142,66 @@ public class GameSession(
     }
 
     private fun layoutChrome() {
-        barY = (viewH - BAR_HEIGHT_PT - BAR_MARGIN_PT).coerceAtLeast(0f)
-        // Room for the play zone: inside the page margins and the frame border, between the
-        // top inset and the button bar.
-        val availX = FRAME_MARGIN_PT + FRAME_BORDER_PT
-        val availW = (viewW - 2 * availX).coerceAtLeast(0f)
-        val availTop = maxOf(safeTop, 0f) + TOP_MARGIN_PT + FRAME_BORDER_PT
-        val availH = (barY - FRAME_MARGIN_PT - FRAME_BORDER_PT - availTop).coerceAtLeast(0f)
-        scale = minOf(availW / LOGICAL_W, availH / LOGICAL_H).coerceAtLeast(MIN_SCALE)
-        zoneW = LOGICAL_W * scale
-        zoneH = LOGICAL_H * scale
+        if (landscape) layoutLandscape() else layoutPortrait()
+        scale = minOf(availW / width, availH / height).coerceAtLeast(MIN_SCALE)
+        zoneW = width * scale
+        zoneH = height * scale
         originX = availX + (availW - zoneW) / 2f
         originY = availTop + (availH - zoneH) / 2f
         frameX = originX - FRAME_BORDER_PT
         frameY = originY - FRAME_BORDER_PT
         frameW = zoneW + 2 * FRAME_BORDER_PT
         frameH = zoneH + 2 * FRAME_BORDER_PT
+    }
+
+    // Room available for the play zone, set by the two layouts below.
+    private var availX: Float = 0f
+    private var availW: Float = 0f
+    private var availTop: Float = 0f
+    private var availH: Float = 0f
+
+    /** Portrait: the zone above a bar holding Help and Quit side by side. */
+    private fun layoutPortrait() {
+        controlsEdge = (viewH - BAR_HEIGHT_PT - BAR_MARGIN_PT).coerceAtLeast(0f)
+        availX = FRAME_MARGIN_PT + FRAME_BORDER_PT
+        availW = (viewW - 2 * availX).coerceAtLeast(0f)
+        availTop = maxOf(safeTop, 0f) + TOP_MARGIN_PT + FRAME_BORDER_PT
+        availH = (controlsEdge - FRAME_MARGIN_PT - FRAME_BORDER_PT - availTop).coerceAtLeast(0f)
         val barW = (viewW - 2 * FRAME_MARGIN_PT).coerceIn(0f, BAR_MAX_WIDTH_PT)
         helpW = barW * HELP_SHARE
         quitW = barW - helpW - BAR_GAP_PT
         helpX = (viewW - barW) / 2f
         quitX = helpX + helpW + BAR_GAP_PT
+        helpY = controlsEdge
+        quitY = controlsEdge
     }
+
+    /** Landscape: the zone on the left, Help and Quit stacked in a column on the right. */
+    private fun layoutLandscape() {
+        controlsEdge = (viewW - LANDSCAPE_MARGIN_PT - SIDE_COLUMN_WIDTH_PT).coerceAtLeast(0f)
+        availX = LANDSCAPE_MARGIN_PT + FRAME_BORDER_PT
+        availW = (controlsEdge - FRAME_MARGIN_PT - FRAME_BORDER_PT - availX).coerceAtLeast(0f)
+        availTop = maxOf(safeTop, 0f) + FRAME_MARGIN_PT + FRAME_BORDER_PT
+        availH = (viewH - availTop - FRAME_MARGIN_PT - FRAME_BORDER_PT).coerceAtLeast(0f)
+        helpW = SIDE_COLUMN_WIDTH_PT
+        quitW = SIDE_COLUMN_WIDTH_PT
+        helpX = controlsEdge
+        quitX = controlsEdge
+        val stackH = 2 * BAR_HEIGHT_PT + BAR_GAP_PT
+        helpY = ((viewH - stackH) / 2f).coerceAtLeast(0f)
+        quitY = helpY + BAR_HEIGHT_PT + BAR_GAP_PT
+    }
+
+    /** True when a touch at ([x], [y]) is on the Help/Quit controls rather than on the game. */
+    private fun inControls(x: Float, y: Float): Boolean = if (landscape) x >= controlsEdge else y >= controlsEdge
 
     /** Routes a raw pointer event to the overlay (via gesture detection) or the game. */
     public fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
         // A touch that starts on the Quit bar never reaches the game.
-        if (phase == PointerPhase.DOWN && y >= barY) ignoredPointer = id
+        if (phase == PointerPhase.DOWN && inControls(x, y)) ignoredPointer = id
         if (id != ignoredPointer && overlay == Overlay.None) {
             game.onPointer(id, phase, (x - originX) / scale, (y - originY) / scale)
+            checkOver()
         }
         if (id == ignoredPointer && (phase == PointerPhase.UP || phase == PointerPhase.CANCEL)) {
             ignoredPointer = NO_POINTER
@@ -182,16 +218,27 @@ public class GameSession(
 
         val changed = game.update(clampedDt)
         if (changed) eventsArmed = true
+        if (checkOver()) return true
+        return changed
+    }
+
+    /**
+     * Notices a game that has just ended and shows the end overlay. Called after every update and after
+     * every input handed to the game: a last move made by a tap ends a turn-based game without any
+     * frame loop running, so waiting for the next [update] would never show the result.
+     * @return true if the game over overlay was just raised.
+     */
+    private fun checkOver(): Boolean {
         saveProgressIfAny()
         val status = game.status
-        if (status is GameStatus.Over) {
+        if (status is GameStatus.Over && overlay == Overlay.None) {
             scores.submit(meta.id, game.score)
             overlay = Overlay.Over(status.winner)
             eventsArmed = true
             layoutButtons()
             return true
         }
-        return changed
+        return false
     }
 
     private fun saveProgressIfAny() {
@@ -261,11 +308,11 @@ public class GameSession(
     private fun saveKey(): String = "save.${meta.id}"
 
     private fun handleGesture(gesture: Gesture) {
-        if (gesture.y >= barY) {
+        if (inControls(gesture.x, gesture.y)) {
             if (gesture.kind == GestureKind.TAP) {
-                if (gesture.x >= quitX && gesture.x <= quitX + quitW) {
+                if (hits(gesture.x, gesture.y, quitX, quitY, quitW)) {
                     onQuit?.invoke()
-                } else if (gesture.x >= helpX && gesture.x <= helpX + helpW) {
+                } else if (hits(gesture.x, gesture.y, helpX, helpY, helpW)) {
                     pause()
                     onHelp?.invoke()
                 }
@@ -280,10 +327,14 @@ public class GameSession(
             if (gesture.kind == GestureKind.TAP) hitTestOverlayButton(gesture.x, gesture.y)
         } else {
             game.onGesture(gesture)
+            checkOver()
         }
         gesture.x = gx
         gesture.y = gy
     }
+
+    private fun hits(x: Float, y: Float, bx: Float, by: Float, bw: Float): Boolean =
+        x >= bx && x <= bx + bw && y >= by && y <= by + BAR_HEIGHT_PT
 
     private fun hitTestOverlayButton(x: Float, y: Float) {
         for (i in 0 until buttonCount) {
@@ -364,14 +415,14 @@ public class GameSession(
 
     /** The permanent bottom controls: arcade-style Help and Quit buttons (view coordinates). */
     private fun renderQuitBar(scene: Scene) {
-        arcadeButton(scene, helpX, helpW, StringKey.HELP, Palette.NEON_CYAN)
-        arcadeButton(scene, quitX, quitW, StringKey.QUIT, Palette.NEON_YELLOW)
+        arcadeButton(scene, helpX, helpY, helpW, StringKey.HELP, Palette.NEON_CYAN)
+        arcadeButton(scene, quitX, quitY, quitW, StringKey.QUIT, Palette.NEON_YELLOW)
     }
 
-    private fun arcadeButton(scene: Scene, x: Float, w: Float, label: StringKey, neon: Int) {
-        scene.rect(x, barY, w, BAR_HEIGHT_PT, neon, radius = BUTTON_RADIUS_PT)
-        scene.rect(x + 2f, barY + 2f, w - 4f, BAR_HEIGHT_PT - 4f, Palette.BEZEL_EDGE, radius = BUTTON_RADIUS_PT - 2f)
-        scene.text(x + w / 2f, barY + BAR_HEIGHT_PT / 2f, label, neon, BUTTON_TEXT_SIZE_PT, Align.CENTER)
+    private fun arcadeButton(scene: Scene, x: Float, y: Float, w: Float, label: StringKey, neon: Int) {
+        scene.rect(x, y, w, BAR_HEIGHT_PT, neon, radius = BUTTON_RADIUS_PT)
+        scene.rect(x + 2f, y + 2f, w - 4f, BAR_HEIGHT_PT - 4f, Palette.BEZEL_EDGE, radius = BUTTON_RADIUS_PT - 2f)
+        scene.text(x + w / 2f, y + BAR_HEIGHT_PT / 2f, label, neon, BUTTON_TEXT_SIZE_PT, Align.CENTER)
     }
 
     private fun renderHud(scene: Scene) {
@@ -408,14 +459,18 @@ public class GameSession(
                 scene.text(width / 2f, height * 0.32f, StringKey.PAUSED, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
             }
             is Overlay.Over -> {
-                scene.text(width / 2f, height * 0.28f, StringKey.GAME_OVER, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
-                val winnerKey = when (currentOverlay.winner) {
-                    1 -> StringKey.PLAYER_1_WINS
-                    2 -> StringKey.PLAYER_2_WINS
-                    else -> null
-                }
-                if (winnerKey != null) {
-                    scene.text(width / 2f, height * 0.38f, winnerKey, Palette.FG_DIM, SUBTITLE_SIZE_PT, Align.CENTER)
+                if (currentOverlay.winner == GameStatus.DRAW) {
+                    scene.text(width / 2f, height * 0.28f, StringKey.DRAW, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
+                } else {
+                    scene.text(width / 2f, height * 0.28f, StringKey.GAME_OVER, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
+                    val winnerKey = when (currentOverlay.winner) {
+                        1 -> StringKey.PLAYER_1_WINS
+                        2 -> StringKey.PLAYER_2_WINS
+                        else -> null
+                    }
+                    if (winnerKey != null) {
+                        scene.text(width / 2f, height * 0.38f, winnerKey, Palette.FG_DIM, SUBTITLE_SIZE_PT, Align.CENTER)
+                    }
                 }
             }
             Overlay.None -> Unit
@@ -434,9 +489,14 @@ public class GameSession(
         const val MAX_BUTTONS = 3
         const val NO_POINTER = -1
 
-        /** The play zone every game sees, in points, whatever the screen. */
-        const val LOGICAL_W = 360f
-        const val LOGICAL_H = 560f
+        /**
+         * The play zone every game sees, in points, whatever the screen: 360 x 560 in portrait,
+         * 560 x 360 for a landscape game ([lg.core.Orientation.LANDSCAPE]).
+         */
+        const val LOGICAL_SHORT = 360f
+        const val LOGICAL_LONG = 560f
+        const val SIDE_COLUMN_WIDTH_PT = 104f
+        const val LANDSCAPE_MARGIN_PT = 36f
         const val MIN_SCALE = 0.01f
 
         const val FRAME_MARGIN_PT = 10f

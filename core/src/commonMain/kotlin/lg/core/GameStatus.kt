@@ -21,8 +21,13 @@ public sealed class GameStatus {
     /**
      * Terminal state.
      *
-     * @property winner 0 = no winner / single-player loss, 1 or 2 = the winning
-     *   player in a two-player game.
+     * @property winner 0 = single-player result (no winner to name), 1 or 2 = the winning
+     *   player in a two-player game, [DRAW] = a tie (nobody wins; the session shows "Draw").
      */
     public class Over(public val winner: Int) : GameStatus()
+
+    public companion object {
+        /** [Over.winner] value for a tie in a game that has two sides. */
+        public const val DRAW: Int = -1
+    }
 }

@@ -76,6 +76,56 @@ private class SoundOnEveryRenderGame : Game {
     }
 }
 
+private class DrawOnFirstUpdateGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override val score: Int = 0
+    override val wantsFrames: Boolean = true
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture): Unit = Unit
+
+    override fun update(dtMs: Int): Boolean {
+        status = GameStatus.Over(GameStatus.DRAW)
+        return true
+    }
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
+/** Ends on a tap, never in update(): like a turn-based game whose last move is made by the player. */
+private class EndsOnTapGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override val score: Int = 0
+    override val wantsFrames: Boolean = false
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture) {
+        status = GameStatus.Over(GameStatus.DRAW)
+    }
+
+    override fun update(dtMs: Int): Boolean = false
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
 private class DiesOnFirstUpdateGame : Game {
     override val meta: GameMeta get() = error("not used")
     override var status: GameStatus = GameStatus.Idle
@@ -417,5 +467,103 @@ public class GameSessionTest {
         )
         GameSession(meta2, Scores(store), Settings(store), FakeClock())
         assertEquals(2, game2.restoredWith)
+    }
+
+    @Test
+    public fun aDrawShowsTheDrawScreenInsteadOfGameOver(): Unit {
+        val store = FakeStore()
+        val meta = GameMeta(
+            id = "drawing",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..2,
+            orientation = Orientation.PORTRAIT,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { DrawOnFirstUpdateGame() },
+            icon = { _, _ -> },
+        )
+        val session = GameSession(meta, Scores(store), Settings(store), FakeClock())
+        session.resize(400f, 800f)
+        session.start(players = 2, seed = 1L)
+        session.update(16)
+        assertIs<Overlay.Over>(session.overlay)
+
+        val scene = Scene()
+        session.render(scene)
+        val texts = (0 until scene.count).filter { scene.kind[it] == lg.core.scene.Prim.TEXT }.map { scene.key[it] }
+        assertTrue(StringKey.DRAW.ordinal in texts, "the draw title must be shown")
+        assertTrue(StringKey.GAME_OVER.ordinal !in texts, "a draw is not shown as a plain game over")
+        assertTrue(StringKey.PLAYER_1_WINS.ordinal !in texts && StringKey.PLAYER_2_WINS.ordinal !in texts)
+    }
+
+    private fun sessionFor(orientation: Orientation, factory: () -> Game, players: IntRange = 1..1): GameSession {
+        val store = FakeStore()
+        val meta = GameMeta(
+            id = "custom",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = players,
+            orientation = orientation,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = factory,
+            icon = { _, _ -> },
+        )
+        return GameSession(meta, Scores(store), Settings(store), FakeClock())
+    }
+
+    @Test
+    public fun aGameEndedByTheLastTapShowsItsResultWithoutAnyFrameLoop(): Unit {
+        val session = sessionFor(Orientation.PORTRAIT, { EndsOnTapGame() }, players = 1..2)
+        session.resize(400f, 800f)
+        session.start(players = 2, seed = 1L)
+        // A tap in the middle of the play zone ends the game inside onGesture; no update() follows.
+        val x = session.playOriginX + 180f * session.playScale
+        val y = session.playOriginY + 280f * session.playScale
+        session.onPointer(0, PointerPhase.DOWN, x, y)
+        session.onPointer(0, PointerPhase.UP, x, y)
+        assertIs<Overlay.Over>(session.overlay)
+    }
+
+    @Test
+    public fun aLandscapeGameSeesA560By360ZoneBesideItsControls(): Unit {
+        for ((w, h) in listOf(800f to 360f, 915f to 412f, 1024f to 768f)) {
+            val game = RecordingGame()
+            val session = sessionFor(Orientation.LANDSCAPE, { game })
+            session.resize(w, h, safeTop = 0f)
+            assertEquals(560f, game.width, "width on ${w}x$h")
+            assertEquals(360f, game.height, "height on ${w}x$h")
+            val s = session.playScale
+            assertTrue(session.playOriginX >= 0f && session.playOriginX + 560f * s <= w - 100f, "zone is left of the control column on ${w}x$h")
+            assertTrue(session.playOriginY >= 0f && session.playOriginY + 360f * s <= h, "zone fits the height on ${w}x$h")
+
+            session.start(players = 1, seed = 1L)
+            val sx = session.playOriginX + 100f * s
+            val sy = session.playOriginY + 200f * s
+            session.onPointer(0, PointerPhase.DOWN, sx, sy)
+            assertEquals(100f, game.pointerX, 0.05f)
+            assertEquals(200f, game.pointerY, 0.05f)
+        }
+    }
+
+    @Test
+    public fun inLandscapeTheSideColumnHoldsHelpAndQuit(): Unit {
+        val session = sessionFor(Orientation.LANDSCAPE, { RecordingGame() })
+        session.resize(800f, 360f)
+        var quits = 0
+        var helps = 0
+        session.onQuit = { quits++ }
+        session.onHelp = { helps++ }
+        // Column on the right edge: Help above, Quit below, vertically centred (stack of 2 x 52 + 12).
+        val columnX = 800f - 36f - 104f / 2f
+        val helpY = (360f - 116f) / 2f + 26f
+        val quitY = helpY + 64f
+        session.onPointer(0, PointerPhase.DOWN, columnX, quitY)
+        session.onPointer(0, PointerPhase.UP, columnX, quitY)
+        session.onPointer(1, PointerPhase.DOWN, columnX, helpY)
+        session.onPointer(1, PointerPhase.UP, columnX, helpY)
+        assertEquals(1, quits)
+        assertEquals(1, helps)
     }
 }

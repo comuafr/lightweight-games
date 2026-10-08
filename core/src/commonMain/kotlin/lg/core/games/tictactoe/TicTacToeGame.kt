@@ -113,7 +113,7 @@ public class TicTacToeGame : Game {
             return
         }
         if (isFull()) {
-            status = GameStatus.Over(0)
+            status = GameStatus.Over(GameStatus.DRAW)
             drawThisFrame = true
             return
         }

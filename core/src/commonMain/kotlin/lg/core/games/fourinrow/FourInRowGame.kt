@@ -179,7 +179,7 @@ public class FourInRowGame : Game {
             return
         }
         if (pendingDraw) {
-            status = GameStatus.Over(0)
+            status = GameStatus.Over(GameStatus.DRAW)
             drawThisUpdate = true
             return
         }

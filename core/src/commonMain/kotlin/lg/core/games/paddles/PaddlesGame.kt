@@ -399,7 +399,7 @@ public class PaddlesGame : Game {
             titleKey = StringKey.TITLE_PADDLES,
             tier = Tier.UNLOCKED,
             players = 1..2,
-            orientation = Orientation.PORTRAIT,
+            orientation = Orientation.LANDSCAPE,
             complexity = Complexity.S,
             resumable = false,
             factory = { PaddlesGame() },

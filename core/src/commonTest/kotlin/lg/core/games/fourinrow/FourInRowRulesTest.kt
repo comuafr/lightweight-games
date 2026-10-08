@@ -91,7 +91,7 @@ public class FourInRowRulesTest {
         }
         dropAndLand(game, FourInRowGame.COLS - 1) // fills the last remaining cell
         assertTrue(game.status is GameStatus.Over)
-        assertEquals(0, (game.status as GameStatus.Over).winner)
+        assertEquals(GameStatus.DRAW, (game.status as GameStatus.Over).winner)
     }
 
     @Test

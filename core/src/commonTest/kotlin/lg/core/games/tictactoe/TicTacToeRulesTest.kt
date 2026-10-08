@@ -62,7 +62,7 @@ public class TicTacToeRulesTest {
         game.debugSetCurrentPlayer(1)
         game.debugPlayMove(8, 1)
         assertTrue(game.status is GameStatus.Over)
-        assertEquals(0, (game.status as GameStatus.Over).winner)
+        assertEquals(GameStatus.DRAW, (game.status as GameStatus.Over).winner)
     }
 
     @Test

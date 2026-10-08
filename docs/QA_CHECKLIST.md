@@ -20,7 +20,7 @@ Run this before every release, on one physical Android device and one physical i
 - [ ] Refund (Play console / StoreKit config): next store check revokes the entitlement.
 
 ## Lifecycle
-- [ ] Every game stays locked in portrait; turning the phone does not rotate or reset it.
+- [ ] Every game stays locked in portrait, except Paddles which is locked in landscape; turning the phone does not rotate or reset it.
 - [ ] Same play zone on a small phone, a tall phone and a tablet (same board, same speed, only the zoom differs).
 - [ ] Background then foreground during a real-time game: game is paused with a Resume overlay, never auto-resumes.
 - [ ] Incoming call during a game: same behaviour as background.
@@ -29,7 +29,7 @@ Run this before every release, on one physical Android device and one physical i
 ## Two-player games (Paddles, Three in Line, Drop Four, Twins, Flip Discs)
 - [ ] Two fingers at the same time work on both halves.
 - [ ] System edge gestures (back swipe, home indicator) are not triggered by normal play.
-- [ ] Two-player games give each player a readable, correctly oriented half of the play zone (top and bottom).
+- [ ] Two-player games give each player a readable half of the play zone (Paddles: left and right in landscape).
 
 ## Accessibility and kids
 - [ ] Every tappable target is at least 48 pt.

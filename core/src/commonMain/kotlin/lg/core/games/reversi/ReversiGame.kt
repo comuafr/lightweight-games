@@ -183,8 +183,8 @@ public class ReversiGame : Game {
     private fun endGame() {
         val p1 = countDiscs(1)
         val p2 = countDiscs(2)
-        val winner = if (p1 > p2) 1 else if (p2 > p1) 2 else 0
-        tieThisMove = winner == 0
+        val winner = if (p1 > p2) 1 else if (p2 > p1) 2 else GameStatus.DRAW
+        tieThisMove = winner == GameStatus.DRAW
         status = GameStatus.Over(winner)
         gameOverThisMove = true
     }
