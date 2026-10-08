@@ -433,7 +433,7 @@ public class SnakeGame : Game {
             titleKey = StringKey.TITLE_SNAKE,
             tier = Tier.FREE,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.S,
             resumable = false,
             factory = { SnakeGame() },

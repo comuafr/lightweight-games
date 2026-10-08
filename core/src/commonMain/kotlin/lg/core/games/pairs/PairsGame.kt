@@ -329,7 +329,7 @@ public class PairsGame : Game {
             titleKey = StringKey.TITLE_PAIRS,
             tier = Tier.UNLOCKED,
             players = 1..2,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.S,
             resumable = false,
             factory = { PairsGame() },

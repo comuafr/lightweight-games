@@ -331,7 +331,7 @@ public class MinesGame : Game {
             titleKey = StringKey.TITLE_MINES,
             tier = Tier.UNLOCKED,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.M,
             resumable = true,
             factory = { MinesGame() },

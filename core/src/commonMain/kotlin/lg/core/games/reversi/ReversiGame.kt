@@ -464,7 +464,7 @@ public class ReversiGame : Game {
             titleKey = StringKey.TITLE_REVERSI,
             tier = Tier.UNLOCKED,
             players = 1..2,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.C,
             resumable = false,
             factory = { ReversiGame() },

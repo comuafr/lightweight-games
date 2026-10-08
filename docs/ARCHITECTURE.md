@@ -50,6 +50,15 @@ the static `GamesCore.xcframework` built from `iosArm64` +
   (`Scores`) and, for resumable games, save data (`KeyValueStore`, key
   `"save.<id>"`).
 
+**Fixed play zone.** Whatever the screen, a game is always told the same size,
+`GameSession.LOGICAL_W x LOGICAL_H` (360 x 560 pt, portrait), through
+`Game.resize`. The session scales that zone uniformly to fit the screen (inside
+the arcade frame, centred, above the Help/Quit bar), maps pointers and gestures
+back into zone coordinates, and applies the scale to the drawn `Scene`
+(`Scene.transformFrom`). So the rules, speeds and board sizes of a game never
+depend on the device; only the zoom does. Every game is `Orientation.PORTRAIT`.
+Games must not assume any other size, and must keep lengths in points.
+
 Platforms only ever talk to `GameSession`, never to a `Game` directly.
 
 ## Adding a new game

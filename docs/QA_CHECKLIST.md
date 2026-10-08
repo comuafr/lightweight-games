@@ -20,8 +20,8 @@ Run this before every release, on one physical Android device and one physical i
 - [ ] Refund (Play console / StoreKit config): next store check revokes the entitlement.
 
 ## Lifecycle
-- [ ] Rotate during a real-time game (Gobbler, Wall Smash): layout adapts, no reset, no crash.
-- [ ] Rotate during a turn-based game: board keeps its state.
+- [ ] Every game stays locked in portrait; turning the phone does not rotate or reset it.
+- [ ] Same play zone on a small phone, a tall phone and a tablet (same board, same speed, only the zoom differs).
 - [ ] Background then foreground during a real-time game: game is paused with a Resume overlay, never auto-resumes.
 - [ ] Incoming call during a game: same behaviour as background.
 - [ ] Resumable games (Fusion, Nine by Nine, ...) restore the board after a kill + relaunch.
@@ -29,7 +29,7 @@ Run this before every release, on one physical Android device and one physical i
 ## Two-player games (Paddles, Three in Line, Drop Four, Twins, Flip Discs)
 - [ ] Two fingers at the same time work on both halves.
 - [ ] System edge gestures (back swipe, home indicator) are not triggered by normal play.
-- [ ] Portrait and landscape both give each player a readable, correctly oriented zone.
+- [ ] Two-player games give each player a readable, correctly oriented half of the play zone (top and bottom).
 
 ## Accessibility and kids
 - [ ] Every tappable target is at least 48 pt.

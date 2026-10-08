@@ -302,7 +302,7 @@ public class TicTacToeGame : Game {
             titleKey = StringKey.TITLE_TICTACTOE,
             tier = Tier.UNLOCKED,
             players = 1..2,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.S,
             resumable = false,
             factory = { TicTacToeGame() },

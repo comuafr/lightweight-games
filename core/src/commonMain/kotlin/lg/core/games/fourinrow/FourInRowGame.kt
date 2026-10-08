@@ -441,7 +441,7 @@ public class FourInRowGame : Game {
             titleKey = StringKey.TITLE_FOURINROW,
             tier = Tier.UNLOCKED,
             players = 1..2,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.M,
             resumable = false,
             factory = { FourInRowGame() },

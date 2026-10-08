@@ -199,17 +199,30 @@ public class Scene(public val capacity: Int = 1280) {
     }
 
     /**
-     * Moves every primitive from index [from] onward by ([dx], [dy]). Used by
-     * [lg.core.session.GameSession] to place the game's own drawing inside its frame.
+     * Scales every primitive from index [from] onward by [scale] (positions, sizes,
+     * radii, stroke widths and text sizes; arc angles are unchanged), then moves it by
+     * ([dx], [dy]). Used by [lg.core.session.GameSession] to place the game's own
+     * drawing, made in its fixed logical play zone, inside the frame on screen.
      */
-    public fun translateFrom(from: Int, dx: Float, dy: Float) {
+    public fun transformFrom(from: Int, scale: Float, dx: Float, dy: Float) {
         for (i in from until count) {
             val base = i * FLOATS_PER_PRIM
-            f[base] += dx
-            f[base + 1] += dy
-            if (kind[i] == Prim.LINE) {
-                f[base + 2] += dx
-                f[base + 3] += dy
+            f[base] = f[base] * scale + dx
+            f[base + 1] = f[base + 1] * scale + dy
+            when (kind[i]) {
+                Prim.RECT -> {
+                    f[base + 2] *= scale // w
+                    f[base + 3] *= scale // h
+                    f[base + 4] *= scale // corner radius
+                }
+                Prim.CIRCLE -> f[base + 2] *= scale // radius
+                Prim.LINE -> {
+                    f[base + 2] = f[base + 2] * scale + dx
+                    f[base + 3] = f[base + 3] * scale + dy
+                    f[base + 4] *= scale // stroke width
+                }
+                Prim.ARC -> f[base + 2] *= scale // radius
+                else -> f[base + 2] *= scale // TEXT / NUMBER / LABEL: text size
             }
         }
     }

@@ -103,7 +103,111 @@ private class DiesOnFirstUpdateGame : Game {
     override fun render(scene: Scene): Unit = Unit
 }
 
+/** Records the size it is given and where pointers and gestures land, to check the fixed play zone. */
+private class RecordingGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override var score: Int = 0
+        private set
+    override val wantsFrames: Boolean = false
+
+    var width = -1f
+    var height = -1f
+    var pointerX = -1f
+    var pointerY = -1f
+    var gestureX = -1f
+    var gestureY = -1f
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float) {
+        this.width = width
+        this.height = height
+    }
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
+        pointerX = x
+        pointerY = y
+    }
+
+    override fun onGesture(gesture: Gesture) {
+        gestureX = gesture.x
+        gestureY = gesture.y
+    }
+
+    override fun update(dtMs: Int): Boolean = false
+
+    override fun render(scene: Scene) {
+        scene.rect(0f, 0f, width, height, lg.core.scene.Palette.SURFACE)
+    }
+}
+
 public class GameSessionTest {
+    private val screens = listOf(360f to 640f, 412f to 915f, 768f to 1024f, 320f to 480f)
+
+    private fun recordingSession(): Pair<GameSession, RecordingGame> {
+        val store = FakeStore()
+        val game = RecordingGame()
+        val meta = GameMeta(
+            id = "recording",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.PORTRAIT,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { game },
+            icon = { _, _ -> },
+        )
+        return GameSession(meta, Scores(store), Settings(store), FakeClock()) to game
+    }
+
+    @Test
+    public fun theGameAlwaysSeesTheSameFixedPlayZone(): Unit {
+        for ((w, h) in screens) {
+            val (session, game) = recordingSession()
+            session.resize(w, h)
+            assertEquals(360f, game.width, "width on ${w}x$h")
+            assertEquals(560f, game.height, "height on ${w}x$h")
+        }
+    }
+
+    @Test
+    public fun pointersAndGesturesAreMappedBackToZoneCoordinates(): Unit {
+        for ((w, h) in screens) {
+            val (session, game) = recordingSession()
+            session.resize(w, h)
+            session.start(players = 1, seed = 1L)
+            val sx = session.playOriginX + 100f * session.playScale
+            val sy = session.playOriginY + 200f * session.playScale
+            session.onPointer(0, PointerPhase.DOWN, sx, sy)
+            assertEquals(100f, game.pointerX, 0.05f, "pointer x on ${w}x$h")
+            assertEquals(200f, game.pointerY, 0.05f, "pointer y on ${w}x$h")
+            session.onPointer(0, PointerPhase.UP, sx, sy)
+            assertEquals(100f, game.gestureX, 0.05f, "tap x on ${w}x$h")
+            assertEquals(200f, game.gestureY, 0.05f, "tap y on ${w}x$h")
+        }
+    }
+
+    @Test
+    public fun thePlayZoneFitsTheScreenAboveTheButtonBarAndIsCentered(): Unit {
+        for ((w, h) in screens) {
+            val (session, _) = recordingSession()
+            session.resize(w, h, safeTop = 24f)
+            val s = session.playScale
+            assertTrue(session.playOriginX >= 0f, "left edge on ${w}x$h")
+            assertTrue(session.playOriginX + 360f * s <= w, "right edge on ${w}x$h")
+            assertTrue(session.playOriginY >= 24f, "below the inset on ${w}x$h")
+            assertTrue(session.playOriginY + 560f * s <= h - 52f, "above the button bar on ${w}x$h")
+            val left = session.playOriginX
+            val right = w - (session.playOriginX + 360f * s)
+            assertEquals(left, right, 0.01f, "horizontally centered on ${w}x$h")
+        }
+    }
+
     private fun newSession(store: FakeStore = FakeStore(), clock: FakeClock = FakeClock()): GameSession {
         val scores = Scores(store)
         val settings = Settings(store)

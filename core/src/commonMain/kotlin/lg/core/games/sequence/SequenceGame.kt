@@ -254,7 +254,7 @@ public class SequenceGame : Game {
             titleKey = StringKey.TITLE_SEQUENCE,
             tier = Tier.UNLOCKED,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.S,
             resumable = false,
             factory = { SequenceGame() },

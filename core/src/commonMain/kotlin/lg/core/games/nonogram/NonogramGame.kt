@@ -465,7 +465,7 @@ public class NonogramGame : Game {
             titleKey = StringKey.TITLE_NONOGRAM,
             tier = Tier.UNLOCKED,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.C,
             resumable = true,
             factory = { NonogramGame() },

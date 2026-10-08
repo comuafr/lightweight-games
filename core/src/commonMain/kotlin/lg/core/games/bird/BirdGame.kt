@@ -275,7 +275,7 @@ public class BirdGame : Game {
             titleKey = StringKey.TITLE_BIRD,
             tier = Tier.UNLOCKED,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.M,
             resumable = false,
             factory = { BirdGame() },

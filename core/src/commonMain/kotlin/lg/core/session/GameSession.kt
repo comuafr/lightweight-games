@@ -47,13 +47,18 @@ public class GameSession(
     /** Called when the player taps the permanent "Help" button; the platform shows the rules and controls. */
     public var onHelp: (() -> Unit)? = null
 
-    // Full view size, and the inner play area handed to the game and to the
-    // overlays (`width` x `height`, drawn at `originX`/`originY` in the view).
+    // Full view size (screen dp). The game and the overlays always work in a fixed
+    // logical play zone of `width` x `height` ([LOGICAL_W] x [LOGICAL_H]) so that
+    // every player gets the same game whatever the screen; the session scales that
+    // zone uniformly by `scale` and draws it at `originX`/`originY` in the view.
     private var viewW: Float = 0f
     private var viewH: Float = 0f
     private var safeTop: Float = 0f
-    private var width: Float = 0f
-    private var height: Float = 0f
+    private var width: Float = LOGICAL_W
+    private var height: Float = LOGICAL_H
+    private var scale: Float = 1f
+    private var zoneW: Float = 0f
+    private var zoneH: Float = 0f
     private var originX: Float = 0f
     private var originY: Float = 0f
     private var frameX: Float = 0f
@@ -93,8 +98,17 @@ public class GameSession(
     private var buttonCount = 0
 
     init {
+        // The game's play zone has a fixed size, known from the start.
+        game.resize(width, height)
         layoutButtons()
     }
+
+    /** Screen scale of the fixed play zone (for tests). */
+    internal val playScale: Float get() = scale
+
+    /** Screen position of the play zone's top-left corner (for tests). */
+    internal val playOriginX: Float get() = originX
+    internal val playOriginY: Float get() = originY
 
     /** Starts (or restarts) the game with [players] participants and a deterministic [seed]. */
     public fun start(players: Int = 1, seed: Long = clock.nowMs()) {
@@ -120,15 +134,22 @@ public class GameSession(
     }
 
     private fun layoutChrome() {
-        frameX = FRAME_MARGIN_PT
-        frameY = maxOf(safeTop, 0f) + TOP_MARGIN_PT
-        barY = (viewH - BAR_HEIGHT_PT - BAR_MARGIN_PT).coerceAtLeast(frameY)
-        frameW = (viewW - 2 * FRAME_MARGIN_PT).coerceAtLeast(0f)
-        frameH = (barY - FRAME_MARGIN_PT - frameY).coerceAtLeast(0f)
-        originX = frameX + FRAME_BORDER_PT
-        originY = frameY + FRAME_BORDER_PT
-        width = (frameW - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
-        height = (frameH - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
+        barY = (viewH - BAR_HEIGHT_PT - BAR_MARGIN_PT).coerceAtLeast(0f)
+        // Room for the play zone: inside the page margins and the frame border, between the
+        // top inset and the button bar.
+        val availX = FRAME_MARGIN_PT + FRAME_BORDER_PT
+        val availW = (viewW - 2 * availX).coerceAtLeast(0f)
+        val availTop = maxOf(safeTop, 0f) + TOP_MARGIN_PT + FRAME_BORDER_PT
+        val availH = (barY - FRAME_MARGIN_PT - FRAME_BORDER_PT - availTop).coerceAtLeast(0f)
+        scale = minOf(availW / LOGICAL_W, availH / LOGICAL_H).coerceAtLeast(MIN_SCALE)
+        zoneW = LOGICAL_W * scale
+        zoneH = LOGICAL_H * scale
+        originX = availX + (availW - zoneW) / 2f
+        originY = availTop + (availH - zoneH) / 2f
+        frameX = originX - FRAME_BORDER_PT
+        frameY = originY - FRAME_BORDER_PT
+        frameW = zoneW + 2 * FRAME_BORDER_PT
+        frameH = zoneH + 2 * FRAME_BORDER_PT
         val barW = (viewW - 2 * FRAME_MARGIN_PT).coerceIn(0f, BAR_MAX_WIDTH_PT)
         helpW = barW * HELP_SHARE
         quitW = barW - helpW - BAR_GAP_PT
@@ -141,7 +162,7 @@ public class GameSession(
         // A touch that starts on the Quit bar never reaches the game.
         if (phase == PointerPhase.DOWN && y >= barY) ignoredPointer = id
         if (id != ignoredPointer && overlay == Overlay.None) {
-            game.onPointer(id, phase, x - originX, y - originY)
+            game.onPointer(id, phase, (x - originX) / scale, (y - originY) / scale)
         }
         if (id == ignoredPointer && (phase == PointerPhase.UP || phase == PointerPhase.CANCEL)) {
             ignoredPointer = NO_POINTER
@@ -187,8 +208,8 @@ public class GameSession(
         if (!settings.hapticsEnabled) scene.muteHaptic()
         renderHud(scene)
         renderOverlay(scene)
+        scene.transformFrom(mark, scale, originX, originY)
         renderScanlines(scene)
-        scene.translateFrom(mark, originX, originY)
         renderQuitBar(scene)
     }
 
@@ -241,8 +262,8 @@ public class GameSession(
         }
         val gx = gesture.x
         val gy = gesture.y
-        gesture.x = gx - originX
-        gesture.y = gy - originY
+        gesture.x = (gx - originX) / scale
+        gesture.y = (gy - originY) / scale
         if (overlay != Overlay.None) {
             if (gesture.kind == GestureKind.TAP) hitTestOverlayButton(gesture.x, gesture.y)
         } else {
@@ -323,7 +344,7 @@ public class GameSession(
         scene.rect(frameX + 5f, frameY + 5f, frameW - 10f, frameH - 10f, Palette.NEON_CYAN, radius = FRAME_RADIUS_PT - 5f)
         scene.rect(frameX + 7f, frameY + 7f, frameW - 14f, frameH - 14f, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT - 7f)
         // Black screen bezel right around the game.
-        scene.rect(originX - 3f, originY - 3f, width + 6f, height + 6f, Palette.BEZEL, radius = 4f)
+        scene.rect(originX - 3f, originY - 3f, zoneW + 6f, zoneH + 6f, Palette.BEZEL, radius = 4f)
         // Yellow corner brackets, like the marks on an old monitor.
         val l = BRACKET_LEN_PT
         val x0 = frameX - 1f
@@ -341,11 +362,11 @@ public class GameSession(
         scene.line(x1, y1, x1, y1 - l, Palette.NEON_YELLOW, w)
     }
 
-    /** Faint horizontal CRT scanlines over the whole play area (inner coordinates). */
+    /** Faint horizontal CRT scanlines over the whole play zone (view coordinates, fixed spacing on screen). */
     private fun renderScanlines(scene: Scene) {
         var y = SCANLINE_STEP_PT / 2f
-        while (y < height) {
-            scene.rect(0f, y, width, 1f, Palette.BEZEL, alpha = SCANLINE_ALPHA)
+        while (y < zoneH) {
+            scene.rect(originX, originY + y, zoneW, 1f, Palette.BEZEL, alpha = SCANLINE_ALPHA)
             y += SCANLINE_STEP_PT
         }
     }
@@ -421,6 +442,11 @@ public class GameSession(
         const val MAX_DT_MS = 50
         const val MAX_BUTTONS = 3
         const val NO_POINTER = -1
+
+        /** The play zone every game sees, in points, whatever the screen. */
+        const val LOGICAL_W = 360f
+        const val LOGICAL_H = 560f
+        const val MIN_SCALE = 0.01f
 
         const val FRAME_MARGIN_PT = 10f
         const val TOP_MARGIN_PT = 28f

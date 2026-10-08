@@ -530,7 +530,7 @@ public class Game2048 : Game {
             titleKey = StringKey.TITLE_2048,
             tier = Tier.FREE,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.M,
             resumable = true,
             factory = { Game2048() },

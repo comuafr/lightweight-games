@@ -315,7 +315,7 @@ public class SlidingGame : Game {
             titleKey = StringKey.TITLE_SLIDING,
             tier = Tier.UNLOCKED,
             players = 1..1,
-            orientation = Orientation.ANY,
+            orientation = Orientation.PORTRAIT,
             complexity = Complexity.S,
             resumable = true,
             factory = { SlidingGame() },
