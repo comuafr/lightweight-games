@@ -50,6 +50,7 @@
     <string name="easy">Facile</string>
     <string name="medium">Moyen</string>
     <string name="hard">Difficile</string>
+    <string name="quit">Quitter</string>
 
     <string name="version">Version %1$s</string>
     <string name="unlocked_check">Débloqué ✓</string>

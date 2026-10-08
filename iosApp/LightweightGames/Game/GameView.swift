@@ -28,7 +28,7 @@ private final class DisplayLinkProxy {
 final class GameView: UIView {
     private let session: GameSession
     private let renderer = CoreGraphicsRenderer()
-    private let scene = Scene(capacity: 1024)
+    private let scene = Scene(capacity: 1280)
     private let haptics = Haptics()
     private let soundSink: SoundSink
 
@@ -102,7 +102,7 @@ final class GameView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        session.resize(width: Float(bounds.width), height: Float(bounds.height))
+        session.resize(width: Float(bounds.width), height: Float(bounds.height), safeTop: Float(safeAreaInsets.top))
         setNeedsDisplay()
     }
 

@@ -36,7 +36,7 @@ package lg.core.scene
  * extra ones are silently dropped and counted in [dropped]; callers (notably
  * the fuzz tests) are expected to assert `dropped == 0`.
  */
-public class Scene(public val capacity: Int = 1024) {
+public class Scene(public val capacity: Int = 1280) {
     private companion object {
         const val FLOATS_PER_PRIM = 6
     }
@@ -196,6 +196,22 @@ public class Scene(public val capacity: Int = 1024) {
         f[base + 3] = 1f
         this.align[i] = align.ordinal.toByte()
         label[i] = text
+    }
+
+    /**
+     * Moves every primitive from index [from] onward by ([dx], [dy]). Used by
+     * [lg.core.session.GameSession] to place the game's own drawing inside its frame.
+     */
+    public fun translateFrom(from: Int, dx: Float, dy: Float) {
+        for (i in from until count) {
+            val base = i * FLOATS_PER_PRIM
+            f[base] += dx
+            f[base + 1] += dy
+            if (kind[i] == Prim.LINE) {
+                f[base + 2] += dx
+                f[base + 3] += dy
+            }
+        }
     }
 
     /** Requests a procedural sound effect for this frame. */

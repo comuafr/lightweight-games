@@ -41,9 +41,27 @@ public class GameSession(
     public val score: Int
         get() = game.score
 
+    /** Called when the player taps the permanent "Quit" button; the platform leaves the game screen. */
+    public var onQuit: (() -> Unit)? = null
+
+    // Full view size, and the inner play area handed to the game and to the
+    // overlays (`width` x `height`, drawn at `originX`/`originY` in the view).
+    private var viewW: Float = 0f
+    private var viewH: Float = 0f
+    private var safeTop: Float = 0f
     private var width: Float = 0f
     private var height: Float = 0f
+    private var originX: Float = 0f
+    private var originY: Float = 0f
+    private var frameX: Float = 0f
+    private var frameY: Float = 0f
+    private var frameW: Float = 0f
+    private var frameH: Float = 0f
+    private var barY: Float = 0f
+    private var quitX: Float = 0f
+    private var quitW: Float = 0f
     private var players: Int = 1
+    private var ignoredPointer: Int = NO_POINTER
 
     /**
      * True when the most recent [game] state change has not yet been rendered.
@@ -82,18 +100,44 @@ public class GameSession(
         layoutButtons()
     }
 
-    /** Notifies the session (and the game, if playing) of a size change; never resets state. */
-    public fun resize(width: Float, height: Float) {
-        this.width = width
-        this.height = height
-        game.resize(width, height)
+    /**
+     * Notifies the session (and the game, if playing) of a size change; never
+     * resets state. [safeTop] is the height of whatever the platform covers at
+     * the top of the view (status bar, camera cut-out); the frame starts below it.
+     */
+    public fun resize(width: Float, height: Float, safeTop: Float = 0f) {
+        viewW = width
+        viewH = height
+        this.safeTop = safeTop
+        layoutChrome()
+        game.resize(this.width, this.height)
         layoutButtons()
+    }
+
+    private fun layoutChrome() {
+        frameX = FRAME_MARGIN_PT
+        frameY = maxOf(safeTop, 0f) + TOP_MARGIN_PT
+        barY = (viewH - BAR_HEIGHT_PT - BAR_MARGIN_PT).coerceAtLeast(frameY)
+        frameW = (viewW - 2 * FRAME_MARGIN_PT).coerceAtLeast(0f)
+        frameH = (barY - FRAME_MARGIN_PT - frameY).coerceAtLeast(0f)
+        originX = frameX + FRAME_BORDER_PT
+        originY = frameY + FRAME_BORDER_PT
+        width = (frameW - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
+        height = (frameH - 2 * FRAME_BORDER_PT).coerceAtLeast(0f)
+        quitW = (viewW * 0.6f).coerceAtMost(viewW - 2 * FRAME_MARGIN_PT)
+        quitX = (viewW - quitW) / 2f
     }
 
     /** Routes a raw pointer event to the overlay (via gesture detection) or the game. */
     public fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
-        if (overlay == Overlay.None) {
-            game.onPointer(id, phase, x, y)
+        // A touch that starts on the Quit bar never reaches the game.
+        if (phase == PointerPhase.DOWN && y >= barY) ignoredPointer = id
+        if (id != ignoredPointer && overlay == Overlay.None) {
+            game.onPointer(id, phase, x - originX, y - originY)
+        }
+        if (id == ignoredPointer && (phase == PointerPhase.UP || phase == PointerPhase.CANCEL)) {
+            ignoredPointer = NO_POINTER
+            // Gesture detector still gets the UP below so the tap can be recognised.
         }
         gestureDetector.onPointer(id, phase, x, y, clock.nowMs())
     }
@@ -120,6 +164,8 @@ public class GameSession(
     /** Draws the game, then the HUD, then any active overlay, into [scene]. */
     public fun render(scene: Scene) {
         scene.clear()
+        renderFrame(scene)
+        val mark = scene.count
         game.render(scene)
         if (!eventsArmed) {
             // No state change happened since the last render: this redraw was
@@ -133,6 +179,8 @@ public class GameSession(
         if (!settings.hapticsEnabled) scene.muteHaptic()
         renderHud(scene)
         renderOverlay(scene)
+        scene.translateFrom(mark, originX, originY)
+        renderQuitBar(scene)
     }
 
     /** Pauses a running game, showing the Paused overlay. No-op if an overlay is already shown. */
@@ -171,11 +219,21 @@ public class GameSession(
     private fun saveKey(): String = "save.${meta.id}"
 
     private fun handleGesture(gesture: Gesture) {
+        if (gesture.y >= barY) {
+            if (gesture.kind == GestureKind.TAP && gesture.x >= quitX && gesture.x <= quitX + quitW) onQuit?.invoke()
+            return
+        }
+        val gx = gesture.x
+        val gy = gesture.y
+        gesture.x = gx - originX
+        gesture.y = gy - originY
         if (overlay != Overlay.None) {
             if (gesture.kind == GestureKind.TAP) hitTestOverlayButton(gesture.x, gesture.y)
         } else {
             game.onGesture(gesture)
         }
+        gesture.x = gx
+        gesture.y = gy
     }
 
     private fun hitTestOverlayButton(x: Float, y: Float) {
@@ -219,7 +277,7 @@ public class GameSession(
         }
 
         val btnH = BUTTON_HEIGHT_PT
-        val btnW = (width * 0.6f).coerceAtLeast(btnH * 2f)
+        val btnW = (width * 0.9f).coerceAtLeast(btnH * 2f)
         val gap = BUTTON_GAP_PT
         val totalH = buttonCount * btnH + (buttonCount - 1).coerceAtLeast(0) * gap
         var y = (height - totalH) / 2f
@@ -238,6 +296,43 @@ public class GameSession(
         buttonLabel[buttonCount] = label
         buttonAction[buttonCount] = action
         buttonCount++
+    }
+
+    /** Page background, then the decorated border around the play area (view coordinates). */
+    private fun renderFrame(scene: Scene) {
+        scene.rect(0f, 0f, viewW, viewH, Palette.BG)
+        scene.rect(frameX, frameY, frameW, frameH, Palette.ACCENT, radius = FRAME_RADIUS_PT)
+        scene.rect(originX - 2f, originY - 2f, width + 4f, height + 4f, Palette.BG, radius = 4f)
+        // Studs along the border, alternating colours, plus a bigger one in each corner.
+        val half = FRAME_BORDER_PT / 2f
+        val colors = STUD_COLORS
+        var n = 0
+        var x = frameX + FRAME_BORDER_PT + STUD_STEP_PT / 2f
+        while (x < frameX + frameW - FRAME_BORDER_PT) {
+            val c = colors[n % colors.size]
+            scene.circle(x, frameY + half, STUD_RADIUS_PT, c)
+            scene.circle(x, frameY + frameH - half, STUD_RADIUS_PT, c)
+            x += STUD_STEP_PT
+            n++
+        }
+        var y = frameY + FRAME_BORDER_PT + STUD_STEP_PT / 2f
+        while (y < frameY + frameH - FRAME_BORDER_PT) {
+            val c = colors[n % colors.size]
+            scene.circle(frameX + half, y, STUD_RADIUS_PT, c)
+            scene.circle(frameX + frameW - half, y, STUD_RADIUS_PT, c)
+            y += STUD_STEP_PT
+            n++
+        }
+        scene.circle(frameX + half, frameY + half, CORNER_RADIUS_PT, Palette.FG)
+        scene.circle(frameX + frameW - half, frameY + half, CORNER_RADIUS_PT, Palette.FG)
+        scene.circle(frameX + half, frameY + frameH - half, CORNER_RADIUS_PT, Palette.FG)
+        scene.circle(frameX + frameW - half, frameY + frameH - half, CORNER_RADIUS_PT, Palette.FG)
+    }
+
+    /** The permanent bottom control: a Quit button (view coordinates). */
+    private fun renderQuitBar(scene: Scene) {
+        scene.rect(quitX, barY, quitW, BAR_HEIGHT_PT, Palette.SURFACE, radius = BUTTON_RADIUS_PT)
+        scene.text(quitX + quitW / 2f, barY + BAR_HEIGHT_PT / 2f, StringKey.QUIT, Palette.FG, BUTTON_TEXT_SIZE_PT, Align.CENTER)
     }
 
     private fun renderHud(scene: Scene) {
@@ -298,6 +393,18 @@ public class GameSession(
     private companion object {
         const val MAX_DT_MS = 50
         const val MAX_BUTTONS = 3
+        const val NO_POINTER = -1
+
+        const val FRAME_MARGIN_PT = 10f
+        const val TOP_MARGIN_PT = 28f
+        const val FRAME_BORDER_PT = 14f
+        const val FRAME_RADIUS_PT = 18f
+        const val BAR_HEIGHT_PT = 52f
+        const val BAR_MARGIN_PT = 16f
+        const val STUD_STEP_PT = 28f
+        const val STUD_RADIUS_PT = 3.5f
+        const val CORNER_RADIUS_PT = 5.5f
+        val STUD_COLORS = intArrayOf(Palette.P1, Palette.DANGER, Palette.OK, Palette.P2)
 
         const val ACTION_START_1P = 1
         const val ACTION_START_2P = 2

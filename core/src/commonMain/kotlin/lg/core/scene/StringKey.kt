@@ -54,4 +54,5 @@ public enum class StringKey {
     EASY,
     MEDIUM,
     HARD,
+    QUIT,
 }

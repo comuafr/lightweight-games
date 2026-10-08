@@ -51,6 +51,7 @@
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>
+    <string name="quit">Quit</string>
 
     <!-- App-only strings, not part of StringKey. -->
     <string name="version">Version %1$s</string>

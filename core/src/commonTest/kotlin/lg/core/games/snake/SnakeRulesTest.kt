@@ -57,15 +57,19 @@ public class SnakeRulesTest {
     }
 
     @Test
-    public fun diesOnWallCollision(): Unit {
+    public fun wrapsAroundTheEdgesLikeATorus(): Unit {
         val game = newGame()
-        var ticks = 0
-        while (game.status == GameStatus.Running && ticks < 40) {
-            game.update(160)
-            ticks++
-        }
-        assertTrue(game.status is GameStatus.Over)
-        assertEquals(0, (game.status as GameStatus.Over).winner)
+        val cols = game.debugCols()
+        // Keep moving RIGHT well past the board width: the snake must never die and must re-enter on the left.
+        repeat(cols + 5) { game.update(160) }
+        assertEquals(GameStatus.Running, game.status)
+        assertTrue(game.debugHeadX() in 0 until cols)
+
+        // Same vertically.
+        game.onGesture(gestureOf(GestureKind.SWIPE_UP))
+        repeat(game.debugRows() + 5) { game.update(160) }
+        assertEquals(GameStatus.Running, game.status)
+        assertTrue(game.debugHeadY() in 0 until game.debugRows())
     }
 
     @Test

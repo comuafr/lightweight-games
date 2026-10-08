@@ -28,7 +28,7 @@ internal enum class Direction(public val dx: Int, public val dy: Int) {
 }
 
 /**
- * Classic grid snake: fixed tick, four-direction swipes, walls kill (no wrap).
+ * Classic grid snake: fixed tick, four-direction swipes, no walls: the board is a torus (edges wrap around).
  * The board is [COLS] cells wide; the row count is derived from the current
  * aspect ratio (at least [MIN_ROWS]) so the board fills the available area.
  *
@@ -175,13 +175,9 @@ public class SnakeGame : Game {
         diedThisTick = false
 
         direction = nextDirection
-        val nx = bodyX[headIdx] + direction.dx
-        val ny = bodyY[headIdx] + direction.dy
-
-        if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) {
-            die()
-            return
-        }
+        // Torus: leaving one edge re-enters from the opposite one.
+        val nx = (bodyX[headIdx] + direction.dx + cols) % cols
+        val ny = (bodyY[headIdx] + direction.dy + rows) % rows
 
         val willGrow = nx == foodX && ny == foodY
         if (occupiesBody(nx, ny, excludeTail = !willGrow)) {
@@ -334,11 +330,29 @@ public class SnakeGame : Game {
         )
 
         private fun drawIcon(scene: Scene, size: Float) {
-            val cell = size / 6f
-            scene.rect(size * 0.1f, size * 0.45f, size * 0.35f, cell, Palette.P1, radius = cell * 0.3f)
-            scene.rect(size * 0.35f, size * 0.45f, size * 0.35f, cell, Palette.P1, radius = cell * 0.3f)
-            scene.rect(size * 0.6f, size * 0.25f, cell, size * 0.25f, Palette.ACCENT, radius = cell * 0.3f)
-            scene.circle(size * 0.75f, size * 0.2f, cell * 0.6f, Palette.DANGER)
+            // A fat S-shaped snake (round segments, big head with eyes) next to an apple.
+            val r = size * 0.085f
+            val body = floatArrayOf(
+                0.78f, 0.78f, 0.62f, 0.80f, 0.46f, 0.80f, 0.30f, 0.76f, 0.20f, 0.64f,
+                0.24f, 0.50f, 0.38f, 0.44f, 0.54f, 0.42f, 0.66f, 0.34f, 0.68f, 0.22f,
+            )
+            var k = body.size / 2 - 1
+            while (k >= 0) {
+                val shade = if (k % 2 == 0) Palette.P1 else Palette.OK
+                scene.circle(size * body[k * 2], size * body[k * 2 + 1], r * (0.85f + 0.015f * (9 - k)), shade)
+                k--
+            }
+            // Head (last point), looking up-left, with a tongue.
+            val hx = size * 0.68f
+            val hy = size * 0.20f
+            scene.circle(hx, hy, r * 1.25f, Palette.ACCENT)
+            scene.circle(hx - r * 0.5f, hy - r * 0.15f, r * 0.42f, Palette.FG)
+            scene.circle(hx + r * 0.5f, hy - r * 0.15f, r * 0.42f, Palette.FG)
+            scene.circle(hx - r * 0.5f, hy - r * 0.15f, r * 0.2f, Palette.BG)
+            scene.circle(hx + r * 0.5f, hy - r * 0.15f, r * 0.2f, Palette.BG)
+            // Apple.
+            scene.circle(size * 0.86f, size * 0.56f, r * 1.1f, Palette.DANGER)
+            scene.line(size * 0.86f, size * 0.56f - r, size * 0.88f, size * 0.56f - r * 1.7f, Palette.OK, size * 0.025f)
         }
     }
 }

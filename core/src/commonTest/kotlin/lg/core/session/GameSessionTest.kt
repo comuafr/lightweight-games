@@ -76,6 +76,33 @@ private class SoundOnEveryRenderGame : Game {
     }
 }
 
+private class DiesOnFirstUpdateGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override var score: Int = 0
+        private set
+    override val wantsFrames: Boolean = true
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture): Unit = Unit
+
+    override fun update(dtMs: Int): Boolean {
+        score = 3
+        status = GameStatus.Over(0)
+        return true
+    }
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
 public class GameSessionTest {
     private fun newSession(store: FakeStore = FakeStore(), clock: FakeClock = FakeClock()): GameSession {
         val scores = Scores(store)
@@ -93,10 +120,37 @@ public class GameSessionTest {
     public fun tapOnStartButtonBeginsPlay(): Unit {
         val session = newSession()
         session.resize(400f, 400f)
-        // Single centered "Tap to start" button for a 1-player game covers the screen center.
-        session.onPointer(0, PointerPhase.DOWN, 200f, 200f)
-        session.onPointer(0, PointerPhase.UP, 200f, 200f)
+        // Single centered "Tap to start" button for a 1-player game covers the centre of the framed play area.
+        session.onPointer(0, PointerPhase.DOWN, 200f, 175f)
+        session.onPointer(0, PointerPhase.UP, 200f, 175f)
         assertIs<Overlay.None>(session.overlay)
+    }
+
+    @Test
+    public fun tapOnQuitBarCallsOnQuitAndNeverStartsTheGame(): Unit {
+        val session = newSession()
+        session.resize(400f, 400f)
+        var quits = 0
+        session.onQuit = { quits++ }
+        // The Quit button sits at the bottom of the view, below the framed play area.
+        session.onPointer(0, PointerPhase.DOWN, 200f, 360f)
+        session.onPointer(0, PointerPhase.UP, 200f, 360f)
+        assertEquals(1, quits)
+        assertIs<Overlay.Start>(session.overlay)
+    }
+
+    @Test
+    public fun framedPlayAreaLeavesRoomAtTheTopForTheSafeInset(): Unit {
+        val session = newSession()
+        session.resize(400f, 800f, safeTop = 48f)
+        val scene = Scene()
+        session.render(scene)
+        // First primitive is the page background; the decorated frame starts below the inset.
+        var minFrameY = Float.MAX_VALUE
+        for (i in 1 until scene.count) {
+            if (scene.kind[i] == lg.core.scene.Prim.RECT) minFrameY = minOf(minFrameY, scene.f[i * 6 + 1])
+        }
+        assertTrue(minFrameY >= 48f, "frame must start below the safe inset, was $minFrameY")
     }
 
     @Test
@@ -116,23 +170,25 @@ public class GameSessionTest {
     @Test
     public fun gameOverShowsOverlayAndPersistsBestScore(): Unit {
         val store = FakeStore()
-        // Seed a lower "previous best" directly in storage so the game-over
-        // submission (score 0, since the snake dies on the wall without
-        // eating) is guaranteed to be a new best and observably update it.
-        store.putInt("score.snake", -5)
-        val session = newSession(store)
+        store.putInt("score.dying", -5)
+        val meta = GameMeta(
+            id = "dying",
+            titleKey = StringKey.TITLE_SNAKE,
+            tier = Tier.FREE,
+            players = 1..1,
+            orientation = Orientation.ANY,
+            complexity = Complexity.S,
+            resumable = false,
+            factory = { DiesOnFirstUpdateGame() },
+            icon = { _, _ -> },
+        )
+        val session = GameSession(meta, Scores(store), Settings(store), FakeClock())
         session.resize(400f, 400f)
         session.start(players = 1, seed = 1L)
-
-        var ticks = 0
-        while (session.overlay == Overlay.None && ticks < 60) {
-            session.update(160)
-            ticks++
-        }
+        session.update(16)
 
         assertIs<Overlay.Over>(session.overlay)
-        val scores = Scores(store)
-        assertEquals(session.score, scores.best("snake"))
+        assertEquals(3, Scores(store).best("dying"))
     }
 
     @Test

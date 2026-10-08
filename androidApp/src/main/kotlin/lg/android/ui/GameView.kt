@@ -2,11 +2,13 @@ package lg.android.ui
 
 import android.content.Context
 import android.graphics.Canvas
+import android.os.Build
 import android.util.AttributeSet
 import android.view.Choreographer
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
 import lg.android.audio.NoopSoundSink
 import lg.android.audio.SoundSink
 import lg.core.input.PointerPhase
@@ -74,9 +76,31 @@ internal class GameView @JvmOverloads constructor(
         lastFrameTimeNanos = 0L
     }
 
+    /** Height (px) of the camera cut-out / status bar covering the top of the view. */
+    private var safeTopPx = 0
+
+    override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
+        var top = 0
+        if (Build.VERSION.SDK_INT >= 28) {
+            top = insets.displayCutout?.safeInsetTop ?: 0
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            top = maxOf(top, insets.getInsets(WindowInsets.Type.statusBars()).top)
+        } else {
+            @Suppress("DEPRECATION")
+            top = maxOf(top, insets.systemWindowInsetTop)
+        }
+        if (top != safeTopPx) {
+            safeTopPx = top
+            session?.resize(width / density, height / density, safeTopPx / density)
+            invalidate()
+        }
+        return super.onApplyWindowInsets(insets)
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        session?.resize(w / density, h / density)
+        session?.resize(w / density, h / density, safeTopPx / density)
         invalidate()
     }
 

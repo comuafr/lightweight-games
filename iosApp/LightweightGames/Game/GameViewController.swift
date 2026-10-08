@@ -1,8 +1,7 @@
 import UIKit
 import GamesCore
 
-/// Hosts one `GameSession` full-screen: the `GameView` canvas, a close
-/// button (>=44pt touch target), orientation lock derived from
+/// Hosts one `GameSession` full-screen: the `GameView` canvas, orientation lock derived from
 /// `GameMeta.orientation`, and the background/foreground pause+persist
 /// lifecycle (PLAN.md §5). Presented modally, full screen, from
 /// `CatalogViewController`.
@@ -11,17 +10,6 @@ final class GameViewController: UIViewController {
     private let services: Services
     private let session: GameSession
     private lazy var gameView = GameView(session: session, soundSink: services.soundSink)
-
-    private let closeButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        button.tintColor = .white
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.35)
-        button.layer.cornerRadius = 22
-        button.accessibilityLabel = Strings.close
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
 
     init(meta: GameMeta, services: Services) {
         self.meta = meta
@@ -72,8 +60,6 @@ final class GameViewController: UIViewController {
 
         gameView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(gameView)
-        view.addSubview(closeButton)
-        closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
 
         NSLayoutConstraint.activate([
             gameView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -81,10 +67,6 @@ final class GameViewController: UIViewController {
             gameView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             gameView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 8),
-            closeButton.widthAnchor.constraint(equalToConstant: 44),
-            closeButton.heightAnchor.constraint(equalToConstant: 44),
         ])
 
         NotificationCenter.default.addObserver(
@@ -98,6 +80,12 @@ final class GameViewController: UIViewController {
         // player left off; Snake (M0) is not resumable, so this is a no-op
         // (GameSession.tryRestore checks GameMeta.resumable itself).
         _ = session.tryRestore(store: services.kvStore)
+
+        // The permanent Quit button drawn by the session at the bottom of the game.
+        session.onQuit = { [weak self] in
+            self?.closeTapped()
+            return KotlinUnit()
+        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
