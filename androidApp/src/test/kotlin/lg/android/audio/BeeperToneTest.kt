@@ -17,6 +17,7 @@ class BeeperToneTest {
         "hit" to Tones.hit(),
         "win" to Tones.win(),
         "lose" to Tones.lose(),
+        "bonus" to Tones.bonus(),
     )
 
     @Test
@@ -27,6 +28,7 @@ class BeeperToneTest {
             "hit" to 150,
             "win" to 850,
             "lose" to 850,
+            "bonus" to 420,
         )
         for ((name, samples) in allTones) {
             val expectedSamples = Tones.SAMPLE_RATE_HZ.toLong() * expectedMs.getValue(name) / 1000L

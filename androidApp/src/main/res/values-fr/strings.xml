@@ -68,7 +68,7 @@ Pas d\'achat dans les jeux
 Pas besoin d\'internet
 Pas de compte, pas de suivi
 Un seul achat débloque tout, pour toujours</string>
-    <string name="rules_snake">Guide le serpent vers les pommes pour grandir. Ne te mords pas la queue. Il n\'y a pas de murs : en sortant d\'un bord, tu réapparais de l\'autre côté.</string>
+    <string name="rules_snake">Guide le serpent vers les pommes pour grandir. Ne te mords pas la queue. Il n\'y a pas de murs : en sortant d\'un bord, tu réapparais de l\'autre côté. De temps en temps, un bonus doré apparaît puis disparaît vite : attrape-le pour gagner 5 points.</string>
     <string name="controls_snake">Glisse le doigt vers le haut, le bas, la gauche ou la droite pour tourner.</string>
     <string name="rules_g2048">Fais glisser les tuiles : deux tuiles identiques qui se touchent fusionnent en une seule de valeur double. Atteins 2048. La partie se termine quand la grille est pleine et que plus rien ne peut fusionner.</string>
     <string name="controls_g2048">Glisse le doigt dans une direction pour faire glisser toutes les tuiles.</string>

@@ -36,13 +36,15 @@ internal class Beeper(context: Context) : SoundSink {
     private val hit = load(context, "hit", Tones.hit())
     private val win = load(context, "win", Tones.win())
     private val lose = load(context, "lose", Tones.lose())
+    private val bonus = load(context, "bonus", Tones.bonus())
 
     override fun play(soundMask: Int) {
         // Priority order (highest first) so simultaneous bits in one frame
-        // don't play on top of each other: LOSE > WIN > EAT > HIT > TICK.
+        // don't play on top of each other: LOSE > WIN > BONUS > EAT > HIT > TICK.
         val id = when {
             soundMask and SoundId.LOSE.bit != 0 -> lose
             soundMask and SoundId.WIN.bit != 0 -> win
+            soundMask and SoundId.BONUS.bit != 0 -> bonus
             soundMask and SoundId.EAT.bit != 0 -> eat
             soundMask and SoundId.HIT.bit != 0 -> hit
             soundMask and SoundId.TICK.bit != 0 -> tick

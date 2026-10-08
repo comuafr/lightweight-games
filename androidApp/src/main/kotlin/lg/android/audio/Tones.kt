@@ -42,6 +42,14 @@ internal object Tones {
         voice(buf, 0.07, 0.16, 1174.7, 1174.7, Wave.PLUCK, decayS = 0.07, gain = 0.85)
     }
 
+    /** Quick sparkling run up, for a bonus pick-up. */
+    fun bonus(): ShortArray = render(durationMs = 420, echoMs = 90, echoGain = 0.3) { buf ->
+        voice(buf, 0.00, 0.12, 880.0, 880.0, Wave.PLUCK, decayS = 0.05)
+        voice(buf, 0.06, 0.12, 1108.7, 1108.7, Wave.PLUCK, decayS = 0.05)
+        voice(buf, 0.12, 0.12, 1318.5, 1318.5, Wave.PLUCK, decayS = 0.05)
+        voice(buf, 0.18, 0.22, 1760.0, 1760.0, Wave.PLUCK, decayS = 0.09)
+    }
+
     /** Dull "thock", like a ball on a wall: a falling thump plus a tiny click. */
     fun hit(): ShortArray = render(durationMs = 150) { buf ->
         voice(buf, 0.0, 0.13, 260.0, 120.0, Wave.TRIANGLE, decayS = 0.04)

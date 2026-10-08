@@ -106,4 +106,58 @@ public class SnakeRulesTest {
         game.update(1)
         assertEquals(hx + 1, game.debugHeadX())
     }
+
+    @Test
+    public fun bonusAppearsAfterItsDelayOnAFreeCell(): Unit {
+        val game = newGame()
+        assertEquals(-1, game.debugBonusX())
+        game.debugForceNextBonusIn(500)
+        game.update(400)
+        assertEquals(-1, game.debugBonusX(), "not yet")
+        game.update(160)
+        assertTrue(game.debugBonusX() >= 0 && game.debugBonusY() >= 0, "bonus must have appeared")
+        assertTrue(game.debugBonusLeftMs() in 1..SnakeGame.BONUS_LIFETIME_MS)
+        assertTrue(game.debugBonusX() != game.debugFoodX() || game.debugBonusY() != game.debugFoodY())
+    }
+
+    @Test
+    public fun bonusVanishesAfterItsLifetime(): Unit {
+        val game = newGame()
+        game.debugPlaceBonus(0, 0, leftMs = 300)
+        game.update(200)
+        assertTrue(game.debugBonusX() >= 0)
+        game.update(200)
+        assertEquals(-1, game.debugBonusX())
+        assertEquals(0, game.debugBonusLeftMs())
+    }
+
+    @Test
+    public fun eatingTheBonusGivesPointsAndGrowsWithoutMovingTheFood(): Unit {
+        val game = newGame()
+        val lengthBefore = game.debugLength()
+        val hx = game.debugHeadX()
+        val hy = game.debugHeadY()
+        val foodX = game.debugFoodX()
+        val foodY = game.debugFoodY()
+        game.debugPlaceBonus(hx + 1, hy)
+        game.update(160)
+        assertEquals(SnakeGame.BONUS_POINTS, game.score)
+        assertEquals(lengthBefore + 1, game.debugLength())
+        assertEquals(-1, game.debugBonusX())
+        assertEquals(foodX, game.debugFoodX())
+        assertEquals(foodY, game.debugFoodY())
+    }
+
+    @Test
+    public fun foodNeverRespawnsOnTheBonus(): Unit {
+        val game = newGame()
+        repeat(40) {
+            val hx = game.debugHeadX()
+            val hy = game.debugHeadY()
+            game.debugPlaceBonus(0, 0)
+            game.debugPlaceFood((hx + 1) % game.debugCols(), hy)
+            game.update(160)
+            assertTrue(game.debugFoodX() != game.debugBonusX() || game.debugFoodY() != game.debugBonusY() || game.debugBonusX() < 0)
+        }
+    }
 }

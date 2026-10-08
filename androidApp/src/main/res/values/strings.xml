@@ -70,7 +70,7 @@ No in-game purchases
 No internet required
 No account, no tracking
 One purchase unlocks everything, forever</string>
-    <string name="rules_snake">Guide the snake to the apples to grow. Don\'t bite your own tail. There are no walls: leaving one edge brings you back on the opposite side.</string>
+    <string name="rules_snake">Guide the snake to the apples to grow. Don\'t bite your own tail. There are no walls: leaving one edge brings you back on the opposite side. Golden bonuses appear now and then and vanish quickly: grab them for 5 points.</string>
     <string name="controls_snake">Swipe up, down, left or right to turn.</string>
     <string name="rules_g2048">Slide the tiles: two equal tiles that touch merge into one with double the value. Reach 2048. The game ends when the board is full and nothing can merge.</string>
     <string name="controls_g2048">Swipe in any direction to slide all tiles.</string>

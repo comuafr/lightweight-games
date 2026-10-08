@@ -71,12 +71,22 @@ public class SnakeGame : Game {
     private var foodX: Int = -1
     private var foodY: Int = -1
 
+    // Timed bonus: appears now and then, worth BONUS_POINTS, vanishes after BONUS_LIFETIME_MS.
+    private var bonusX: Int = -1
+    private var bonusY: Int = -1
+    private var bonusLeftMs: Int = 0
+    private var nextBonusInMs: Int = 0
+
+    /** Food items eaten this game (bonus included): drives the speed, so a bonus does not jump it. */
+    private var eaten: Int = 0
+
     private var rng: Rng = Rng(0L)
     private var tickAccumulatorMs: Int = 0
 
     // Events from the most recently processed tick, read (not mutated) by render().
     private var ateThisTick: Boolean = false
     private var diedThisTick: Boolean = false
+    private var ateBonusThisTick: Boolean = false
 
     override fun reset(seed: Long, players: Int) {
         rng = Rng(seed)
@@ -84,6 +94,12 @@ public class SnakeGame : Game {
         rows = gridRowsFor(viewWidth, viewHeight)
         layoutBoard()
         score = 0
+        eaten = 0
+        bonusX = -1
+        bonusY = -1
+        bonusLeftMs = 0
+        nextBonusInMs = nextBonusDelayMs()
+        ateBonusThisTick = false
         tickAccumulatorMs = 0
         direction = Direction.RIGHT
         nextDirection = Direction.RIGHT
@@ -158,9 +174,9 @@ public class SnakeGame : Game {
 
     override fun update(dtMs: Int): Boolean {
         if (status != GameStatus.Running) return false
+        var stepped = updateBonus(dtMs)
         tickAccumulatorMs += dtMs
         val interval = tickIntervalMs()
-        var stepped = false
         while (tickAccumulatorMs >= interval && status == GameStatus.Running) {
             tickAccumulatorMs -= interval
             step()
@@ -169,18 +185,62 @@ public class SnakeGame : Game {
         return stepped
     }
 
-    private fun tickIntervalMs(): Int = (BASE_TICK_MS - score * TICK_DECAY_PER_POINT).coerceIn(MIN_TICK_MS, BASE_TICK_MS)
+    private fun tickIntervalMs(): Int = (BASE_TICK_MS - eaten * TICK_DECAY_PER_POINT).coerceIn(MIN_TICK_MS, BASE_TICK_MS)
+
+    /** Ages the bonus (or counts down to the next one). @return true when it needs a redraw. */
+    private fun updateBonus(dtMs: Int): Boolean {
+        if (bonusLeftMs > 0) {
+            bonusLeftMs -= dtMs
+            if (bonusLeftMs <= 0) removeBonus()
+            return true // the countdown pie and the blink are animated
+        }
+        nextBonusInMs -= dtMs
+        if (nextBonusInMs <= 0) {
+            spawnBonus()
+            return bonusLeftMs > 0
+        }
+        return false
+    }
+
+    private fun removeBonus() {
+        bonusX = -1
+        bonusY = -1
+        bonusLeftMs = 0
+        nextBonusInMs = nextBonusDelayMs()
+    }
+
+    private fun nextBonusDelayMs(): Int = BONUS_MIN_DELAY_MS + rng.nextInt(BONUS_MAX_DELAY_MS - BONUS_MIN_DELAY_MS)
+
+    /** Puts the bonus on a random free cell (not body, not food); tries again later if the board is full. */
+    private fun spawnBonus() {
+        var attempts = 0
+        while (attempts < MAX_FOOD_ATTEMPTS) {
+            val bx = rng.nextInt(cols)
+            val by = rng.nextInt(rows)
+            if (!occupiesBody(bx, by, excludeTail = false) && !(bx == foodX && by == foodY)) {
+                bonusX = bx
+                bonusY = by
+                bonusLeftMs = BONUS_LIFETIME_MS
+                return
+            }
+            attempts++
+        }
+        nextBonusInMs = nextBonusDelayMs()
+    }
 
     private fun step() {
         ateThisTick = false
         diedThisTick = false
+        ateBonusThisTick = false
 
         direction = nextDirection
         // Torus: leaving one edge re-enters from the opposite one.
         val nx = (bodyX[headIdx] + direction.dx + cols) % cols
         val ny = (bodyY[headIdx] + direction.dy + rows) % rows
 
-        val willGrow = nx == foodX && ny == foodY
+        val onFood = nx == foodX && ny == foodY
+        val onBonus = bonusLeftMs > 0 && nx == bonusX && ny == bonusY
+        val willGrow = onFood || onBonus
         if (occupiesBody(nx, ny, excludeTail = !willGrow)) {
             die()
             return
@@ -196,9 +256,17 @@ public class SnakeGame : Game {
         headIdx = newHeadIdx
         if (willGrow) {
             length++
-            score++
-            ateThisTick = true
-            spawnFood()
+            eaten++
+            if (onFood) {
+                score++
+                ateThisTick = true
+                spawnFood()
+            }
+            if (onBonus) {
+                score += BONUS_POINTS
+                ateBonusThisTick = true
+                removeBonus()
+            }
         } else {
             tailIdx = ringNext(tailIdx)
         }
@@ -232,7 +300,7 @@ public class SnakeGame : Game {
         while (attempts < MAX_FOOD_ATTEMPTS) {
             val fx = rng.nextInt(cols)
             val fy = rng.nextInt(rows)
-            if (!occupiesBody(fx, fy, excludeTail = false)) {
+            if (!occupiesBody(fx, fy, excludeTail = false) && !(fx == bonusX && fy == bonusY)) {
                 foodX = fx
                 foodY = fy
                 return
@@ -258,6 +326,26 @@ public class SnakeGame : Game {
         foodX = x
         foodY = y
     }
+
+    internal fun debugPlaceBonus(x: Int, y: Int, leftMs: Int = BONUS_LIFETIME_MS) {
+        bonusX = x
+        bonusY = y
+        bonusLeftMs = leftMs
+    }
+
+    internal fun debugBonusX(): Int = bonusX
+
+    internal fun debugBonusY(): Int = bonusY
+
+    internal fun debugBonusLeftMs(): Int = bonusLeftMs
+
+    internal fun debugForceNextBonusIn(ms: Int) {
+        nextBonusInMs = ms
+    }
+
+    internal fun debugFoodX(): Int = foodX
+
+    internal fun debugFoodY(): Int = foodY
 
     internal fun debugHeadX(): Int = bodyX[headIdx]
 
@@ -297,11 +385,25 @@ public class SnakeGame : Game {
         }
 
 
+        if (bonusLeftMs > 0) renderBonus(scene)
+
         if (ateThisTick) scene.sound(SoundId.EAT)
+        if (ateBonusThisTick) scene.sound(SoundId.BONUS)
         if (diedThisTick) {
             scene.sound(SoundId.LOSE)
             scene.haptic()
         }
+    }
+
+    /** Golden bonus: a pie that empties as time runs out, a glowing coin on top; blinks in its last second and a half. */
+    private fun renderBonus(scene: Scene) {
+        if (bonusLeftMs < BONUS_BLINK_MS && (bonusLeftMs / BONUS_BLINK_PERIOD_MS) % 2 == 0) return
+        val cx = boardOriginX + bonusX * cellSize + cellSize / 2f
+        val cy = boardOriginY + bonusY * cellSize + cellSize / 2f
+        val sweep = 360f * bonusLeftMs / BONUS_LIFETIME_MS
+        scene.arc(cx, cy, cellSize * 0.62f, -90f, sweep, Palette.ACCENT, alpha = 0.45f)
+        scene.circle(cx, cy, cellSize * 0.4f, Palette.NEON_ORANGE)
+        scene.circle(cx, cy, cellSize * 0.26f, Palette.NEON_YELLOW)
     }
 
     public companion object {
@@ -313,6 +415,14 @@ public class SnakeGame : Game {
         private const val MIN_TICK_MS: Int = 70
         private const val TICK_DECAY_PER_POINT: Int = 5
         private const val MAX_FOOD_ATTEMPTS: Int = 64
+
+        /** Bonus: worth this many points, on screen this long, then a random pause before the next. */
+        public const val BONUS_POINTS: Int = 5
+        public const val BONUS_LIFETIME_MS: Int = 6000
+        private const val BONUS_MIN_DELAY_MS: Int = 7000
+        private const val BONUS_MAX_DELAY_MS: Int = 14000
+        private const val BONUS_BLINK_MS: Int = 1500
+        private const val BONUS_BLINK_PERIOD_MS: Int = 150
         private const val BODY_INSET: Float = 1f
         /** Vertical strip reserved for the session HUD (score / best). */
         private const val HUD_TOP_PT: Float = 32f
