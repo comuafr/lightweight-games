@@ -18,10 +18,11 @@ EN:
 
 Light Games is a pocket arcade that works everywhere: in the train, in the car, on the plane, or anywhere the network is bad.
 
-- Three games for free: Gobbler, Fusion and Wall Smash.
+- Three games for free: Gobbler, Fusion and Wall Smash (ten levels with tough and steel bricks, bonus and malus capsules, multi-ball).
 - One purchase unlocks twelve more: Color Echo, Twins, Tile Shuffle, Three in Line, Paddles, Drop Four, Chirp, Hidden Bombs, Secret Word, Flip Discs, Nine by Nine and Pixel Reveal.
 - No ads, no interstitials, no fake buttons, no subscription.
 - No account, no tracking, no data collection. The app never needs the network, except the store itself when you buy.
+- A bright arcade look, and a built-in help screen in every game.
 - Tiny download, instant launch, gentle on the battery.
 - Big touch targets and very little text, so young children can play alone. Several games are for two players on the same screen.
 - A parental gate protects the purchase button.
@@ -30,10 +31,11 @@ FR :
 
 Jeux Légers est une salle d'arcade de poche qui marche partout : dans le train, en voiture, en avion, ou dès que le réseau est mauvais.
 
-- Trois jeux gratuits : Glouton, Fusion et Casse-mur.
+- Trois jeux gratuits : Glouton, Fusion et Casse-mur (dix niveaux avec briques résistantes et blocs d'acier, capsules bonus et malus, multi-balles).
 - Un seul achat débloque douze jeux de plus : Écho de couleurs, Jumeaux, Glisse-cases, Trois alignés, Raquettes, Quatre alignés, Piou-Piou, Bombes cachées, Mot secret, Retourne-pions, Neuf par neuf et Pixel caché.
 - Aucune publicité, aucun écran d'interruption, aucun faux bouton, aucun abonnement.
 - Aucun compte, aucun suivi, aucune collecte de données. L'application n'a jamais besoin du réseau, sauf la boutique au moment de l'achat.
+- Un look arcade coloré, et un écran d'aide intégré dans chaque jeu.
 - Téléchargement minuscule, lancement instantané, douce pour la batterie.
 - Grandes zones tactiles et très peu de texte : les jeunes enfants jouent seuls. Plusieurs jeux se jouent à deux sur le même écran.
 - Une barrière parentale protège le bouton d'achat.
@@ -45,6 +47,9 @@ Jeux Légers est une salle d'arcade de poche qui marche partout : dans le train,
 ## Privacy declarations
 - Google Play Data safety: no data collected, no data shared, no security practices to declare beyond "data is not encrypted in transit" being not applicable (no transit). Purchases are handled by Google Play.
 - App Store privacy nutrition label: "Data Not Collected". `PrivacyInfo.xcprivacy` declares UserDefaults (reason CA92.1) and no tracking.
+
+## Assets (generated)
+`python3 tools/icons/gen_store_art.py` writes `store/play/icon_512.png` and `feature_1024x500_{en,fr}.png` (same mark as the launcher icon). Privacy policy: `docs/PRIVACY_POLICY.md` (to host at a public URL; fill in the contact e-mail first).
 
 ## Screenshots
 Generate with `./gradlew :preview:run` (JVM renderer, PNG per game) for drafts, then replace with real device captures for the final listing: catalog, Gobbler, Fusion, Wall Smash, one two-player game (Paddles), one puzzle (Nine by Nine), the unlock screen with the parental gate.
