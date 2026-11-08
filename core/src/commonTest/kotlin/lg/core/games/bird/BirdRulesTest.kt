@@ -100,4 +100,32 @@ public class BirdRulesTest {
         val game = newGame()
         assertTrue(game.score >= 0)
     }
+
+    @Test
+    public fun gapsNarrowAsTheScoreGrowsThenStopShrinking(): Unit {
+        val game = newGame()
+        val start = game.debugGapHalfHeight()
+        game.debugSetScore(15)
+        val middle = game.debugGapHalfHeight()
+        game.debugSetScore(30)
+        val end = game.debugGapHalfHeight()
+        game.debugSetScore(300)
+        assertTrue(middle < start && end < middle, "gap must shrink with the score")
+        assertEquals(end, game.debugGapHalfHeight(), 0.001f)
+    }
+
+    @Test
+    public fun pipesScrollFasterAsTheScoreGrows(): Unit {
+        fun travelAt(score: Int): Float {
+            val game = newGame()
+            tap(game)
+            game.debugSetScore(score)
+            game.debugForcePipe(0, 300f, 300f, scored = true)
+            game.debugSetBird(game.debugBirdX(), 300f, 0f)
+            val before = game.debugPipeX(0)
+            game.update(4)
+            return before - game.debugPipeX(0)
+        }
+        assertTrue(travelAt(30) > travelAt(0), "pipes must move faster at high score")
+    }
 }

@@ -33,8 +33,16 @@ import lg.core.util.Rng
  *
  * The bird starts at rest ([launched] false): no gravity, no pipe motion,
  * [wantsFrames] false. The first TAP sets [launched] and applies the same
- * upward impulse every subsequent TAP does. Difficulty is deliberately
- * gentle (large gap, moderate speed) since this is aimed at young kids.
+ * upward impulse every subsequent TAP does.
+ *
+ * ### Difficulty
+ *
+ * It starts gentle (wide gaps, slow scrolling, for young kids) and tightens with the score,
+ * linearly over the first [RAMP_SCORE] pipes, towards the narrower gaps and faster scroll of the
+ * classic game: [difficulty] goes from 0 to 1 and drives [pipeSpeed] and [gapFraction]. Each pipe
+ * keeps the gap height it was spawned with ([pipeGapHalf]), so the pipes already on screen do not
+ * change shape under the player. A new gap centre is never more than [MAX_GAP_SHIFT_FRACTION]
+ * of the playfield away from the previous one, so every pipe stays reachable at top speed.
  */
 public class BirdGame : Game {
     override val meta: GameMeta get() = META
@@ -61,6 +69,7 @@ public class BirdGame : Game {
 
     private val pipeX = FloatArray(PIPE_COUNT)
     private val pipeGapCenterY = FloatArray(PIPE_COUNT)
+    private val pipeGapHalf = FloatArray(PIPE_COUNT)
     private val pipeScored = BooleanArray(PIPE_COUNT)
 
     // Events from the most recently processed update() call, read (not mutated) by render().
@@ -98,23 +107,33 @@ public class BirdGame : Game {
         birdY = (ceilingY() + groundY()) / 2f
         for (i in 0 until PIPE_COUNT) {
             pipeX[i] = viewWidth + PIPE_WIDTH_PT + i * PIPE_SPACING_PT
-            pipeGapCenterY[i] = randomGapCenter()
+            pipeGapHalf[i] = gapHalfHeight()
+            pipeGapCenterY[i] = randomGapCenter(pipeGapHalf[i], if (i == 0) birdY else pipeGapCenterY[i - 1])
             pipeScored[i] = false
         }
     }
 
-    private fun randomGapCenter(): Float {
-        val playableTop = ceilingY() + gapHalfHeight() + GAP_MARGIN_PT
-        val playableBottom = groundY() - gapHalfHeight() - GAP_MARGIN_PT
-        val range = (playableBottom - playableTop).coerceAtLeast(1f)
-        return playableTop + rng.nextFloat() * range
+    /** A gap centre that fits the field for a gap of half-height [half], within reach of [previous]. */
+    private fun randomGapCenter(half: Float, previous: Float): Float {
+        val playableTop = ceilingY() + half + GAP_MARGIN_PT
+        val playableBottom = groundY() - half - GAP_MARGIN_PT
+        val maxShift = (groundY() - ceilingY()) * MAX_GAP_SHIFT_FRACTION
+        val lo = maxOf(playableTop, previous - maxShift)
+        val hi = minOf(playableBottom, previous + maxShift)
+        if (hi <= lo) return ((playableTop + playableBottom) / 2f).coerceAtLeast(playableTop)
+        return lo + rng.nextFloat() * (hi - lo)
     }
+
+    /** 0 at the start, 1 once [RAMP_SCORE] pipes have been passed. */
+    private fun difficulty(): Float = (score.toFloat() / RAMP_SCORE).coerceAtMost(1f)
+    private fun gapFraction(): Float = GAP_FRACTION + (GAP_FRACTION_MIN - GAP_FRACTION) * difficulty()
+    private fun pipeSpeed(): Float = PIPE_SPEED_PT_PER_S + (PIPE_SPEED_MAX_PT_PER_S - PIPE_SPEED_PT_PER_S) * difficulty()
 
     private fun ceilingY(): Float = HUD_TOP_PT
     private fun groundY(): Float = (viewHeight - GROUND_HEIGHT_PT).coerceAtLeast(ceilingY() + 1f)
     private fun gapHalfHeight(): Float {
         val playable = (groundY() - ceilingY()).coerceAtLeast(1f)
-        return (playable * GAP_FRACTION / 2f).coerceAtLeast(MIN_GAP_HALF_PT)
+        return (playable * gapFraction() / 2f).coerceAtLeast(MIN_GAP_HALF_PT)
     }
 
     override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float) {
@@ -152,7 +171,7 @@ public class BirdGame : Game {
         birdY += birdVY * dtSec
 
         for (i in 0 until PIPE_COUNT) {
-            pipeX[i] -= PIPE_SPEED_PT_PER_S * dtSec
+            pipeX[i] -= pipeSpeed() * dtSec
             if (pipeX[i] + PIPE_WIDTH_PT < 0f) recyclePipe(i)
             if (!pipeScored[i] && pipeX[i] + PIPE_WIDTH_PT < birdX) {
                 pipeScored[i] = true
@@ -177,16 +196,19 @@ public class BirdGame : Game {
         val left = birdX + BIRD_RADIUS_PT
         val right = birdX - BIRD_RADIUS_PT
         if (right > pipeX[i] + PIPE_WIDTH_PT || left < pipeX[i]) return false
-        val gapTop = pipeGapCenterY[i] - gapHalfHeight()
-        val gapBottom = pipeGapCenterY[i] + gapHalfHeight()
+        val gapTop = pipeGapCenterY[i] - pipeGapHalf[i]
+        val gapBottom = pipeGapCenterY[i] + pipeGapHalf[i]
         return birdY - BIRD_RADIUS_PT < gapTop || birdY + BIRD_RADIUS_PT > gapBottom
     }
 
     private fun recyclePipe(i: Int): Unit {
         var maxX = pipeX[i]
         for (j in 0 until PIPE_COUNT) if (pipeX[j] > maxX) maxX = pipeX[j]
+        var previous = birdY
+        for (j in 0 until PIPE_COUNT) if (pipeX[j] == maxX && j != i) previous = pipeGapCenterY[j]
         pipeX[i] = maxX + PIPE_SPACING_PT
-        pipeGapCenterY[i] = randomGapCenter()
+        pipeGapHalf[i] = gapHalfHeight()
+        pipeGapCenterY[i] = randomGapCenter(pipeGapHalf[i], previous)
         pipeScored[i] = false
     }
 
@@ -206,6 +228,9 @@ public class BirdGame : Game {
     internal fun debugPipeX(i: Int): Float = pipeX[i]
     internal fun debugPipeGapCenterY(i: Int): Float = pipeGapCenterY[i]
     internal fun debugGapHalfHeight(): Float = gapHalfHeight()
+    internal fun debugSetScore(n: Int) {
+        score = n
+    }
 
     internal fun debugSetBird(x: Float, y: Float, vy: Float, launched: Boolean = true) {
         birdX = x
@@ -218,6 +243,7 @@ public class BirdGame : Game {
     internal fun debugForcePipe(i: Int, x: Float, gapCenterY: Float, scored: Boolean = false) {
         pipeX[i] = x
         pipeGapCenterY[i] = gapCenterY
+        pipeGapHalf[i] = gapHalfHeight()
         pipeScored[i] = scored
     }
 
@@ -229,8 +255,8 @@ public class BirdGame : Game {
         for (i in 0 until PIPE_COUNT) {
             val x = pipeX[i]
             if (x + PIPE_WIDTH_PT < 0f || x > viewWidth) continue
-            val gapTop = pipeGapCenterY[i] - gapHalfHeight()
-            val gapBottom = pipeGapCenterY[i] + gapHalfHeight()
+            val gapTop = pipeGapCenterY[i] - pipeGapHalf[i]
+            val gapBottom = pipeGapCenterY[i] + pipeGapHalf[i]
             scene.rect(x, ceilingY(), PIPE_WIDTH_PT, (gapTop - ceilingY()).coerceAtLeast(0f), Palette.TILE_3)
             scene.rect(x, gapBottom, PIPE_WIDTH_PT, (groundY() - gapBottom).coerceAtLeast(0f), Palette.TILE_3)
         }
@@ -259,6 +285,10 @@ public class BirdGame : Game {
         private const val PIPE_SPACING_PT: Float = 220f
         private const val PIPE_WIDTH_PT: Float = 46f
         private const val GAP_FRACTION: Float = 0.46f
+        private const val GAP_FRACTION_MIN: Float = 0.30f
+        private const val PIPE_SPEED_MAX_PT_PER_S: Float = 135f
+        private const val RAMP_SCORE: Int = 30
+        private const val MAX_GAP_SHIFT_FRACTION: Float = 0.45f
         private const val MIN_GAP_HALF_PT: Float = 55f
         private const val GAP_MARGIN_PT: Float = 10f
 
