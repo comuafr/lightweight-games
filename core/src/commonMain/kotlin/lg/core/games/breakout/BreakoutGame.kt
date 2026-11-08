@@ -16,6 +16,7 @@ import lg.core.scene.Scene
 import lg.core.scene.SoundId
 import lg.core.scene.StringKey
 import lg.core.util.Rng
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -349,10 +350,21 @@ public class BreakoutGame : Game {
 
                 val overlapX = minOf(right, bx + bw) - maxOf(left, bx)
                 val overlapY = minOf(bottom, by + BRICK_ROW_HEIGHT_PT) - maxOf(top, by)
+                // The ball is pushed out of the brick and sent away from it, not merely mirrored:
+                // against a steel brick (which never disappears) a plain mirror re-triggers on the
+                // next substep while still overlapping, and the ball sticks to the block.
                 if (overlapX < overlapY) {
-                    ballVX[i] = -ballVX[i]
+                    if (ballX[i] < bx + bw / 2f) {
+                        ballX[i] = bx - r
+                        ballVX[i] = -abs(ballVX[i])
+                    } else {
+                        ballX[i] = bx + bw + r
+                        ballVX[i] = abs(ballVX[i])
+                    }
                 } else {
-                    bounceOffBrickFace(i, bx + bw / 2f, bw / 2f)
+                    val below = ballY[i] > by + BRICK_ROW_HEIGHT_PT / 2f
+                    ballY[i] = if (below) by + BRICK_ROW_HEIGHT_PT + r else by - r
+                    bounceOffBrickFace(i, bx + bw / 2f, bw / 2f, below)
                 }
                 damageBrick(idx)
                 return
@@ -376,14 +388,14 @@ public class BreakoutGame : Game {
      * part -> to the right, centre -> unchanged), at the same speed. Without this a ball launched
      * straight up would keep drilling the same column.
      */
-    private fun bounceOffBrickFace(i: Int, brickCenterX: Float, brickHalfWidth: Float) {
+    private fun bounceOffBrickFace(i: Int, brickCenterX: Float, brickHalfWidth: Float, below: Boolean) {
         val speed = sqrt(ballVX[i] * ballVX[i] + ballVY[i] * ballVY[i])
         if (speed <= 0f) return
         val offset = ((ballX[i] - brickCenterX) / brickHalfWidth).coerceIn(-1f, 1f)
         val limit = speed * MAX_BOUNCE_FRACTION
         val vx = (ballVX[i] + offset * speed * BRICK_DEFLECT).coerceIn(-limit, limit)
         val vyMagnitude = sqrt(speed * speed - vx * vx)
-        ballVY[i] = if (ballVY[i] < 0f) vyMagnitude else -vyMagnitude
+        ballVY[i] = if (below) vyMagnitude else -vyMagnitude
         ballVX[i] = vx
     }
 

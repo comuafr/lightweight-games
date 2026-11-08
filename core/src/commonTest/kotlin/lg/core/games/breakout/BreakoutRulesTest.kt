@@ -147,6 +147,8 @@ public class BreakoutRulesTest {
         val x = game.debugBrickLeft(1) + game.debugBrickWidth() / 2f
         val y = game.debugBrickTop(4) + game.debugBrickHeight() + 5f
         game.debugSetBall(x = x, y = y, vx = 0f, vy = -220f, inFlight = true)
+        // The ball is pushed out of the pillar; clear the brick below so it has room to leave.
+        game.debugDestroyBrick(5, 1)
         val remaining = game.debugBricksRemaining()
         game.update(30)
         assertEquals(BreakoutGame.STEEL, game.debugHitPoints(4, 1))
@@ -444,5 +446,22 @@ public class BreakoutRulesTest {
         game.reset(2L)
         assertTrue(game.debugChoosing())
         assertEquals(5, game.progress)
+    }
+
+    @Test
+    public fun ballLeavesSteelBrickInsteadOfSticking(): Unit {
+        val game = BreakoutGame()
+        game.restoreProgress(10)
+        game.reset(1L)
+        game.resize(VIEW_W, VIEW_H)
+        tap(game, game.debugChoiceTileCenterX(10), game.debugChoiceTileCenterY(10))
+        // Level 10: steel at row 0, col 0. Start the ball slightly inside its bottom face, going up.
+        val steelBottom = game.debugBrickTop(0) + game.debugBrickHeight()
+        game.debugSetBall(x = game.debugBrickLeft(0) + 5f, y = steelBottom + 2f, vx = 0f, vy = -300f, inFlight = true)
+        val bricksBefore = game.debugBricksRemaining()
+        for (n in 1..5) game.update(4)
+        assertTrue(game.debugBallVY() > 0f, "ball must head away from the steel brick")
+        assertTrue(game.debugBallY() - game.debugBallRadius() >= steelBottom - 0.01f, "ball must be out of the steel brick")
+        assertEquals(bricksBefore, game.debugBricksRemaining(), "steel is never destroyed")
     }
 }
