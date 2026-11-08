@@ -1,6 +1,6 @@
 name: LightweightGames
 options:
-  bundleIdPrefix: fr.regisp
+  bundleIdPrefix: fr.comua
   deploymentTarget:
     iOS: "15.0"
   createIntermediateGroups: true
@@ -56,7 +56,7 @@ targets:
       path: LightweightGames/Info.plist
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: fr.regisp.lightgames
+        PRODUCT_BUNDLE_IDENTIFIER: fr.comua.lightgames
         PRODUCT_NAME: LightweightGames
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -111,7 +111,7 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: fr.regisp.lightgames.tests
+        PRODUCT_BUNDLE_IDENTIFIER: fr.comua.lightgames.tests
     dependencies:
       - target: LightweightGames
       # Weak-linked: only `StoreKitTests.swift` uses it, and weak linking

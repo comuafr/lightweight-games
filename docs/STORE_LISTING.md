@@ -6,7 +6,7 @@ Same content on Google Play and the App Store, adapted to each console's fields.
 
 Game titles are original (renamed on 2026-09-18 to stay clear of any classic-game or brand name); the mapping to the internal ids is in `docs/GAME_NAMES.md`.
 - App name: **Light Games** (EN) / **Jeux Légers** (FR)
-- Bundle / application id: `fr.regisp.lightgames`
+- Bundle / application id: `fr.comua.lightgames`
 - In-app product: `unlock_all`, non-consumable, "Unlock every game" / "Débloquer tous les jeux"
 
 ## Short description (80 chars)

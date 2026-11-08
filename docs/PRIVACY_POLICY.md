@@ -4,7 +4,7 @@ Last updated / Dernière mise à jour : 2026-11-08
 
 ## English
 
-**Light Games** (application id `fr.regisp.lightgames`) is published by COMUA, France.
+**Light Games** (application id `fr.comua.lightgames`) is published by COMUA, France.
 Contact: **regis.portalez@comua.fr**
 
 **We do not collect any personal data.**
@@ -19,7 +19,7 @@ Changes to this policy will be published at the same address with a new date.
 
 ## Français
 
-**Jeux Légers** (identifiant `fr.regisp.lightgames`) est édité par COMUA, France.
+**Jeux Légers** (identifiant `fr.comua.lightgames`) est édité par COMUA, France.
 Contact : **regis.portalez@comua.fr**
 
 **Nous ne collectons aucune donnée personnelle.**

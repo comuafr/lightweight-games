@@ -61,7 +61,7 @@ Aucun émulateur n'est nécessaire : les deux téléphones se testent en direct.
    ```
 8. **Sans câble** (Android 11+) : Options de développement > Débogage sans fil > « Associer l'appareil avec un code », puis `adb pair IP:PORT` et `adb connect IP:PORT`.
 
-**Achat sur Samsung** : l'écran de déblocage affichera « hors ligne / indisponible » tant que l'application n'est pas publiée sur une piste de test interne de la Play Console avec le même identifiant `fr.regisp.lightgames` et la même signature. Le flux complet (prix, achat, restauration, remboursement) se teste ensuite avec un compte testeur de licence : voir `docs/BILLING_TESTING.md`. Tout le reste (jeux, réglages, hors ligne, barrière parentale) se teste sans Play Console.
+**Achat sur Samsung** : l'écran de déblocage affichera « hors ligne / indisponible » tant que l'application n'est pas publiée sur une piste de test interne de la Play Console avec le même identifiant `fr.comua.lightgames` et la même signature. Le flux complet (prix, achat, restauration, remboursement) se teste ensuite avec un compte testeur de licence : voir `docs/BILLING_TESTING.md`. Tout le reste (jeux, réglages, hors ligne, barrière parentale) se teste sans Play Console.
 
 ### iPhone (iOS) : un Mac est indispensable
 
@@ -73,7 +73,7 @@ Apple n'autorise l'installation que depuis Xcode (ou TestFlight, qui demande un 
    git clone git@github.com:comuafr/lightweight-games.git && cd lightweight-games
    cd iosApp && xcodegen generate && open LightweightGames.xcodeproj
    ```
-2. **Signature** : dans Xcode, cible `LightweightGames` > Signing & Capabilities > cocher « Automatically manage signing » et choisir votre Apple ID comme Team (Xcode > Settings > Accounts pour l'ajouter). Si l'identifiant `fr.regisp.lightgames` est refusé, le changer dans `iosApp/project.yml` (clé `PRODUCT_BUNDLE_IDENTIFIER`) et relancer `xcodegen generate`.
+2. **Signature** : dans Xcode, cible `LightweightGames` > Signing & Capabilities > cocher « Automatically manage signing » et choisir votre Apple ID comme Team (Xcode > Settings > Accounts pour l'ajouter). Si l'identifiant `fr.comua.lightgames` est refusé, le changer dans `iosApp/project.yml` (clé `PRODUCT_BUNDLE_IDENTIFIER`) et relancer `xcodegen generate`.
 3. **Sur l'iPhone** : brancher le câble, « Se fier à cet ordinateur », puis Réglages > Confidentialité et sécurité > Mode développeur > activer (redémarrage).
 4. **Lancer** : sélectionner l'iPhone dans la barre d'outils Xcode, puis ⌘R. Le premier build lance Gradle (`embedAndSignAppleFrameworkForXcode`) et télécharge le compilateur Kotlin/Native : compter plusieurs minutes.
 5. **Première ouverture** : si iOS refuse de lancer l'app, Réglages > Général > VPN et gestion de l'appareil > faire confiance au certificat de développeur.
