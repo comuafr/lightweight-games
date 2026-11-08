@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -11,9 +13,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.ProductDetails
 import kotlin.math.roundToInt
-import lg.android.billing.ProductInfo
+import lg.android.billing.ProductResult
 import lg.android.billing.PurchaseOutcome
 import lg.android.billing.RestoreResult
 import lg.android.ui.HoldToConfirmButton
@@ -27,10 +30,11 @@ import lg.core.scene.StringKey
 /**
  * The "unlock all" paywall (PLAN.md §6, §8): the locked game's icon, title
  * and body copy, the price once known, a parental-gate hold button, a
- * "Restore purchases" action, and an offline notice when the price can't be
- * fetched. Never blocks: there is no spinner, the back button always works,
- * and an unreachable store only ever disables the buy button — it never
- * traps the user on this screen.
+ * "Restore purchases" action, and, when the price can't be fetched, a message
+ * saying why (store unreachable, product not offered, other error with its code)
+ * and a "Try again" button. Never blocks: the back button always works, a store
+ * that never answers is given up on after [LOAD_TIMEOUT_MS], and an unreachable
+ * store only ever disables the buy button — it never traps the user on this screen.
  *
  * On a successful purchase or restore this finishes itself; [MainActivity]
  * re-reads [App.isUnlocked] in `onResume` and rebuilds the grid, so padlocks
@@ -39,9 +43,14 @@ import lg.core.scene.StringKey
 class PaywallActivity : Activity() {
     private lateinit var strings: Strings
     private lateinit var priceText: TextView
-    private lateinit var offlineText: TextView
+    private lateinit var statusText: TextView
+    private lateinit var retryButton: TextView
     private lateinit var unlockButton: HoldToConfirmButton
     private var productDetails: ProductDetails? = null
+    private val handler = Handler(Looper.getMainLooper())
+
+    /** Incremented by each load, so a late answer to an abandoned or timed-out load is ignored. */
+    private var loadId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,11 +84,23 @@ class PaywallActivity : Activity() {
         priceText = centeredText("", 17f, bold = true)
         root.addView(priceText)
 
-        offlineText = centeredText(strings.get(StringKey.OFFLINE_NOTICE), 13f, bold = false).apply {
+        statusText = centeredText("", 13f, bold = false).apply {
             visibility = View.GONE
-            alpha = 0.7f
+            alpha = 0.8f
         }
-        root.addView(offlineText)
+        root.addView(statusText)
+        retryButton = TextView(this).apply {
+            text = getString(R.string.billing_retry)
+            textSize = 15f
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(dp(8), dp(12), dp(8), dp(12))
+            isClickable = true
+            isFocusable = true
+            visibility = View.GONE
+            setOnClickListener { loadProduct() }
+        }
+        root.addView(retryButton)
         root.addView(spacer(24))
 
         unlockButton = HoldToConfirmButton(this).apply {
@@ -111,6 +132,8 @@ class PaywallActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        loadId++
+        handler.removeCallbacksAndMessages(null)
         // Not onStop(): launchBillingFlow() shows Play's own purchase sheet
         // on top of this Activity, which stops it for the whole purchase --
         // onPurchasesUpdated's result typically arrives around the time this
@@ -125,22 +148,50 @@ class PaywallActivity : Activity() {
         TileView(this, meta).apply { locked = true }
 
     private fun loadProduct() {
-        App.from(this).billing.queryProduct { info -> onProductLoaded(info) }
+        val id = ++loadId
+        showStatus(getString(R.string.billing_connecting), retry = false)
+        unlockButton.isEnabled = false
+        handler.removeCallbacksAndMessages(null)
+        handler.postDelayed({
+            if (id == loadId) {
+                loadId++
+                showFailure(getString(R.string.billing_store_unavailable), null)
+            }
+        }, LOAD_TIMEOUT_MS)
+        App.from(this).billing.queryProduct { result ->
+            if (id != loadId) return@queryProduct
+            handler.removeCallbacksAndMessages(null)
+            onProductLoaded(result)
+        }
     }
 
-    private fun onProductLoaded(info: ProductInfo?) {
+    private fun onProductLoaded(result: ProductResult) {
         if (isFinishing || isDestroyed) return
-        if (info == null) {
-            priceText.visibility = View.GONE
-            offlineText.visibility = View.VISIBLE
-            unlockButton.isEnabled = false
-            return
+        when (result) {
+            is ProductResult.Loaded -> {
+                productDetails = result.info.productDetails
+                priceText.text = result.info.formattedPrice
+                priceText.visibility = View.VISIBLE
+                statusText.visibility = View.GONE
+                retryButton.visibility = View.GONE
+                unlockButton.isEnabled = true
+            }
+            is ProductResult.StoreUnavailable -> showFailure(getString(R.string.billing_store_unavailable), result.code)
+            ProductResult.NotFound -> showFailure(getString(R.string.billing_product_not_found), null)
+            is ProductResult.Error -> showFailure(getString(R.string.billing_error), result.code)
         }
-        productDetails = info.productDetails
-        priceText.text = info.formattedPrice
-        priceText.visibility = View.VISIBLE
-        offlineText.visibility = View.GONE
-        unlockButton.isEnabled = true
+    }
+
+    private fun showFailure(message: String, code: Int?) {
+        priceText.visibility = View.GONE
+        unlockButton.isEnabled = false
+        showStatus(if (code == null) message else message + "\n" + getString(R.string.billing_code, code), retry = true)
+    }
+
+    private fun showStatus(message: String, retry: Boolean) {
+        statusText.text = message
+        statusText.visibility = View.VISIBLE
+        retryButton.visibility = if (retry) View.VISIBLE else View.GONE
     }
 
     private fun onGateConfirmed() {
@@ -154,7 +205,15 @@ class PaywallActivity : Activity() {
         when (outcome) {
             PurchaseOutcome.SUCCESS -> finish()
             PurchaseOutcome.PENDING -> Toast.makeText(this, strings.get(StringKey.PURCHASE_PENDING), Toast.LENGTH_LONG).show()
-            PurchaseOutcome.FAILED -> Toast.makeText(this, strings.get(StringKey.PURCHASE_FAILED), Toast.LENGTH_SHORT).show()
+            PurchaseOutcome.FAILED -> {
+                val code = App.from(this).billing.lastErrorCode
+                val message = if (code == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE) {
+                    getString(R.string.purchase_unavailable)
+                } else {
+                    strings.get(StringKey.PURCHASE_FAILED) + " (" + getString(R.string.billing_code, code) + ")"
+                }
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -169,8 +228,10 @@ class PaywallActivity : Activity() {
                 Toast.makeText(this, strings.get(StringKey.RESTORED), Toast.LENGTH_SHORT).show()
                 finish()
             }
-            RestoreResult.NOTHING_TO_RESTORE, RestoreResult.ERROR ->
+            RestoreResult.NOTHING_TO_RESTORE ->
                 Toast.makeText(this, strings.get(StringKey.NOTHING_TO_RESTORE), Toast.LENGTH_SHORT).show()
+            RestoreResult.ERROR ->
+                Toast.makeText(this, getString(R.string.restore_error), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -191,6 +252,9 @@ class PaywallActivity : Activity() {
 
     companion object {
         const val EXTRA_GAME_ID = "game_id"
+
+        /** Gives up waiting for Google Play after this long and offers to try again. */
+        private const val LOAD_TIMEOUT_MS = 12_000L
 
         fun start(context: Context, gameId: String?) {
             val intent = Intent(context, PaywallActivity::class.java)

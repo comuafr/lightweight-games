@@ -101,4 +101,14 @@ One purchase unlocks everything, forever</string>
     <string name="controls_sudoku">Choose a difficulty, tap an empty square, then tap a digit on the pad. Use the erase key to clear a square.</string>
     <string name="rules_nonogram">Reveal the hidden picture. The numbers beside each row and column tell the lengths of the runs of filled squares in it. Cross the squares you know are empty.</string>
     <string name="controls_nonogram">Tap or drag to fill squares. Press and hold to put a cross.</string>
+
+    <!-- Billing errors shown on the paywall (Android only, not part of the shared StringKey list). -->
+    <string name="billing_connecting">Connecting to Google Play…</string>
+    <string name="billing_store_unavailable">Google Play can\'t be reached. Check your connection and that Google Play is up to date, then try again.</string>
+    <string name="billing_product_not_found">This purchase isn\'t available right now for this account. Try again in a few minutes.</string>
+    <string name="billing_error">Google Play returned an error. Try again later.</string>
+    <string name="billing_code">Code: %1$d</string>
+    <string name="billing_retry">Try again</string>
+    <string name="purchase_unavailable">This purchase isn\'t available right now</string>
+    <string name="restore_error">Couldn\'t reach Google Play. Try again later.</string>
 </resources>

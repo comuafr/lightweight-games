@@ -3,6 +3,7 @@ package lg.android.billing
 import android.app.Activity
 import android.content.Context
 import android.os.Handler
+import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -19,6 +20,20 @@ import lg.core.store.EntitlementSource
 
 /** [ProductDetails] plus the formatted price string the paywall shows. */
 internal data class ProductInfo(val productDetails: ProductDetails, val formattedPrice: String)
+
+/** What the paywall learns when it asks Play for the price of the product; each failure says why, for the user. */
+internal sealed interface ProductResult {
+    data class Loaded(val info: ProductInfo) : ProductResult
+
+    /** Play Store unreachable or its billing service unavailable (offline, outdated, not signed in...). */
+    data class StoreUnavailable(val code: Int) : ProductResult
+
+    /** The store answered but does not offer the product to this account (not published yet, not a tester...). */
+    data object NotFound : ProductResult
+
+    /** Any other error answered by the store. */
+    data class Error(val code: Int) : ProductResult
+}
 
 /** Outcome of a `queryPurchasesAsync` restore, as shown to the user. */
 internal enum class RestoreResult { RESTORED, NOTHING_TO_RESTORE, ERROR }
@@ -73,6 +88,13 @@ internal class PlayBilling(
      */
     var purchaseListener: ((PurchaseOutcome) -> Unit)? = null
 
+    /** Response code of the last failed purchase, for the message shown with [PurchaseOutcome.FAILED]. */
+    var lastErrorCode: Int = BillingClient.BillingResponseCode.OK
+        private set
+
+    /** Response code of the last connection attempt (OK when it worked). */
+    private var lastSetupCode: Int = BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE
+
     private val purchasesUpdatedListener = PurchasesUpdatedListener { result, purchases ->
         onPurchasesUpdated(result, purchases)
     }
@@ -104,6 +126,8 @@ internal class PlayBilling(
         c.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
                 connecting = false
+                lastSetupCode = result.responseCode
+                Log.i(TAG, "setup: code=${result.responseCode} msg=${result.debugMessage}")
                 when {
                     result.responseCode == BillingClient.BillingResponseCode.OK -> {
                         reconnectAttempted = false
@@ -122,6 +146,7 @@ internal class PlayBilling(
 
             override fun onBillingServiceDisconnected() {
                 connecting = false
+                lastSetupCode = BillingClient.BillingResponseCode.SERVICE_DISCONNECTED
                 if (!reconnectAttempted) {
                     reconnectAttempted = true
                     startConnection()
@@ -148,16 +173,15 @@ internal class PlayBilling(
     // ---------------------------------------------------------------- paywall
 
     /**
-     * Looks up [Entitlement.PRODUCT_ID]'s price. Calls back with `null` when
-     * the store cannot be reached, the query fails, or the product is
-     * missing (all treated as "offline" by the paywall — never an error
-     * dialog, never a retry loop).
+     * Looks up [Entitlement.PRODUCT_ID]'s price and always calls back exactly once with a
+     * [ProductResult] that says why it failed, so the paywall can tell the user (never an error
+     * dialog, never a retry loop: the user decides to retry).
      */
-    fun queryProduct(callback: (ProductInfo?) -> Unit) {
+    fun queryProduct(callback: (ProductResult) -> Unit) {
         connect { ready ->
             val c = client
             if (!ready || c == null) {
-                callback(null)
+                callback(ProductResult.StoreUnavailable(lastSetupCode))
                 return@connect
             }
             val product = QueryProductDetailsParams.Product.newBuilder()
@@ -167,22 +191,48 @@ internal class PlayBilling(
             val params = QueryProductDetailsParams.newBuilder().setProductList(listOf(product)).build()
             c.queryProductDetailsAsync(params) { result, queryResult ->
                 post {
+                    Log.i(
+                        TAG,
+                        "queryProduct: code=${result.responseCode} msg=${result.debugMessage} " +
+                            "found=${queryResult.productDetailsList.size} unfetched=${queryResult.unfetchedProductList.map { it.productId to it.statusCode }}",
+                    )
                     val details = queryResult.productDetailsList.firstOrNull { it.productId == Entitlement.PRODUCT_ID }
                     val price = details?.oneTimePurchaseOfferDetails?.formattedPrice
-                    if (result.responseCode != BillingClient.BillingResponseCode.OK || details == null || price == null) {
-                        callback(null)
-                    } else {
-                        callback(ProductInfo(details, price))
-                    }
+                    callback(
+                        when {
+                            result.responseCode != BillingClient.BillingResponseCode.OK -> failureFor(result.responseCode)
+                            details == null -> ProductResult.NotFound
+                            price == null -> ProductResult.Error(result.responseCode)
+                            else -> ProductResult.Loaded(ProductInfo(details, price))
+                        },
+                    )
                 }
             }
         }
     }
 
-    /** Opens the Play purchase sheet for [productDetails]. Outcome arrives via [purchaseListener]. */
+    private fun failureFor(code: Int): ProductResult = when (code) {
+        BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
+        BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
+        BillingClient.BillingResponseCode.SERVICE_TIMEOUT,
+        BillingClient.BillingResponseCode.NETWORK_ERROR,
+        BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
+        -> ProductResult.StoreUnavailable(code)
+        BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> ProductResult.NotFound
+        else -> ProductResult.Error(code)
+    }
+
+    /**
+     * Opens the Play purchase sheet for [productDetails]. Outcome arrives via [purchaseListener];
+     * a sheet that cannot even be opened is reported there too, as [PurchaseOutcome.FAILED].
+     */
     fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
-        val c = client ?: return
-        val offerToken = productDetails.oneTimePurchaseOfferDetails?.offerToken ?: return
+        val c = client
+        val offerToken = productDetails.oneTimePurchaseOfferDetails?.offerToken
+        if (c == null || offerToken == null) {
+            failPurchase(BillingClient.BillingResponseCode.ERROR)
+            return
+        }
         val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
             .setOfferToken(offerToken)
@@ -190,7 +240,14 @@ internal class PlayBilling(
         val flowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(listOf(productParams))
             .build()
-        c.launchBillingFlow(activity, flowParams)
+        val result = c.launchBillingFlow(activity, flowParams)
+        Log.i(TAG, "launchBillingFlow: code=${result.responseCode} msg=${result.debugMessage}")
+        if (result.responseCode != BillingClient.BillingResponseCode.OK) failPurchase(result.responseCode)
+    }
+
+    private fun failPurchase(code: Int) {
+        lastErrorCode = code
+        purchaseListener?.invoke(PurchaseOutcome.FAILED)
     }
 
     private fun onPurchasesUpdated(result: BillingResult, purchases: List<Purchase>?) {
@@ -217,12 +274,17 @@ internal class PlayBilling(
                 BillingClient.BillingResponseCode.USER_CANCELED -> Unit
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
                     restore { restoreResult ->
-                        purchaseListener?.invoke(
-                            if (restoreResult == RestoreResult.RESTORED) PurchaseOutcome.SUCCESS else PurchaseOutcome.FAILED,
-                        )
+                        if (restoreResult == RestoreResult.RESTORED) {
+                            purchaseListener?.invoke(PurchaseOutcome.SUCCESS)
+                        } else {
+                            failPurchase(result.responseCode)
+                        }
                     }
                 }
-                else -> purchaseListener?.invoke(PurchaseOutcome.FAILED)
+                else -> {
+                    Log.i(TAG, "purchase failed: code=${result.responseCode} msg=${result.debugMessage}")
+                    failPurchase(result.responseCode)
+                }
             }
         }
     }
@@ -300,5 +362,9 @@ internal class PlayBilling(
 
     private fun post(block: () -> Unit) {
         mainHandler.post(block)
+    }
+
+    private companion object {
+        const val TAG = "LGBilling"
     }
 }

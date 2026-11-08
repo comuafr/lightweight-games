@@ -99,4 +99,14 @@ Un seul achat débloque tout, pour toujours</string>
     <string name="controls_sudoku">Choisis une difficulté, touche une case vide, puis un chiffre sur le pavé. La touche gomme efface une case.</string>
     <string name="rules_nonogram">Fais apparaître l\'image cachée. Les nombres à côté de chaque ligne et colonne donnent la longueur des suites de cases pleines. Marque d\'une croix les cases que tu sais vides.</string>
     <string name="controls_nonogram">Touche ou fais glisser le doigt pour remplir des cases. Appuie longuement pour poser une croix.</string>
+
+    <!-- Erreurs de facturation affichées sur l'écran de déblocage (Android seulement). -->
+    <string name="billing_connecting">Connexion à Google Play…</string>
+    <string name="billing_store_unavailable">Google Play est inaccessible. Vérifiez votre connexion et que Google Play est à jour, puis réessayez.</string>
+    <string name="billing_product_not_found">Cet achat n\'est pas disponible pour le moment avec ce compte. Réessayez dans quelques minutes.</string>
+    <string name="billing_error">Google Play a renvoyé une erreur. Réessayez plus tard.</string>
+    <string name="billing_code">Code : %1$d</string>
+    <string name="billing_retry">Réessayer</string>
+    <string name="purchase_unavailable">Cet achat n\'est pas disponible pour le moment</string>
+    <string name="restore_error">Impossible de joindre Google Play. Réessayez plus tard.</string>
 </resources>

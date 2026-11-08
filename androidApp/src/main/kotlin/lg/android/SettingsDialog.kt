@@ -58,7 +58,8 @@ internal object SettingsDialog {
                         app.billing.restore { result ->
                             val message = when (result) {
                                 RestoreResult.RESTORED -> strings.get(StringKey.RESTORED)
-                                RestoreResult.NOTHING_TO_RESTORE, RestoreResult.ERROR -> strings.get(StringKey.NOTHING_TO_RESTORE)
+                                RestoreResult.NOTHING_TO_RESTORE -> strings.get(StringKey.NOTHING_TO_RESTORE)
+                                RestoreResult.ERROR -> context.getString(R.string.restore_error)
                             }
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         }
