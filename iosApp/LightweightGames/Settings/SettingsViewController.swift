@@ -12,6 +12,7 @@ final class SettingsViewController: UITableViewController {
     private enum Section: Int, CaseIterable {
         case toggles
         case purchases
+        case scores
         case about
     }
 
@@ -49,6 +50,7 @@ final class SettingsViewController: UITableViewController {
         switch Section(rawValue: section) {
         case .toggles: return 2 // sound, haptics
         case .purchases: return 1 // restore purchases / unlocked state
+        case .scores: return 1 // reset scores
         case .about: return 1 // version
         case .none: return 0
         }
@@ -83,6 +85,11 @@ final class SettingsViewController: UITableViewController {
                 cell.isUserInteractionEnabled = true
             }
             return cell
+        case .scores:
+            let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+            cell.textLabel?.text = Strings.resetScores
+            cell.textLabel?.textColor = .systemRed
+            return cell
         case .about, .none:
             let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
             cell.textLabel?.text = Strings.version
@@ -94,9 +101,29 @@ final class SettingsViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        guard Section(rawValue: indexPath.section) == .purchases else { return }
-        guard !services.isUnlocked, !isRestoring else { return }
-        restorePurchases()
+        switch Section(rawValue: indexPath.section) {
+        case .scores:
+            confirmResetScores()
+        case .purchases:
+            guard !services.isUnlocked, !isRestoring else { return }
+            restorePurchases()
+        default:
+            return
+        }
+    }
+
+    /// Asks before erasing every best score and table; progress (levels reached) and purchases are kept.
+    private func confirmResetScores() {
+        let alert = UIAlertController(title: Strings.resetScoresConfirm, message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: Strings.cancel, style: .cancel))
+        alert.addAction(UIAlertAction(title: Strings.resetScoresErase, style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.services.scores.resetAll(gameIds: GameRegistry.shared.all.map { $0.id })
+            let done = UIAlertController(title: Strings.resetScoresDone, message: nil, preferredStyle: .alert)
+            done.addAction(UIAlertAction(title: Strings.close, style: .default))
+            self.present(done, animated: true)
+        })
+        present(alert, animated: true)
     }
 
     private func restorePurchases() {

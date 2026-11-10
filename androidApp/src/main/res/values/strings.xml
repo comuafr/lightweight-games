@@ -54,6 +54,14 @@
     <string name="quit">Quit</string>
     <string name="help">Help</string>
     <string name="level">Level</string>
+    <string name="high_scores">High scores</string>
+    <string name="grand_champion">Grand champion</string>
+    <string name="new_high_score">New high score!</string>
+    <string name="enter_initials">Your initials</string>
+    <string name="reset_scores">Reset scores</string>
+    <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
+    <string name="reset_scores_erase">Erase</string>
+    <string name="reset_scores_done">Scores erased</string>
 
     <!-- App-only strings, not part of StringKey. -->
     <string name="version">Version %1$s</string>

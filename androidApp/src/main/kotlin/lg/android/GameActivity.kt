@@ -1,12 +1,19 @@
 package lg.android
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.pm.ActivityInfo
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.InputType
+import android.view.Gravity
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
@@ -18,6 +25,7 @@ import lg.core.GameRegistry
 import lg.core.Orientation
 import lg.core.session.GameSession
 import lg.core.session.Overlay
+import lg.core.store.Scores
 
 /**
  * Hosts a single [GameSession] full-screen. Owns the session end-to-end for
@@ -67,6 +75,7 @@ class GameActivity : Activity() {
             gameView.stopFrameLoop()
             showHelp(root, meta, app)
         }
+        session.onEnterInitials = { _, _ -> askInitials(app) }
         showHelpFirstTime(root, meta, app)
         EdgeToEdge.enterImmersiveSticky(window)
 
@@ -82,6 +91,55 @@ class GameActivity : Activity() {
     }
 
     private var helpView: HelpView? = null
+    private var initialsDialog: AlertDialog? = null
+
+    /**
+     * A new high score: a dialog with a three-letter, upper-case field, prefilled with the initials used last.
+     * The answer (or leaving the dialog, which keeps the prefilled/default initials) goes to [GameSession.submitInitials].
+     */
+    private fun askInitials(app: App) {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            filters = arrayOf(InputFilter.AllCaps(), InputFilter.LengthFilter(Scores.NAME_LENGTH))
+            setSingleLine()
+            imeOptions = EditorInfo.IME_ACTION_DONE
+            gravity = Gravity.CENTER
+            textSize = 32f
+            setText(app.scores.lastInitials())
+            setSelection(text.length)
+        }
+        val pad = (24 * resources.displayMetrics.density).toInt()
+        val holder = FrameLayout(this).apply {
+            setPadding(pad, pad / 2, pad, 0)
+            addView(input, FrameLayout.LayoutParams(MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.enter_initials)
+            .setView(holder)
+            .setPositiveButton(android.R.string.ok) { _, _ -> finishInitials(input.text.toString()) }
+            .setOnCancelListener { finishInitials(null) }
+            .create()
+        dialog.setCanceledOnTouchOutside(false)
+        input.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                dialog.dismiss()
+                finishInitials(input.text.toString())
+                true
+            } else {
+                false
+            }
+        }
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        initialsDialog = dialog
+        dialog.show()
+    }
+
+    private fun finishInitials(name: String?) {
+        initialsDialog = null
+        session.submitInitials(name)
+        gameView.invalidate()
+    }
 
     /** First time this game is opened: rules and controls on top of the game, until dismissed. */
     private fun showHelpFirstTime(root: FrameLayout, meta: GameMeta, app: App) {
@@ -105,6 +163,10 @@ class GameActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
+        // Leaving while the initials are asked: keep the score under the default initials.
+        initialsDialog?.dismiss()
+        initialsDialog = null
+        session.submitInitials(null)
         session.pause()
         session.persist(App.from(this).store)
         gameView.stopFrameLoop()
@@ -121,6 +183,8 @@ class GameActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        initialsDialog?.dismiss()
+        initialsDialog = null
         if (Build.VERSION.SDK_INT >= 33) {
             (backCallback as? OnBackInvokedCallback)?.let {
                 onBackInvokedDispatcher.unregisterOnBackInvokedCallback(it)

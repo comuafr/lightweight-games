@@ -62,6 +62,10 @@ enum Strings {
         "quit", // 44 QUIT
         "help", // 45 HELP
         "level", // 46 LEVEL
+        "high_scores", // 47 HIGH_SCORES
+        "grand_champion", // 48 GRAND_CHAMPION
+        "new_high_score", // 49 NEW_HIGH_SCORE
+        "enter_initials", // 50 ENTER_INITIALS
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps
@@ -89,6 +93,12 @@ enum Strings {
     static let appName = NSLocalizedString("app_name", comment: "")
     static let close = NSLocalizedString("close", comment: "")
     static let version = NSLocalizedString("version", comment: "")
+    static let ok = NSLocalizedString("ok", comment: "")
+    static let cancel = NSLocalizedString("cancel", comment: "")
+    static let resetScores = NSLocalizedString("reset_scores", comment: "")
+    static let resetScoresConfirm = NSLocalizedString("reset_scores_confirm", comment: "")
+    static let resetScoresErase = NSLocalizedString("reset_scores_erase", comment: "")
+    static let resetScoresDone = NSLocalizedString("reset_scores_done", comment: "")
 
     /// Number of `StringKey` ordinals this table covers -- kept in sync with
     /// `keysByOrdinal.count` (and, transitively, with `StringKey.kt`; see

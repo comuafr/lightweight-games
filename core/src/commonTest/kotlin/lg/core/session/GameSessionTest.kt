@@ -308,9 +308,12 @@ public class GameSessionTest {
     public fun tapOnStartButtonBeginsPlay(): Unit {
         val session = newSession()
         session.resize(400f, 400f)
-        // Single centered "Tap to start" button for a 1-player game covers the centre of the framed play area.
-        session.onPointer(0, PointerPhase.DOWN, 200f, 175f)
-        session.onPointer(0, PointerPhase.UP, 200f, 175f)
+        // Snake has a high-score table, so its single "Tap to start" button sits at the bottom of the play zone
+        // (centre at 504 of 560), below the table.
+        val x = session.playOriginX + 180f * session.playScale
+        val y = session.playOriginY + 504f * session.playScale
+        session.onPointer(0, PointerPhase.DOWN, x, y)
+        session.onPointer(0, PointerPhase.UP, x, y)
         assertIs<Overlay.None>(session.overlay)
     }
 

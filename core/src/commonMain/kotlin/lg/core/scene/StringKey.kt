@@ -57,4 +57,8 @@ public enum class StringKey {
     QUIT,
     HELP,
     LEVEL,
+    HIGH_SCORES,
+    GRAND_CHAMPION,
+    NEW_HIGH_SCORE,
+    ENTER_INITIALS,
 }

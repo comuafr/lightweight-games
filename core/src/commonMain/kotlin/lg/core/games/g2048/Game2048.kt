@@ -535,6 +535,7 @@ public class Game2048 : Game {
             resumable = true,
             factory = { Game2048() },
             icon = { scene, size -> ArcadeIcons.fusion(scene, size) },
+            defaultScores = intArrayOf(30000, 16000, 8000, 3500, 1000),
         )
     }
 }

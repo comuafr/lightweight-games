@@ -299,6 +299,7 @@ public class SequenceGame : Game {
             resumable = false,
             factory = { SequenceGame() },
             icon = { scene, size -> ArcadeIcons.colorEcho(scene, size) },
+            defaultScores = intArrayOf(20, 15, 11, 7, 4),
         )
     }
 }

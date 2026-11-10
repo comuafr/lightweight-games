@@ -48,6 +48,17 @@ public class GameSession(
     /** Called when the player taps the permanent "Help" button; the platform shows the rules and controls. */
     public var onHelp: (() -> Unit)? = null
 
+    /**
+     * Called when a finished game earned place `rank` (0 = grand champion) in its high-score table: the platform asks
+     * the player for three initials and answers with [submitInitials]. Without a handler the score is entered at once
+     * under the last initials used (or `---`).
+     */
+    public var onEnterInitials: ((score: Int, rank: Int) -> Unit)? = null
+
+    /** True while the platform is asked for the initials of a new high score. */
+    public val isAwaitingInitials: Boolean
+        get() = overlay is Overlay.NewHighScore
+
     // Full view size (screen dp). The game and the overlays always work in a fixed
     // logical play zone of `width` x `height` ([LOGICAL_SHORT] x [LOGICAL_LONG], swapped for a landscape game) so that
     // every player gets the same game whatever the screen; the session scales that
@@ -104,10 +115,53 @@ public class GameSession(
 
     private var savedProgress: Int = scores.progress(meta.id)
 
+    // The high-score table of a game that has one (see [GameMeta.defaultScores]): loaded into fixed arrays at the
+    // start and after each insertion, so drawing it never allocates.
+    private val defaultScores: IntArray? = meta.defaultScores
+    private val tableNames = Array(Scores.TABLE_SIZE) { Scores.NO_NAME }
+    private val tableScores = IntArray(Scores.TABLE_SIZE)
+    private val tableIsDefault = BooleanArray(Scores.TABLE_SIZE)
+    private var tableLines = 0
+
+    /** Line of the table that was just earned by the player, or -1. */
+    private var highlightRank = -1
+
     init {
+        if (defaultScores != null) {
+            scores.migrateLegacy(meta.id)
+            loadTable()
+        }
         game.restoreProgress(savedProgress)
         // The game's play zone has a fixed size, known from the start.
         game.resize(width, height)
+        layoutButtons()
+    }
+
+    private fun loadTable() {
+        val defaults = defaultScores ?: return
+        val lines = scores.table(meta.id, defaults)
+        tableLines = lines.size
+        for (i in lines.indices) {
+            tableNames[i] = lines[i].name
+            tableScores[i] = lines[i].score
+            tableIsDefault[i] = lines[i].isDefault
+        }
+    }
+
+    /**
+     * Gives the initials of the player who just earned a place in the high-score table ([onEnterInitials]); [name]
+     * is cleaned to three letters A-Z, and `null` or blank means the last initials used (or `---`). Enters the score
+     * and shows the game over screen with the table. No-op when no initials are awaited.
+     */
+    public fun submitInitials(name: String?) {
+        val current = overlay as? Overlay.NewHighScore ?: return
+        val defaults = defaultScores ?: return
+        val chosen = if (name.isNullOrBlank()) scores.lastInitials().ifEmpty { Scores.NO_NAME } else name
+        val cleaned = Scores.sanitizeName(chosen)
+        highlightRank = scores.insert(meta.id, defaults, cleaned, current.score)
+        if (cleaned != Scores.NO_NAME) scores.saveLastInitials(cleaned)
+        loadTable()
+        overlay = Overlay.Over(0)
         layoutButtons()
     }
 
@@ -122,6 +176,7 @@ public class GameSession(
     public fun start(players: Int = 1, seed: Long = clock.nowMs()) {
         this.players = players.coerceIn(meta.players.first, meta.players.last)
         game.reset(seed, this.players)
+        highlightRank = -1
         overlay = Overlay.None
         eventsArmed = true
         layoutButtons()
@@ -232,10 +287,22 @@ public class GameSession(
         saveProgressIfAny()
         val status = game.status
         if (status is GameStatus.Over && overlay == Overlay.None) {
-            scores.submit(meta.id, game.score)
-            overlay = Overlay.Over(status.winner)
+            val defaults = defaultScores
+            val finalScore = game.score
+            // Ask before submit(): the table's own bookkeeping must not see the new best as an old one.
+            val earned = defaults != null && scores.qualifies(meta.id, defaults, finalScore)
+            scores.submit(meta.id, finalScore)
             eventsArmed = true
-            layoutButtons()
+            if (earned) {
+                val rank = scores.table(meta.id, defaults).count { it.score >= finalScore }
+                overlay = Overlay.NewHighScore(rank, finalScore)
+                layoutButtons()
+                val handler = onEnterInitials
+                if (handler != null) handler(finalScore, rank) else submitInitials(null)
+            } else {
+                overlay = Overlay.Over(status.winner)
+                layoutButtons()
+            }
             return true
         }
         return false
@@ -373,14 +440,15 @@ public class GameSession(
             is Overlay.Over -> {
                 addButton(StringKey.RESTART, ACTION_RESTART)
             }
-            Overlay.None -> Unit
+            is Overlay.NewHighScore, Overlay.None -> Unit
         }
 
         val btnH = BUTTON_HEIGHT_PT
         val btnW = (width * 0.9f).coerceAtLeast(btnH * 2f)
         val gap = BUTTON_GAP_PT
         val totalH = buttonCount * btnH + (buttonCount - 1).coerceAtLeast(0) * gap
-        var y = (height - totalH) / 2f
+        // With a high-score table on the screen the buttons sit at the bottom, below the table.
+        var y = if (showsTable(overlay)) height - BUTTON_BOTTOM_MARGIN_PT - totalH else (height - totalH) / 2f
         val x = (width - btnW) / 2f
         for (i in 0 until buttonCount) {
             buttonRect[i].x = x
@@ -451,6 +519,10 @@ public class GameSession(
         if (currentOverlay == Overlay.None) return
 
         scene.rect(0f, 0f, width, height, Palette.SURFACE, alpha = OVERLAY_SCRIM_ALPHA)
+        if (showsTable(currentOverlay)) {
+            renderTableOverlay(scene, currentOverlay)
+            return
+        }
         when (currentOverlay) {
             Overlay.Start -> {
                 scene.text(width / 2f, height * 0.32f, meta.titleKey, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
@@ -473,15 +545,61 @@ public class GameSession(
                     }
                 }
             }
-            Overlay.None -> Unit
+            is Overlay.NewHighScore, Overlay.None -> Unit
         }
+        renderButtons(scene)
+    }
 
+    private fun renderButtons(scene: Scene) {
         for (i in 0 until buttonCount) {
             val r = buttonRect[i]
             scene.rect(r.x, r.y, r.w, r.h, Palette.ACCENT, radius = BUTTON_RADIUS_PT)
             val labelKey = buttonLabel[i] ?: continue
             scene.text(r.x + r.w / 2f, r.y + r.h / 2f, labelKey, Palette.BG, BUTTON_TEXT_SIZE_PT, Align.CENTER)
         }
+    }
+
+    /** Whether [overlay] is drawn together with the game's high-score table (start and end screens of such a game). */
+    private fun showsTable(overlay: Overlay): Boolean =
+        defaultScores != null && (overlay === Overlay.Start || overlay is Overlay.Over || overlay is Overlay.NewHighScore)
+
+    /** Start or end screen of a game with a high-score table: a title, then the table, then the buttons. */
+    private fun renderTableOverlay(scene: Scene, overlay: Overlay) {
+        val cx = width / 2f
+        if (overlay === Overlay.Start) {
+            scene.text(cx, TABLE_TITLE_Y_PT, meta.titleKey, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
+        } else {
+            scene.text(cx, TABLE_TITLE_Y_PT, StringKey.GAME_OVER, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
+            if (overlay is Overlay.NewHighScore || highlightRank >= 0) {
+                scene.text(cx, TABLE_SUBTITLE_Y_PT, StringKey.NEW_HIGH_SCORE, Palette.NEON_YELLOW, SUBTITLE_SIZE_PT, Align.CENTER)
+            }
+        }
+
+        scene.text(cx, TABLE_HEADER_Y_PT, StringKey.HIGH_SCORES, Palette.NEON_CYAN, TABLE_HEADER_SIZE_PT, Align.CENTER)
+        val left = TABLE_SIDE_MARGIN_PT
+        val right = width - TABLE_SIDE_MARGIN_PT
+        for (i in 0 until tableLines) {
+            val color = lineColor(i)
+            if (i == 0) {
+                scene.text(cx, TABLE_CHAMPION_LABEL_Y_PT, StringKey.GRAND_CHAMPION, Palette.NEON_PINK, TABLE_LABEL_SIZE_PT, Align.CENTER)
+                scene.label(left, TABLE_CHAMPION_Y_PT, tableNames[0], color, TABLE_CHAMPION_SIZE_PT, Align.LEFT)
+                scene.number(right, TABLE_CHAMPION_Y_PT, tableScores[0], color, TABLE_CHAMPION_SIZE_PT, Align.RIGHT)
+            } else {
+                val y = TABLE_ROWS_Y_PT + (i - 1) * TABLE_ROW_STEP_PT
+                // The grand champion stands apart; the four runners-up are numbered 1 to 4, flipper style.
+                scene.number(left + TABLE_RANK_WIDTH_PT, y, i, color, TABLE_ROW_SIZE_PT, Align.RIGHT)
+                scene.label(left + TABLE_RANK_WIDTH_PT + TABLE_NAME_GAP_PT, y, tableNames[i], color, TABLE_ROW_SIZE_PT, Align.LEFT)
+                scene.number(right, y, tableScores[i], color, TABLE_ROW_SIZE_PT, Align.RIGHT)
+            }
+        }
+        renderButtons(scene)
+    }
+
+    /** Yellow for the line just earned, green for the player's other scores, dim for the built-in ones. */
+    private fun lineColor(line: Int): Int = when {
+        line == highlightRank -> Palette.NEON_YELLOW
+        tableIsDefault[line] -> Palette.FG_DIM
+        else -> Palette.NEON_GREEN
     }
 
     private companion object {
@@ -524,6 +642,23 @@ public class GameSession(
         const val HUD_MARGIN_PT = 8f
         const val HUD_LABEL_WIDTH_PT = 64f
         const val HUD_TEXT_SIZE_PT = 16f
+
+        // High-score table layout, in zone points.
+        const val BUTTON_BOTTOM_MARGIN_PT = 24f
+        const val TABLE_TITLE_Y_PT = 64f
+        const val TABLE_SUBTITLE_Y_PT = 98f
+        const val TABLE_HEADER_Y_PT = 152f
+        const val TABLE_HEADER_SIZE_PT = 34f
+        const val TABLE_CHAMPION_LABEL_Y_PT = 206f
+        const val TABLE_CHAMPION_Y_PT = 246f
+        const val TABLE_ROWS_Y_PT = 304f
+        const val TABLE_ROW_STEP_PT = 40f
+        const val TABLE_SIDE_MARGIN_PT = 56f
+        const val TABLE_RANK_WIDTH_PT = 22f
+        const val TABLE_NAME_GAP_PT = 18f
+        const val TABLE_LABEL_SIZE_PT = 14f
+        const val TABLE_CHAMPION_SIZE_PT = 40f
+        const val TABLE_ROW_SIZE_PT = 24f
 
         const val TITLE_SIZE_PT = 28f
         const val SUBTITLE_SIZE_PT = 18f

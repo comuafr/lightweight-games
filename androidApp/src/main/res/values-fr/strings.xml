@@ -53,6 +53,14 @@
     <string name="quit">Quitter</string>
     <string name="help">Aide</string>
     <string name="level">Niveau</string>
+    <string name="high_scores">Meilleurs scores</string>
+    <string name="grand_champion">Grand champion</string>
+    <string name="new_high_score">Nouveau record !</string>
+    <string name="enter_initials">Vos initiales</string>
+    <string name="reset_scores">Réinitialiser les scores</string>
+    <string name="reset_scores_confirm">Effacer tous les meilleurs scores ? Cette action est définitive.</string>
+    <string name="reset_scores_erase">Effacer</string>
+    <string name="reset_scores_done">Scores effacés</string>
 
     <string name="version">Version %1$s</string>
     <string name="unlocked_check">Débloqué ✓</string>

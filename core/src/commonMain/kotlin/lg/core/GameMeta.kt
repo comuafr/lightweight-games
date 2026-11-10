@@ -28,6 +28,9 @@ public enum class Complexity {
  *
  * @property factory Creates a fresh [Game] instance; called once per play session.
  * @property icon Draws a small representative tile icon into [Scene] at the given size (points, square).
+ * @property defaultScores The built-in high-score table of a game whose score is a real arcade score (higher is
+ *   better): [lg.core.store.Scores.TABLE_SIZE] values in strictly descending order, grand champion first, from a
+ *   very hard score down to an easy one. `null` for a game without a high-score table.
  */
 public class GameMeta(
     public val id: String,
@@ -39,4 +42,5 @@ public class GameMeta(
     public val resumable: Boolean,
     public val factory: () -> Game,
     public val icon: (Scene, Float) -> Unit,
+    public val defaultScores: IntArray? = null,
 )

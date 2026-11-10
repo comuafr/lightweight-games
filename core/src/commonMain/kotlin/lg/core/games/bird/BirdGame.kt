@@ -310,6 +310,7 @@ public class BirdGame : Game {
             resumable = false,
             factory = { BirdGame() },
             icon = { scene, size -> ArcadeIcons.chirp(scene, size) },
+            defaultScores = intArrayOf(40, 25, 13, 7, 3),
         )
     }
 }

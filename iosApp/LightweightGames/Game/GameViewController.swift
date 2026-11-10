@@ -86,15 +86,58 @@ final class GameViewController: UIViewController {
             self?.closeTapped()
             return KotlinUnit()
         }
+
+        // A new high score: ask for three initials (a text field, upper case), then hand them back to the session.
+        session.onEnterInitials = { [weak self] _, _ in
+            self?.askInitials()
+            return KotlinUnit()
+        }
+    }
+
+    // MARK: - High-score initials
+
+    /// Letters in a name; same as `Scores.NAME_LENGTH` in the core.
+    private static let initialsLength = 3
+
+    private func askInitials() {
+        let alert = UIAlertController(title: Strings.string(for: .enterInitials), message: nil, preferredStyle: .alert)
+        alert.addTextField { [weak self] field in
+            field.text = self?.services.scores.lastInitials()
+            field.autocapitalizationType = .allCharacters
+            field.autocorrectionType = .no
+            field.spellCheckingType = .no
+            field.textAlignment = .center
+            field.font = .systemFont(ofSize: 28, weight: .semibold)
+            field.returnKeyType = .done
+            field.delegate = self
+        }
+        alert.addAction(UIAlertAction(title: Strings.ok, style: .default) { [weak self, weak alert] _ in
+            self?.finishInitials(alert?.textFields?.first?.text)
+        })
+        present(alert, animated: true)
+    }
+
+    private func finishInitials(_ name: String?) {
+        session.submitInitials(name: name)
+        gameView.setNeedsDisplay()
+    }
+
+    /// Leaving while the initials are asked: keep the score under the default initials.
+    private func giveUpInitialsIfAsked() {
+        guard session.isAwaitingInitials else { return }
+        (presentedViewController as? UIAlertController)?.dismiss(animated: false)
+        session.submitInitials(name: nil)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        giveUpInitialsIfAsked()
         session.pause()
         session.persist(store: services.kvStore)
     }
 
     @objc private func willResignActive() {
+        giveUpInitialsIfAsked()
         session.pause()
         session.persist(store: services.kvStore)
     }
@@ -103,5 +146,18 @@ final class GameViewController: UIViewController {
         session.pause()
         session.persist(store: services.kvStore)
         dismiss(animated: true)
+    }
+}
+
+extension GameViewController: UITextFieldDelegate {
+    /// Upper-cases what is typed and caps the field at three characters.
+    func textField(
+        _ textField: UITextField,
+        shouldChangeCharactersIn range: NSRange,
+        replacementString string: String
+    ) -> Bool {
+        let current = (textField.text ?? "") as NSString
+        let updated = current.replacingCharacters(in: range, with: string.uppercased())
+        return updated.count <= GameViewController.initialsLength
     }
 }

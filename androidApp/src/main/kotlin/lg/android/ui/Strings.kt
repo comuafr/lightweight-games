@@ -75,6 +75,10 @@ internal class Strings(context: Context) {
             R.string.quit, // QUIT
             R.string.help, // HELP
             R.string.level, // LEVEL
+            R.string.high_scores, // HIGH_SCORES
+            R.string.grand_champion, // GRAND_CHAMPION
+            R.string.new_high_score, // NEW_HIGH_SCORE
+            R.string.enter_initials, // ENTER_INITIALS
         )
     }
 }

@@ -97,14 +97,27 @@ public class SnakeRulesTest {
     }
 
     @Test
-    public fun tickSpeedsUpAsScoreGrows(): Unit {
+    public fun tickStaysTheSameWhateverTheSnakeLength(): Unit {
         val game = newGame()
-        // At score 0, a 159ms update must not trigger a tick.
+        // At the start, a 159ms update must not trigger a tick.
         val hx = game.debugHeadX()
         game.update(159)
         assertEquals(hx, game.debugHeadX())
         game.update(1)
         assertEquals(hx + 1, game.debugHeadX())
+
+        // After eating many apples (a straight run of 12 fits the 20-cell row) the pace is still one step per 160 ms.
+        for (i in 1..12) {
+            game.debugPlaceFood(game.debugHeadX() + 1, game.debugHeadY())
+            game.update(160)
+            if (game.status !is GameStatus.Running) break
+        }
+        assertTrue(game.debugLength() > 12, "the snake must have grown a lot")
+        val before = game.debugHeadX()
+        game.update(159)
+        assertEquals(before, game.debugHeadX(), "still no step before 160 ms")
+        game.update(1)
+        assertTrue(game.debugHeadX() != before, "one step after 160 ms")
     }
 
     @Test

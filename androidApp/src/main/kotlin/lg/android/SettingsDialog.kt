@@ -11,6 +11,7 @@ import android.widget.Toast
 import kotlin.math.roundToInt
 import lg.android.billing.RestoreResult
 import lg.android.ui.Strings
+import lg.core.GameRegistry
 import lg.core.scene.StringKey
 
 /**
@@ -68,6 +69,16 @@ internal object SettingsDialog {
             },
         )
 
+        container.addView(
+            TextView(context).apply {
+                text = context.getString(R.string.reset_scores)
+                setPadding(0, dp(12), 0, dp(4))
+                isClickable = true
+                isFocusable = true
+                setOnClickListener { confirmResetScores(context) }
+            },
+        )
+
         DevTools.settingsRow(context, ::dp)?.let { container.addView(it) }
 
         container.addView(
@@ -83,6 +94,18 @@ internal object SettingsDialog {
             .setTitle(R.string.settings)
             .setView(container)
             .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    /** Asks before erasing every best score and table; progress (levels reached) and purchases are kept. */
+    private fun confirmResetScores(context: Context) {
+        AlertDialog.Builder(context)
+            .setMessage(R.string.reset_scores_confirm)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.reset_scores_erase) { _, _ ->
+                App.from(context).scores.resetAll(GameRegistry.all.map { it.id })
+                Toast.makeText(context, R.string.reset_scores_done, Toast.LENGTH_SHORT).show()
+            }
             .show()
     }
 

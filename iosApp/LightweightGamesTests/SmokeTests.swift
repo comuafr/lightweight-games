@@ -93,7 +93,7 @@ final class SmokeTests: XCTestCase {
     /// `iosApp/tools/check_string_keys.py` covers the ordinal-order half of
     /// this same invariant statically (without needing to run the app).
     func testEveryStringKeyOrdinalResolvesToATranslatedString() throws {
-        XCTAssertEqual(Strings.ordinalCount, 44, "StringKey.kt now has a different case count; update this test and Strings.swift's keysByOrdinal together")
+        XCTAssertEqual(Strings.ordinalCount, 51, "StringKey.kt now has a different case count; update this test and Strings.swift's keysByOrdinal together")
 
         for ordinal in 0..<Int32(Strings.ordinalCount) {
             let localized = Strings.string(forOrdinal: ordinal)

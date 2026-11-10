@@ -81,9 +81,6 @@ public class SnakeGame : Game {
     private var bonusLeftMs: Int = 0
     private var nextBonusInMs: Int = 0
 
-    /** Food items eaten this game (bonus included): drives the speed, so a bonus does not jump it. */
-    private var eaten: Int = 0
-
     private var rng: Rng = Rng(0L)
     private var tickAccumulatorMs: Int = 0
 
@@ -98,7 +95,6 @@ public class SnakeGame : Game {
         rows = gridRowsFor(viewWidth, viewHeight)
         layoutBoard()
         score = 0
-        eaten = 0
         bonusX = -1
         bonusY = -1
         bonusLeftMs = 0
@@ -183,16 +179,13 @@ public class SnakeGame : Game {
         if (status != GameStatus.Running) return false
         var stepped = updateBonus(dtMs)
         tickAccumulatorMs += dtMs
-        val interval = tickIntervalMs()
-        while (tickAccumulatorMs >= interval && status == GameStatus.Running) {
-            tickAccumulatorMs -= interval
+        while (tickAccumulatorMs >= TICK_MS && status == GameStatus.Running) {
+            tickAccumulatorMs -= TICK_MS
             step()
             stepped = true
         }
         return stepped
     }
-
-    private fun tickIntervalMs(): Int = (BASE_TICK_MS - eaten * TICK_DECAY_PER_POINT).coerceIn(MIN_TICK_MS, BASE_TICK_MS)
 
     /** Ages the bonus (or counts down to the next one). @return true when it needs a redraw. */
     private fun updateBonus(dtMs: Int): Boolean {
@@ -268,7 +261,6 @@ public class SnakeGame : Game {
         headIdx = newHeadIdx
         if (willGrow) {
             length++
-            eaten++
             if (onFood) {
                 score++
                 ateThisTick = true
@@ -423,9 +415,8 @@ public class SnakeGame : Game {
         public const val MIN_ROWS: Int = 20
         public const val MAX_ROWS: Int = 64
 
-        private const val BASE_TICK_MS: Int = 160
-        private const val MIN_TICK_MS: Int = 70
-        private const val TICK_DECAY_PER_POINT: Int = 5
+        /** The snake never speeds up (young players): the challenge comes from its growing length only. */
+        private const val TICK_MS: Int = 160
         private const val MAX_FOOD_ATTEMPTS: Int = 64
         private const val MAX_QUEUED_TURNS: Int = 2
 
@@ -451,6 +442,7 @@ public class SnakeGame : Game {
             resumable = false,
             factory = { SnakeGame() },
             icon = { scene, size -> ArcadeIcons.snake(scene, size) },
+            defaultScores = intArrayOf(90, 60, 38, 22, 10),
         )
     }
 }

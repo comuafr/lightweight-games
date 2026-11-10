@@ -59,4 +59,20 @@ public class RegistryTest {
             assertEquals(0, scene.dropped)
         }
     }
+
+    @Test
+    public fun exactlyTheFourArcadeGamesHaveAHighScoreTable(): Unit {
+        val withTable = GameRegistry.all.filter { it.defaultScores != null }.map { it.id }.toSet()
+        // Wall Smash has levels of its own, so it has no table.
+        assertEquals(setOf("snake", "g2048", "bird", "sequence"), withTable)
+        for (meta in GameRegistry.all) {
+            val defaults = meta.defaultScores ?: continue
+            assertEquals(lg.core.store.Scores.TABLE_SIZE, defaults.size, "${meta.id} needs one default per line")
+            for (i in 1 until defaults.size) {
+                assertTrue(defaults[i - 1] > defaults[i], "${meta.id} defaults must strictly decrease")
+            }
+            assertTrue(defaults.last() > 0, "${meta.id} defaults must be positive")
+            assertEquals(1, meta.players.last, "${meta.id} is a one-player game")
+        }
+    }
 }
