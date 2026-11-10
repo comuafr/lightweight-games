@@ -60,3 +60,15 @@ Dans cet ordre, en jeu avancé quand c'est possible : catalogue, Glouton, Fusion
 
 ## Notes de version 1.0.0
 `fr-FR/release_notes.txt` et `en-US/release_notes.txt`.
+
+## Autres langues (traductions faites à la main, à faire relire par un locuteur si possible)
+`es-ES/`, `de-DE/`, `it-IT/`, `pt-BR/` : mêmes fichiers que pour `fr-FR/` et `en-US/` (`title.txt`, `short_description.txt`, `full_description.txt`, `release_notes_1.0.4.txt`), plus `product_unlock_all.txt` (titre et description du produit `unlock_all` dans la langue).
+
+Règles suivies, à garder pour toute nouvelle langue :
+- **Le titre reste « Light Games »** et **les noms des jeux restent en anglais** : l'application n'existe qu'en anglais et en français, et les autres langues voient l'app en anglais (voir `localeFilters` dans `androidApp/build.gradle.kts`). Traduire les noms créerait un décalage avec ce qu'affiche l'app.
+- **La dernière ligne de la description indique les langues de l'app** (anglais et français), pour ne pas surprendre l'utilisateur.
+- Limites : titre 30, description courte 80, complète 4000, notes de version 500, titre du produit 55 caractères.
+- **Les captures d'écran sont en français** : pour ces langues, mieux vaut des captures en anglais, qui correspondent à l'interface que l'utilisateur verra.
+
+Dans la console : Grow users > Store presence > Main store listing > Manage translations > ajouter la langue, puis coller chaque fichier dans le champ correspondant. Les textes des produits se saisissent dans Monetize with Play > Products > One-time products > `unlock_all` > traductions.
+

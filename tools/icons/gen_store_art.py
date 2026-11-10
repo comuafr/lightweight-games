@@ -98,4 +98,12 @@ if __name__ == "__main__":
     icon(os.path.join(a.out, "icon_512.png"))
     feature(os.path.join(a.out, "feature_1024x500_en.png"), "Light Games", "15 tiny offline games. No ads.")
     feature(os.path.join(a.out, "feature_1024x500_fr.png"), "Jeux Légers", "15 mini-jeux hors ligne. Sans pub.")
+    # Other store languages: the app is only in English and French, so the title stays "Light Games".
+    for code, tagline in (
+        ("es", "15 minijuegos sin conexión. Sin anuncios."),
+        ("de", "15 Mini-Spiele ohne Internet. Keine Werbung."),
+        ("it", "15 mini-giochi offline. Niente pubblicità."),
+        ("pt-BR", "15 minijogos offline. Sem anúncios."),
+    ):
+        feature(os.path.join(a.out, f"feature_1024x500_{code}.png"), "Light Games", tagline)
     print("ok")

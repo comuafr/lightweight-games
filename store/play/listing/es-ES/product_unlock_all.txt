@@ -1,0 +1,2 @@
+Title: Desbloquear todos los juegos
+Description: Desbloquea los doce juegos adicionales, una sola vez, sin suscripción.

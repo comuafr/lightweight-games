@@ -1,0 +1,2 @@
+Tu compra se recupera ahora automáticamente al reinstalar la app o cambiar de móvil: ya no hace falta pulsar «Restaurar compras».
+También nuevo: una tabla de récords en Gobbler, Chirp, Fusion y Color Echo, un botón «Restablecer puntuaciones» en Ajustes, y Gobbler ya no se acelera.
