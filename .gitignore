@@ -16,3 +16,4 @@ DerivedData/
 .DS_Store
 core/build/xcode-frameworks/
 preview/out/
+__pycache__/

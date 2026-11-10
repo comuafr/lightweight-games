@@ -1,0 +1,2 @@
+Nouveau : un tableau des meilleurs scores dans Glouton, Piou-Piou, Fusion et Écho de couleurs, avec un grand champion et vos meilleurs scores sous trois initiales. Nouveau bouton « Réinitialiser les scores » dans les réglages.
+Glouton n'accélère plus : la difficulté ne vient que de la longueur du serpent. Piou-Piou se resserre au fil de la partie. Casse-mur : la balle ne reste plus collée aux blocs d'acier. Messages plus clairs quand Google Play est inaccessible.

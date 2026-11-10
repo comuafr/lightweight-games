@@ -1,0 +1,2 @@
+New: a high-score table in Gobbler, Chirp, Fusion and Color Echo, with a grand champion and your best scores under three-letter initials. A new "Reset scores" button in Settings.
+Gobbler no longer speeds up: it gets harder only as the snake grows. Chirp now gets tighter as you go. Wall Smash: the ball no longer sticks to steel bricks. Clearer messages when Google Play cannot be reached.

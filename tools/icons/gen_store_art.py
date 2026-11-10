@@ -45,22 +45,48 @@ def icon(path):
     img.resize((512, 512), Image.LANCZOS).convert("RGB").save(path)
 
 
+def wrap(draw, text, font, room):
+    """Greedy word wrap of [text] to [room] px."""
+    lines, cur = [], ""
+    for word in text.split():
+        trial = (cur + " " + word).strip()
+        if draw.textlength(trial, font=font) <= room or not cur:
+            cur = trial
+        else:
+            lines.append(cur)
+            cur = word
+    lines.append(cur)
+    return lines
+
+
 def feature(path, title, tagline):
     w, h = 1024, 500
     img = Image.new("RGBA", (w * SS, h * SS), BG + (255,))
-    m = mark(460, view=108.0)
-    img.alpha_composite(m, (40 * SS, 20 * SS))
+    # The mark only fills about 61% of the launcher viewport: draw it larger so the zigzag and the
+    # dot (viewport x 20..86, y 36..68) span ~480 px, centred in the left half.
+    view_w = 66.0
+    k = 430.0 / view_w
+    side = round(108 * k)
+    m = mark(side)
+    dx = round(250 - 53.0 * k)
+    dy = round(250 - 52.0 * k)
+    img.paste(m, (dx * SS, dy * SS), m)
     img = img.resize((w, h), Image.LANCZOS).convert("RGB")
     d = ImageDraw.Draw(img)
-    big = ImageFont.truetype(FONT, 74)
-    small = ImageFont.truetype(FONT, 30)
-    left, room = 480, w - 480 - 40
+    left, right = 530, w - 36
+    room = right - left
+    big = ImageFont.truetype(FONT, 100)
     while d.textlength(title, font=big) > room:
         big = ImageFont.truetype(FONT, big.size - 2)
-    while d.textlength(tagline, font=small) > room:
-        small = ImageFont.truetype(FONT, small.size - 1)
-    d.text((left, 170), title, font=big, fill=WHITE)
-    d.text((left + 4, 275), tagline, font=small, fill=DARK)
+    small = ImageFont.truetype(FONT, 38)
+    lines = wrap(d, tagline, small, room)
+    block = big.size + 24 + len(lines) * 50
+    y = (h - block) // 2 - 10
+    d.text((left, y), title, font=big, fill=WHITE)
+    y += big.size + 24
+    for line in lines:
+        d.text((left + 4, y), line, font=small, fill=DARK)
+        y += 50
     img.save(path)
 
 
