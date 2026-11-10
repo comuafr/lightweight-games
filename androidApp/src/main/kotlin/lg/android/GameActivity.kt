@@ -56,6 +56,7 @@ class GameActivity : Activity() {
         val app = App.from(this)
         session = GameSession(meta, app.scores, app.settings, app.clock)
         session.tryRestore(app.store)
+        DevTools.onGameOpened(session, app.store, meta.id, intent)
         session.onQuit = { finish() }
 
         requestedOrientation = when (meta.orientation) {
