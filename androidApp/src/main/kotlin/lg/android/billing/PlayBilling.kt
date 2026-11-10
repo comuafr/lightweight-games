@@ -312,12 +312,15 @@ internal class PlayBilling(
      * Opportunistic, silent revalidation (PLAN.md §6): connects, queries,
      * shows nothing, and swallows every outcome including errors. Called at
      * most once per process by the catalogue, only when
-     * [Entitlement.shouldRevalidate] is true. It can only CONFIRM or GRANT,
+     * [Entitlement.shouldCheckStore] is true (locked games, e.g. after a reinstall,
+     * or an unlock due for confirmation). It can only CONFIRM or GRANT,
      * never revoke: a buyer keeps playing offline, with another account, or
      * with a stale Play cache. Only the explicit [restore] honours a refund.
+     * [onDone] receives the outcome (no message is ever shown): the catalogue redraws on
+     * [RestoreResult.RESTORED] and tries again later on [RestoreResult.ERROR].
      */
-    fun silentRevalidate() {
-        queryAndReconcile(allowRevoke = false) { /* no UI */ }
+    fun silentRevalidate(onDone: (RestoreResult) -> Unit = {}) {
+        queryAndReconcile(allowRevoke = false, onDone)
     }
 
     private fun applyRestoreResult(result: BillingResult, purchases: List<Purchase>, allowRevoke: Boolean): RestoreResult {

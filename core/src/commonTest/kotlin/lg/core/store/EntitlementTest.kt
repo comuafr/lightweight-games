@@ -83,6 +83,18 @@ class EntitlementTest {
     }
 
     @Test
+    fun aLockedAppAsksTheStoreAtLaunchSoAReinstallGetsItsPurchaseBack() {
+        assertFalse(entitlement.isUnlocked())
+        assertTrue(entitlement.shouldCheckStore(), "a fresh install must check the store")
+        entitlement.grant(EntitlementSource.PLAY, "t")
+        assertFalse(entitlement.shouldCheckStore(), "recently confirmed: no need to ask")
+        clock.advance(Entitlement.REVALIDATE_INTERVAL_MS)
+        assertTrue(entitlement.shouldCheckStore(), "due for confirmation")
+        entitlement.revoke()
+        assertTrue(entitlement.shouldCheckStore(), "locked again: ask")
+    }
+
+    @Test
     fun obfuscatorRoundTripAndCrc() {
         val key = 0x1234_5678_9ABC_DEF0L
         val text = "v1|1|42|7|éàü ok"

@@ -1,0 +1,2 @@
+Votre achat est maintenant retrouvé automatiquement quand vous réinstallez l'application ou changez de téléphone : plus besoin de toucher « Restaurer les achats ».
+Aussi : un tableau des meilleurs scores dans Glouton, Piou-Piou, Fusion et Écho de couleurs, un bouton « Réinitialiser les scores » dans les réglages, et Glouton n'accélère plus.

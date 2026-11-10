@@ -1,0 +1,2 @@
+Your purchase is now found automatically when you reinstall the app or change phone: no need to tap "Restore purchases".
+Also new: a high-score table in Gobbler, Chirp, Fusion and Color Echo, a "Reset scores" button in Settings, and Gobbler no longer speeds up.

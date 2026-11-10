@@ -70,6 +70,15 @@ public class Entitlement(
         return clock.nowMs() - lastVerifiedMs() >= intervalMs
     }
 
+    /**
+     * True when the catalogue should ask the store, silently, at launch: either the games are locked (a reinstall or a
+     * new phone loses the local copy of a purchase that still belongs to the account, which the store can give back),
+     * or an unlock has not been confirmed for more than [intervalMs]. The answer can only unlock, never lock (see
+     * the reconciliation rules), so asking costs a non-buyer nothing.
+     */
+    public fun shouldCheckStore(intervalMs: Long = REVALIDATE_INTERVAL_MS): Boolean =
+        !isUnlocked() || shouldRevalidate(intervalMs)
+
     private class Parsed(val source: EntitlementSource, val grantedMs: Long)
 
     private fun read(): Parsed? {

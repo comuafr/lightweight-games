@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import kotlin.math.roundToInt
+import lg.android.billing.RestoreResult
 import lg.android.ui.TileView
 import lg.core.GameMeta
 import lg.core.GameRegistry
@@ -67,12 +68,20 @@ class MainActivity : Activity() {
         // or restore.
         rebuildGrid()
 
-        // Opportunistic, silent, at most once per process (PLAN.md §6):
-        // never at app launch, never blocking, never shown to the user.
+        // Opportunistic and silent (PLAN.md §6): never blocking, never shown to the user. It asks the store
+        // when the games are locked (a reinstall or a new phone loses the local copy of a purchase that still
+        // belongs to the account) or when an unlock is due for confirmation, and can only unlock, never lock.
+        // Once per process, unless the store could not be reached: then the next resume tries again.
         val app = App.from(this)
-        if (!revalidateAttempted && app.entitlement.shouldRevalidate()) {
+        if (!revalidateAttempted && app.entitlement.shouldCheckStore()) {
             revalidateAttempted = true
-            app.billing.silentRevalidate()
+            app.billing.silentRevalidate { result ->
+                when (result) {
+                    RestoreResult.RESTORED -> if (!isFinishing && !isDestroyed) rebuildGrid()
+                    RestoreResult.ERROR -> revalidateAttempted = false
+                    RestoreResult.NOTHING_TO_RESTORE -> Unit
+                }
+            }
         }
     }
 
