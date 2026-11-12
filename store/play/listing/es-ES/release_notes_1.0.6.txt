@@ -1,0 +1,1 @@
+Hidden Bombs: tres niveles de dificultad (fácil, medio, difícil), números más legibles, casillas más fáciles de distinguir, banderas con pulsación larga, explosiones en cadena y pantallas de victoria y de derrota. Secret Word: dos finales distintos, con la palabra. Pixel Reveal: la pulsación larga ya pone una cruz.

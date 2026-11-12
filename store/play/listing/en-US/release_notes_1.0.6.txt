@@ -1,0 +1,1 @@
+Hidden Bombs: three difficulty levels (easy, medium, hard), easier-to-read numbers, squares that are easier to tell apart, flags with a long press, a chain of explosions and "You won!" or "You lost!" screens. Secret Word: two different endings, with the word. Pixel Reveal: a long press now puts a cross.

@@ -1,0 +1,175 @@
+country|currency|price|vat_rate|note
+Albania|USD|2.19|20%|
+Algeria|DZD|250.00||
+Angola|USD|1.79||
+Antigua & Barbuda|USD|1.79||
+Argentina|ARS|2850.00||
+Armenia|USD|1.79||
+Aruba|USD|1.79||
+Australia|AUD|2.99|10%|
+Austria|EUR|1.99|20%|
+Azerbaijan|AZN|3.09||
+Bahamas|USD|1.79||
+Bahrain|USD|1.99|10%|
+Bangladesh|BDT|250.00|15%|
+Belarus|USD|2.19|20%|
+Belgium|EUR|1.99|21%|
+Belize|USD|1.79||
+Benin|EUR|1.69||
+Bermuda|USD|1.79||
+Bolivia|BOB|21.99||
+Bosnia & Herzegovina|USD|1.79||
+Botswana|USD|1.79||
+Brazil|BRL|9.99||
+British Virgin Islands|USD|1.79||
+Bulgaria|EUR|1.99|20%|
+Burkina Faso|EUR|1.69||
+Cambodia|USD|1.79||
+Cameroon|XAF|1300|19.25%|
+Canada|CAD|2.59||
+Cape Verde|USD|1.79||
+Cayman Islands|USD|1.79||
+Central African Republic|EUR|1.69||
+Chad|USD|1.79||
+Chile|CLP|2100|19%|
+Colombia|COP|6000||
+Comoros|USD|1.79||
+Congo - Brazzaville|USD|1.79||
+Congo - Kinshasa|USD|1.79||
+Costa Rica|CRC|830.00||
+Croatia|EUR|2.09|25%|
+Cyprus|EUR|1.99|19%|
+Czechia|CZK|48.99|21%|
+Côte d’Ivoire|XOF|1300|18%|
+Denmark|DKK|15.00|25%|25% with 2 location overrides
+Djibouti|USD|1.79||
+Dominica|USD|1.79||
+Dominican Republic|USD|1.79||
+Ecuador|USD|1.79||
+Egypt|EGP|109.99|14%|
+El Salvador|USD|1.79||
+Eritrea|USD|1.79||
+Estonia|EUR|2.09|24%|
+Ethiopia|ETB|300.00||
+Fiji|USD|1.79||
+Finland|EUR|2.09|25.5%|25.5% with 1 location override
+France|EUR|1.99|20%|20% with 11 location overrides
+Gabon|EUR|1.69||
+Gambia|USD|1.79||
+Georgia|GEL|6.00|18%|
+Germany|EUR|1.99|19%|
+Ghana|GHS|25.00|20%|
+Gibraltar|GBP|1.39||
+Greece|EUR|2.09|24%|
+Grenada|USD|1.79||
+Guatemala|USD|1.79||
+Guinea|USD|1.79||
+Guinea-Bissau|EUR|1.69||
+Haiti|USD|1.79||
+Honduras|USD|1.79||
+Hong Kong|HKD|14.90||
+Hungary|HUF|790|27%|
+Iceland|EUR|2.09|24%|
+India|INR|200.00|18%|
+Indonesia|IDR|33000||
+Iraq|IQD|2800||
+Ireland|EUR|1.99|23%|
+Israel|ILS|5.90||
+Italy|EUR|1.99|22%|
+Jamaica|USD|1.79||
+Japan|JPY|320|10%|
+Jordan|JOD|1.300||
+Kazakhstan|KZT|990.00|16%|
+Kenya|KES|300.00|16%|
+Kuwait|USD|1.79||
+Kyrgyzstan|USD|1.79||
+Laos|USD|1.79||
+Latvia|EUR|1.99|21%|
+Lebanon|USD|1.79||
+Liberia|USD|1.79||
+Libya|USD|1.79||
+Liechtenstein|CHF|1.60|8.1%|
+Lithuania|EUR|1.99|21%|
+Luxembourg|EUR|1.89|17%|
+Macao|MOP|14.88||
+Malaysia|MYR|7.99|8%|
+Maldives|USD|1.79||
+Mali|EUR|1.69||
+Malta|EUR|1.99|18%|
+Mauritius|USD|1.79||
+Mexico|MXN|40.00|16%|
+Micronesia|USD|1.79||
+Moldova|USD|2.19|20%|
+Monaco|EUR|1.99|20%|
+Mongolia|MNT|6620.00||
+Morocco|MAD|21.99|20%|
+Mozambique|USD|1.79||
+Myanmar (Burma)|MMK|4000||
+Namibia|USD|1.79||
+Nepal|USD|2.09|13%|
+Netherlands|EUR|1.99|21%|
+New Zealand|NZD|3.79|15%|
+Nicaragua|USD|1.79||
+Niger|EUR|1.69||
+Nigeria|NGN|2660.00|7.5%|
+North Macedonia|USD|2.19|18%|
+Norway|NOK|22.00|25%|25% with 1 location override
+Oman|USD|1.89|5%|
+Pakistan|PKR|500.00||
+Panama|USD|1.79||
+Papua New Guinea|USD|1.79||
+Paraguay|PYG|10000||
+Peru|PEN|6.49||
+Philippines|PHP|130.00|12%|
+Poland|PLN|8.89|23%|
+Portugal|EUR|1.99|23%|
+Qatar|QAR|6.50||
+Romania|RON|10.99|21%|
+Russia|RUB|149.00||
+Rwanda|USD|1.79||
+Samoa|USD|1.79||
+San Marino|EUR|1.69||
+Saudi Arabia|SAR|7.89|15%|
+Senegal|XOF|1300|18%|
+Serbia|RSD|249|20%|
+Seychelles|USD|1.79||
+Sierra Leone|USD|1.79||
+Singapore|SGD|2.49|9%|
+Slovakia|EUR|1.99|23%|
+Slovenia|EUR|1.99|22%|
+Solomon Islands|USD|1.79||
+Somalia|USD|1.79||
+South Africa|ZAR|34.99|15%|
+South Korea|KRW|2800|10%|
+Spain|EUR|1.99|21%|21% with 4 location overrides
+Sri Lanka|LKR|600.00||
+St. Kitts & Nevis|USD|1.79||
+St. Lucia|USD|1.79||
+Suriname|USD|1.79||
+Sweden|SEK|23.00|25%|
+Switzerland|CHF|1.50||
+Taiwan|TWD|63.00|5%|
+Tajikistan|USD|1.79||
+Tanzania|TZS|4900.00||
+Thailand|THB|66.00|7%|
+Togo|EUR|1.69||
+Tonga|USD|1.79||
+Trinidad & Tobago|USD|1.79||
+Tunisia|USD|1.79||
+Turkmenistan|USD|1.79||
+Turks & Caicos Islands|USD|1.79||
+Türkiye|TRY|109.99|20%|
+Uganda|USD|2.19|18%|
+Ukraine|UAH|99.99|20%|
+United Arab Emirates|AED|7.09|5%|
+United Kingdom|GBP|1.69|20%|
+United States|USD|1.79||no VAT with 7 location overrides
+Uruguay|USD|1.79||
+Uzbekistan|UZS|24660.00|12%|
+Vanuatu|USD|1.79||
+Vatican City|EUR|1.69||
+Venezuela|USD|1.79||
+Vietnam|VND|47000||
+Yemen|USD|1.79||
+Zambia|USD|1.79||
+Zimbabwe|USD|1.79||

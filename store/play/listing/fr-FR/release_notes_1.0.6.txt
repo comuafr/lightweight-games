@@ -1,0 +1,1 @@
+Démineur : trois niveaux de difficulté (facile, moyen, difficile), chiffres plus lisibles, cases mieux distinguées, drapeaux par appui long, explosions en chaîne et écrans « Gagné ! » ou « Perdu ! ». Pendu : deux fins différentes, avec le mot. Pixel Reveal : l'appui long pose enfin une croix.
