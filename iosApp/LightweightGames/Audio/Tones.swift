@@ -63,6 +63,19 @@ enum Tones {
         }
     }
 
+    /// A mine going off: a deep falling thump under a burst of noise that dies away.
+    static func explosion() -> [Float] {
+        var seed: UInt32 = 12345
+        return tone(durationMs: 500) { t, durationS in
+            let progress = min(1.0, max(0.0, t / durationS))
+            let thump = sin(2.0 * Double.pi * (110.0 - 70.0 * progress) * t) * exp(-t / 0.16)
+            // Deterministic white noise (same linear congruential generator as Android's Tones.kt).
+            seed = seed &* 1_103_515_245 &+ 12345
+            let noise = Double((seed >> 16) & 0x7FFF) / 16384.0 - 1.0
+            return 0.7 * thump + 0.8 * noise * exp(-t / 0.11)
+        }
+    }
+
     /// Generates `durationMs` of mono Float32 samples at `sampleRateHz`,
     /// calling `wave` with `(t seconds, durationSeconds)` for each sample
     /// and applying a linear attack/release envelope so every buffer starts

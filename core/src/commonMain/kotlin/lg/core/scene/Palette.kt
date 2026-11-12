@@ -41,6 +41,17 @@ public object Palette {
     public const val NEON_WHITE: Int = 30
     public const val NEON_PURPLE: Int = 31
 
+    // Digits of the minesweeper board (1 to 8): classic hues, tuned per theme to stay readable (contrast of at
+    // least 4.5:1) on the light and the dark revealed-cell background.
+    public const val NUMBER_1: Int = 32
+    public const val NUMBER_2: Int = 33
+    public const val NUMBER_3: Int = 34
+    public const val NUMBER_4: Int = 35
+    public const val NUMBER_5: Int = 36
+    public const val NUMBER_6: Int = 37
+    public const val NUMBER_7: Int = 38
+    public const val NUMBER_8: Int = 39
+
     /** Total number of palette entries; platform color tables must have this size. */
-    public const val COUNT: Int = 32
+    public const val COUNT: Int = 40
 }

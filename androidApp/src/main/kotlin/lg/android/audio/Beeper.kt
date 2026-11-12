@@ -8,7 +8,7 @@ import java.io.File
 import lg.core.scene.SoundId
 
 /**
- * Real [SoundSink]: the five short tones of [Tones] are written once as tiny
+ * Real [SoundSink]: the short tones of [Tones] are written once as tiny
  * WAV files in the app's cache directory and loaded into a [SoundPool], the
  * platform's own tool for game sound effects (low latency, overlapping
  * playback, no per-sound thread or buffer handling on our side). [play] only
@@ -37,11 +37,13 @@ internal class Beeper(context: Context) : SoundSink {
     private val win = load(context, "win", Tones.win())
     private val lose = load(context, "lose", Tones.lose())
     private val bonus = load(context, "bonus", Tones.bonus())
+    private val explosion = load(context, "explosion", Tones.explosion())
 
     override fun play(soundMask: Int) {
         // Priority order (highest first) so simultaneous bits in one frame
-        // don't play on top of each other: LOSE > WIN > BONUS > EAT > HIT > TICK.
+        // don't play on top of each other: EXPLOSION > LOSE > WIN > BONUS > EAT > HIT > TICK.
         val id = when {
+            soundMask and SoundId.EXPLOSION.bit != 0 -> explosion
             soundMask and SoundId.LOSE.bit != 0 -> lose
             soundMask and SoundId.WIN.bit != 0 -> win
             soundMask and SoundId.BONUS.bit != 0 -> bonus

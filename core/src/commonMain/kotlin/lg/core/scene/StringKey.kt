@@ -61,4 +61,7 @@ public enum class StringKey {
     GRAND_CHAMPION,
     NEW_HIGH_SCORE,
     ENTER_INITIALS,
+    WIN_TITLE,
+    LOSE_TITLE,
+    WORD_WAS,
 }

@@ -57,6 +57,9 @@
     <string name="grand_champion">Grand champion</string>
     <string name="new_high_score">Nouveau record !</string>
     <string name="enter_initials">Vos initiales</string>
+    <string name="win_title">Gagné !</string>
+    <string name="lose_title">Perdu !</string>
+    <string name="word_was">Le mot était</string>
     <string name="reset_scores">Réinitialiser les scores</string>
     <string name="reset_scores_confirm">Effacer tous les meilleurs scores ? Cette action est définitive.</string>
     <string name="reset_scores_erase">Effacer</string>
@@ -97,7 +100,7 @@ Un seul achat débloque tout, pour toujours</string>
     <string name="controls_fourinrow">Touche une colonne pour y faire tomber ton jeton.</string>
     <string name="rules_bird">Vole entre les tuyaux sans les toucher. Chaque tuyau franchi rapporte un point.</string>
     <string name="controls_bird">Touche l\'écran pour battre des ailes et prendre de la hauteur. L\'oiseau tombe si tu ne fais rien.</string>
-    <string name="rules_mines">Découvre toutes les cases qui ne cachent pas de bombe. Un chiffre indique combien de bombes touchent la case. Il y a 10 bombes. Ton premier toucher est toujours sans danger.</string>
+    <string name="rules_mines">Découvre toutes les cases qui ne cachent pas de bombe. Un chiffre indique combien de bombes touchent la case. Choisis un niveau : facile (10 bombes), moyen (19) ou difficile (34). Plus le niveau est difficile, plus la grille est grande. Ton premier toucher est toujours sans danger.</string>
     <string name="controls_mines">Touche une case pour la découvrir. Appuie longuement pour poser un drapeau. Touche un chiffre entouré d\'assez de drapeaux pour découvrir le reste.</string>
     <string name="rules_hangman">Trouve le mot secret en proposant des lettres. Sept mauvaises lettres et tu as perdu.</string>
     <string name="controls_hangman">Touche une lettre du clavier.</string>

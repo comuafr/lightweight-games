@@ -58,6 +58,9 @@
     <string name="grand_champion">Grand champion</string>
     <string name="new_high_score">New high score!</string>
     <string name="enter_initials">Your initials</string>
+    <string name="win_title">You won!</string>
+    <string name="lose_title">You lost!</string>
+    <string name="word_was">The word was</string>
     <string name="reset_scores">Reset scores</string>
     <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
     <string name="reset_scores_erase">Erase</string>
@@ -99,7 +102,7 @@ One purchase unlocks everything, forever</string>
     <string name="controls_fourinrow">Tap a column to drop your disc.</string>
     <string name="rules_bird">Fly between the pipes without touching them. Each pipe passed scores one point.</string>
     <string name="controls_bird">Tap the screen to flap and gain height. The bird falls when you do nothing.</string>
-    <string name="rules_mines">Uncover every square that hides no bomb. A number tells how many bombs touch that square. There are 10 bombs. Your first tap is always safe.</string>
+    <string name="rules_mines">Uncover every square that hides no bomb. A number tells how many bombs touch that square. Pick a level: easy (10 bombs), medium (19) or hard (34). The harder the level, the bigger the board. Your first tap is always safe.</string>
     <string name="controls_mines">Tap a square to uncover it. Press and hold to put a flag. Tap a number with enough flags around it to uncover the rest.</string>
     <string name="rules_hangman">Find the secret word by guessing letters. Seven wrong letters and you lose.</string>
     <string name="controls_hangman">Tap a letter on the keyboard.</string>

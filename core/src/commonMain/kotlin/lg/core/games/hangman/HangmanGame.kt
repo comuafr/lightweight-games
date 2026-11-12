@@ -62,6 +62,10 @@ public class HangmanGame : Game {
     private var word: String = ""
     private val guessed = BooleanArray(26)
     private var wrongCount: Int = 0
+    private var revealedWord: String? = null
+
+    /** The secret word, shown on the end screen (win or loss) once the game is over. */
+    override val resultText: String? get() = revealedWord
 
     // Layout, recomputed on resize().
     private var gallowsX: Float = 0f
@@ -91,6 +95,7 @@ public class HangmanGame : Game {
         wrongThisMove = false
         wonThisMove = false
         lostThisMove = false
+        revealedWord = null
         status = GameStatus.Running
     }
 
@@ -163,7 +168,8 @@ public class HangmanGame : Game {
         if (hit) {
             correctThisMove = true
             if (isWordFullyRevealed()) {
-                status = GameStatus.Over(0)
+                status = GameStatus.Over(GameStatus.SOLO_WIN)
+                revealedWord = word.uppercase()
                 score = 1
                 wonThisMove = true
             }
@@ -171,7 +177,8 @@ public class HangmanGame : Game {
             wrongCount++
             wrongThisMove = true
             if (wrongCount >= MAX_WRONG) {
-                status = GameStatus.Over(0)
+                status = GameStatus.Over(GameStatus.SOLO_LOSS)
+                revealedWord = word.uppercase()
                 lostThisMove = true
             }
         }

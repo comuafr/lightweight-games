@@ -14,7 +14,9 @@ import kotlin.math.sqrt
  * - **Long press**: the pointer stays down for at least [LONG_PRESS_MS]
  *   without moving more than [TAP_MAX_DIST_PT]; fired from [update], not from
  *   an `UP` event, since the pointer is still down when the threshold is
- *   crossed.
+ *   crossed. [hasPendingLongPress] tells the caller that [update] must keep being
+ *   called, even in a turn-based game that needs no frame loop of its own. If no
+ *   [update] came in time, the long press is still recognised when the pointer is released.
  *
  * Up to [MAX_POINTERS] simultaneous pointers are tracked using fixed,
  * preallocated arrays — no per-pointer allocation. A single [Gesture]
@@ -67,6 +69,15 @@ public class GestureDetector(private val out: (Gesture) -> Unit) {
         }
     }
 
+    /** True while a pointer is down, still, and has not yet reached [LONG_PRESS_MS]: [update] has work to do. */
+    public val hasPendingLongPress: Boolean
+        get() {
+            for (slot in 0 until MAX_POINTERS) {
+                if (slotPointerId[slot] != FREE && !longPressFired[slot] && !movedBeyondTap[slot]) return true
+            }
+            return false
+        }
+
     private fun onDown(id: Int, x: Float, y: Float, timeMs: Long) {
         val slot = findSlot(id)
         val target = slot ?: findFreeSlot() ?: return
@@ -98,6 +109,9 @@ public class GestureDetector(private val out: (Gesture) -> Unit) {
             val dist = distance(dx, dy)
             if (!movedBeyondTap[slot] && dist <= TAP_MAX_DIST_PT && dt < TAP_MAX_MS) {
                 emit(GestureKind.TAP, x, y, id)
+            } else if (!movedBeyondTap[slot] && dist <= TAP_MAX_DIST_PT && dt >= LONG_PRESS_MS) {
+                // Held long enough, but no update() came in time to fire it while the pointer was down.
+                emit(GestureKind.LONG_PRESS, x, y, id)
             } else if (dist >= SWIPE_MIN_DIST_PT) {
                 val kind = if (abs(dx) >= abs(dy)) {
                     if (dx >= 0f) GestureKind.SWIPE_RIGHT else GestureKind.SWIPE_LEFT

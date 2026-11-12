@@ -570,3 +570,156 @@ public class GameSessionTest {
         assertEquals(1, helps)
     }
 }
+
+/** A one-player game that ends at once, won or lost, with the word it wants on the end screen. */
+private class SoloResultGame(private val won: Boolean) : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override var score: Int = 0
+        private set
+    override val wantsFrames: Boolean = true
+    override val resultText: String? get() = if (status is GameStatus.Over) "MOT" else null
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture): Unit = Unit
+
+    override fun update(dtMs: Int): Boolean {
+        status = GameStatus.Over(if (won) GameStatus.SOLO_WIN else GameStatus.SOLO_LOSS)
+        return true
+    }
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
+public class SoloResultScreenTest {
+    private fun endScene(won: Boolean): Scene {
+        val meta = GameMeta(
+            id = "solo", titleKey = StringKey.TITLE_SNAKE, tier = Tier.FREE, players = 1..1,
+            orientation = Orientation.PORTRAIT, complexity = Complexity.S, resumable = false,
+            factory = { SoloResultGame(won) }, icon = { _, _ -> },
+        )
+        val store = FakeStore()
+        val session = GameSession(meta, Scores(store), Settings(store), FakeClock())
+        session.resize(400f, 800f)
+        session.start(players = 1, seed = 1L)
+        session.update(16)
+        assertIs<Overlay.Over>(session.overlay)
+        return Scene().also { session.render(it) }
+    }
+
+    private fun keys(scene: Scene): List<Int> =
+        (0 until scene.count).filter { scene.kind[it] == lg.core.scene.Prim.TEXT }.map { scene.key[it] }
+
+    private fun labels(scene: Scene): List<String> =
+        (0 until scene.count).filter { scene.kind[it] == lg.core.scene.Prim.LABEL }.mapNotNull { scene.label[it] }
+
+    @Test
+    public fun aWonGameShowsTheWinTitleAndTheWord(): Unit {
+        val scene = endScene(won = true)
+        assertTrue(StringKey.WIN_TITLE.ordinal in keys(scene))
+        assertTrue(StringKey.LOSE_TITLE.ordinal !in keys(scene))
+        assertTrue(StringKey.GAME_OVER.ordinal !in keys(scene))
+        assertTrue(StringKey.WORD_WAS.ordinal in keys(scene))
+        assertTrue("MOT" in labels(scene))
+        assertEquals(0, scene.dropped)
+    }
+
+    @Test
+    public fun aLostGameShowsTheLoseTitleAndTheWord(): Unit {
+        val scene = endScene(won = false)
+        assertTrue(StringKey.LOSE_TITLE.ordinal in keys(scene))
+        assertTrue(StringKey.WIN_TITLE.ordinal !in keys(scene))
+        assertTrue(StringKey.WORD_WAS.ordinal in keys(scene))
+        assertTrue("MOT" in labels(scene))
+        assertEquals(0, scene.dropped)
+    }
+}
+
+/** A turn-based game (no frames of its own, like the minesweeper) that records the long presses it receives. */
+private class LongPressGame : Game {
+    override val meta: GameMeta get() = error("not used")
+    override var status: GameStatus = GameStatus.Idle
+        private set
+    override var score: Int = 0
+        private set
+    override val wantsFrames: Boolean = false
+    var longPresses: Int = 0
+        private set
+
+    override fun reset(seed: Long, players: Int) {
+        status = GameStatus.Running
+    }
+
+    override fun resize(width: Float, height: Float): Unit = Unit
+
+    override fun onPointer(id: Int, phase: PointerPhase, x: Float, y: Float): Unit = Unit
+
+    override fun onGesture(gesture: Gesture) {
+        if (gesture.kind == lg.core.input.GestureKind.LONG_PRESS) longPresses++
+    }
+
+    override fun update(dtMs: Int): Boolean = false
+
+    override fun render(scene: Scene): Unit = Unit
+}
+
+public class LongPressSessionTest {
+    @Test
+    public fun aLongPressReachesATurnBasedGameThatNeedsNoFrameLoop(): Unit {
+        val game = LongPressGame()
+        val meta = GameMeta(
+            id = "turns", titleKey = StringKey.TITLE_SNAKE, tier = Tier.FREE, players = 1..1,
+            orientation = Orientation.PORTRAIT, complexity = Complexity.S, resumable = false,
+            factory = { game }, icon = { _, _ -> },
+        )
+        val store = FakeStore()
+        val clock = FakeClock()
+        val session = GameSession(meta, Scores(store), Settings(store), clock)
+        session.resize(400f, 800f)
+        session.start(players = 1, seed = 1L)
+
+        assertTrue(!session.needsFrameLoop, "no finger down: no frame loop for a turn-based game")
+        val x = session.playOriginX + 180f * session.playScale
+        val y = session.playOriginY + 280f * session.playScale
+        session.onPointer(0, PointerPhase.DOWN, x, y)
+        assertTrue(session.needsFrameLoop, "a finger is down: the long press timer must run")
+
+        clock.advance(200)
+        assertTrue(!session.update(16), "nothing yet")
+        assertEquals(0, game.longPresses)
+        clock.advance(400)
+        assertTrue(session.update(16), "the long press changed the game: redraw")
+        assertEquals(1, game.longPresses)
+        assertTrue(!session.needsFrameLoop, "already fired: the frame loop can stop while the finger stays down")
+
+        session.onPointer(0, PointerPhase.UP, x, y)
+        assertEquals(1, game.longPresses, "releasing does not fire it again")
+        assertTrue(!session.needsFrameLoop)
+    }
+
+    @Test
+    public fun aMovingFingerDoesNotKeepTheFrameLoopRunning(): Unit {
+        val meta = GameMeta(
+            id = "turns2", titleKey = StringKey.TITLE_SNAKE, tier = Tier.FREE, players = 1..1,
+            orientation = Orientation.PORTRAIT, complexity = Complexity.S, resumable = false,
+            factory = { LongPressGame() }, icon = { _, _ -> },
+        )
+        val store = FakeStore()
+        val session = GameSession(meta, Scores(store), Settings(store), FakeClock())
+        session.resize(400f, 800f)
+        session.start(players = 1, seed = 1L)
+        val x = session.playOriginX + 180f * session.playScale
+        val y = session.playOriginY + 280f * session.playScale
+        session.onPointer(0, PointerPhase.DOWN, x, y)
+        session.onPointer(0, PointerPhase.MOVE, x + 80f, y)
+        assertTrue(!session.needsFrameLoop, "the finger moved: this is no long press")
+    }
+}

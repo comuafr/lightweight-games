@@ -49,9 +49,17 @@ enum PaletteIndex {
     static let neonRed = 29
     static let neonWhite = 30
     static let neonPurple = 31
+    static let number1 = 32
+    static let number2 = 33
+    static let number3 = 34
+    static let number4 = 35
+    static let number5 = 36
+    static let number6 = 37
+    static let number7 = 38
+    static let number8 = 39
 
     /// Total number of palette entries; `ScenePalette.colors.count` must equal this.
-    static let count = 32
+    static let count = 40
 }
 
 /// Mirrors `lg.core.scene.Prim` (values stored in `Scene.kind`, a `ByteArray`
@@ -82,4 +90,5 @@ enum SoundBit {
     static let hit: Int32 = 1 << 2
     static let win: Int32 = 1 << 3
     static let lose: Int32 = 1 << 4
+    static let explosion: Int32 = 1 << 6
 }

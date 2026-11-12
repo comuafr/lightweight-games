@@ -45,6 +45,12 @@ public interface Game {
      */
     public val progress: Int get() = 0
 
+    /**
+     * A short text shown on the game over screen under the result title (e.g. the word of a hangman), or
+     * `null` for none. Must be a stable string, not built per frame.
+     */
+    public val resultText: String? get() = null
+
     /** Gives the game the progress saved earlier; called once, before the first [reset]. */
     public fun restoreProgress(value: Int) {}
 

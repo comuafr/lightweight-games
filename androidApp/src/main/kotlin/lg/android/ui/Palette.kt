@@ -45,6 +45,14 @@ internal object Palette {
         0xFFFF3B3B.toInt(), // NEON_RED
         0xFFF4F4FF.toInt(), // NEON_WHITE
         0xFF9B5CFF.toInt(), // NEON_PURPLE
+        0xFF1A4FCF.toInt(), // NUMBER_1
+        0xFF136A2C.toInt(), // NUMBER_2
+        0xFFAD1B1B.toInt(), // NUMBER_3
+        0xFF6A2FA0.toInt(), // NUMBER_4
+        0xFF8C3A12.toInt(), // NUMBER_5
+        0xFF06626C.toInt(), // NUMBER_6
+        0xFF20202C.toInt(), // NUMBER_7
+        0xFF5A5A6A.toInt(), // NUMBER_8
     )
 
     private val DARK: IntArray = intArrayOf(
@@ -80,6 +88,14 @@ internal object Palette {
         0xFFFF3B3B.toInt(), // NEON_RED
         0xFFF4F4FF.toInt(), // NEON_WHITE
         0xFF9B5CFF.toInt(), // NEON_PURPLE
+        0xFF6EA8FF.toInt(), // NUMBER_1
+        0xFF5BD27C.toInt(), // NUMBER_2
+        0xFFFF7B72.toInt(), // NUMBER_3
+        0xFFB79CFF.toInt(), // NUMBER_4
+        0xFFE0A36B.toInt(), // NUMBER_5
+        0xFF4FD6D0.toInt(), // NUMBER_6
+        0xFFF3F3FA.toInt(), // NUMBER_7
+        0xFFA8A8BA.toInt(), // NUMBER_8
     )
 
     init {

@@ -66,6 +66,9 @@ enum Strings {
         "grand_champion", // 48 GRAND_CHAMPION
         "new_high_score", // 49 NEW_HIGH_SCORE
         "enter_initials", // 50 ENTER_INITIALS
+        "win_title", // 51 WIN_TITLE
+        "lose_title", // 52 LOSE_TITLE
+        "word_was", // 53 WORD_WAS
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps

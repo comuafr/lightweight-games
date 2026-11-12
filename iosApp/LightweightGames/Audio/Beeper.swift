@@ -20,6 +20,7 @@ final class Beeper: SoundSink {
     private let hitBuffer: AVAudioPCMBuffer?
     private let winBuffer: AVAudioPCMBuffer?
     private let loseBuffer: AVAudioPCMBuffer?
+    private let explosionBuffer: AVAudioPCMBuffer?
 
     private var sessionConfigured = false
 
@@ -38,6 +39,7 @@ final class Beeper: SoundSink {
         hitBuffer = Beeper.makeBuffer(samples: Tones.hit(), format: format)
         winBuffer = Beeper.makeBuffer(samples: Tones.win(), format: format)
         loseBuffer = Beeper.makeBuffer(samples: Tones.lose(), format: format)
+        explosionBuffer = Beeper.makeBuffer(samples: Tones.explosion(), format: format)
 
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
@@ -57,9 +59,11 @@ final class Beeper: SoundSink {
     func play(mask: Int32) {
         // Priority order (highest first), matching Android's Beeper.kt, so
         // simultaneous bits in one frame don't play on top of each other:
-        // LOSE > WIN > EAT > HIT > TICK.
+        // EXPLOSION > LOSE > WIN > EAT > HIT > TICK.
         let buffer: AVAudioPCMBuffer?
-        if mask & SoundBit.lose != 0 {
+        if mask & SoundBit.explosion != 0 {
+            buffer = explosionBuffer
+        } else if mask & SoundBit.lose != 0 {
             buffer = loseBuffer
         } else if mask & SoundBit.win != 0 {
             buffer = winBuffer

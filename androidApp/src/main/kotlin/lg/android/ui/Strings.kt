@@ -79,6 +79,9 @@ internal class Strings(context: Context) {
             R.string.grand_champion, // GRAND_CHAMPION
             R.string.new_high_score, // NEW_HIGH_SCORE
             R.string.enter_initials, // ENTER_INITIALS
+            R.string.win_title, // WIN_TITLE
+            R.string.lose_title, // LOSE_TITLE
+            R.string.word_was, // WORD_WAS
         )
     }
 }

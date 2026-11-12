@@ -56,6 +56,13 @@ internal object Tones {
         voice(buf, 0.0, 0.012, 0.0, 0.0, Wave.NOISE, decayS = 0.004, gain = 0.5)
     }
 
+    /** A mine going off: a deep falling thump under a burst of noise that dies away, with a short echo. */
+    fun explosion(): ShortArray = render(durationMs = 650, echoMs = 70, echoGain = 0.3) { buf ->
+        voice(buf, 0.0, 0.45, 110.0, 38.0, Wave.TRIANGLE, decayS = 0.16)
+        voice(buf, 0.0, 0.5, 0.0, 0.0, Wave.NOISE, decayS = 0.11, gain = 0.8)
+        voice(buf, 0.0, 0.03, 0.0, 0.0, Wave.NOISE, decayS = 0.01, gain = 0.6)
+    }
+
     /** Happy rising arpeggio, C major, with a long last note. */
     fun win(): ShortArray = render(durationMs = 850, echoMs = 140, echoGain = 0.3) { buf ->
         voice(buf, 0.00, 0.20, 523.25, 523.25, Wave.PLUCK, decayS = 0.08)

@@ -4,7 +4,7 @@ import UIKit
 /// index (see `PaletteIndex` in CoreConstants.swift), light- and
 /// dark-appearance aware via `UIColor`'s dynamic-provider initializer.
 enum ScenePalette {
-    /// Indexed exactly like `PaletteIndex` (BG=0 ... NEON_PURPLE=31).
+    /// Indexed exactly like `PaletteIndex` (BG=0 ... NUMBER_8=39).
     /// `colors.count == PaletteIndex.count` is asserted by SmokeTests.
     static let colors: [UIColor] = [
         // BG
@@ -92,6 +92,54 @@ enum ScenePalette {
         UIColor(red: 1.000, green: 0.231, blue: 0.231, alpha: 1), // neon_red
         UIColor(red: 0.957, green: 0.957, blue: 1.000, alpha: 1), // neon_white
         UIColor(red: 0.608, green: 0.361, blue: 1.000, alpha: 1), // neon_purple
+        // number1
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.431, green: 0.659, blue: 1.000, alpha: 1)
+                : UIColor(red: 0.102, green: 0.310, blue: 0.812, alpha: 1)
+        },
+        // number2
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.357, green: 0.824, blue: 0.486, alpha: 1)
+                : UIColor(red: 0.075, green: 0.416, blue: 0.173, alpha: 1)
+        },
+        // number3
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 1.000, green: 0.482, blue: 0.447, alpha: 1)
+                : UIColor(red: 0.678, green: 0.106, blue: 0.106, alpha: 1)
+        },
+        // number4
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.718, green: 0.612, blue: 1.000, alpha: 1)
+                : UIColor(red: 0.416, green: 0.184, blue: 0.627, alpha: 1)
+        },
+        // number5
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.878, green: 0.639, blue: 0.420, alpha: 1)
+                : UIColor(red: 0.549, green: 0.227, blue: 0.071, alpha: 1)
+        },
+        // number6
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.310, green: 0.839, blue: 0.816, alpha: 1)
+                : UIColor(red: 0.024, green: 0.384, blue: 0.424, alpha: 1)
+        },
+        // number7
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.953, green: 0.953, blue: 0.980, alpha: 1)
+                : UIColor(red: 0.125, green: 0.125, blue: 0.173, alpha: 1)
+        },
+        // number8
+        UIColor { trait in
+            trait.userInterfaceStyle == .dark
+                ? UIColor(red: 0.659, green: 0.659, blue: 0.729, alpha: 1)
+                : UIColor(red: 0.353, green: 0.353, blue: 0.416, alpha: 1)
+        },
     ]
 
     /// Resolves `colors` against `traitCollection` (light/dark) into a flat

@@ -12,4 +12,5 @@ public enum class SoundId(public val bit: Int) {
     WIN(1 shl 3),
     LOSE(1 shl 4),
     BONUS(1 shl 5),
+    EXPLOSION(1 shl 6),
 }

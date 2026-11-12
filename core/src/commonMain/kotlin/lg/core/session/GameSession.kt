@@ -106,6 +106,9 @@ public class GameSession(
 
     private val gestureDetector = GestureDetector { gesture -> handleGesture(gesture) }
 
+    /** Set when the gesture detector delivered a gesture to the game during the current [update]. */
+    private var gestureDeliveredInUpdate: Boolean = false
+
     // Fixed-capacity overlay button model: at most one row per possible action,
     // recomputed only when the overlay or the layout changes (never per frame).
     private val buttonRect = Array(MAX_BUTTONS) { Rect() }
@@ -268,13 +271,18 @@ public class GameSession(
     /** Advances the game one frame. [dtMs] is clamped to [MAX_DT_MS]. @return true if a redraw is needed. */
     public fun update(dtMs: Int): Boolean {
         val clampedDt = dtMs.coerceAtMost(MAX_DT_MS)
+        gestureDeliveredInUpdate = false
         gestureDetector.update(clock.nowMs())
         if (overlay != Overlay.None) return false
 
+        // A long press that fires while the finger is still down changes the game (a flag, a cross) without any
+        // other event: it needs its own redraw, sound and haptic.
+        val gestured = gestureDeliveredInUpdate
+        if (gestured) eventsArmed = true
         val changed = game.update(clampedDt)
         if (changed) eventsArmed = true
         if (checkOver()) return true
-        return changed
+        return changed || gestured
     }
 
     /**
@@ -354,9 +362,13 @@ public class GameSession(
         }
     }
 
-    /** True while a real-time frame loop is required: playing and the game itself wants frames. */
+    /**
+     * True while a frame loop is required: playing, and either the game itself wants frames or a finger is down
+     * and a long press may still fire (a turn-based game has no frames of its own, yet its long press, such as a
+     * flag in the minesweeper, is detected by the time that [update] advances).
+     */
     public val needsFrameLoop: Boolean
-        get() = overlay == Overlay.None && game.wantsFrames
+        get() = overlay == Overlay.None && (game.wantsFrames || gestureDetector.hasPendingLongPress)
 
     /** Persists the game's resumable state (no-op if [GameMeta.resumable] is false or nothing to save). */
     public fun persist(store: KeyValueStore) {
@@ -394,6 +406,7 @@ public class GameSession(
             if (gesture.kind == GestureKind.TAP) hitTestOverlayButton(gesture.x, gesture.y)
         } else {
             game.onGesture(gesture)
+            gestureDeliveredInUpdate = true
             checkOver()
         }
         gesture.x = gx
@@ -531,7 +544,9 @@ public class GameSession(
                 scene.text(width / 2f, height * 0.32f, StringKey.PAUSED, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
             }
             is Overlay.Over -> {
-                if (currentOverlay.winner == GameStatus.DRAW) {
+                if (currentOverlay.winner == GameStatus.SOLO_WIN || currentOverlay.winner == GameStatus.SOLO_LOSS) {
+                    renderSoloResult(scene, won = currentOverlay.winner == GameStatus.SOLO_WIN)
+                } else if (currentOverlay.winner == GameStatus.DRAW) {
                     scene.text(width / 2f, height * 0.28f, StringKey.DRAW, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
                 } else {
                     scene.text(width / 2f, height * 0.28f, StringKey.GAME_OVER, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
@@ -548,6 +563,22 @@ public class GameSession(
             is Overlay.NewHighScore, Overlay.None -> Unit
         }
         renderButtons(scene)
+    }
+
+    /**
+     * End screen of a one-player game that is won or lost: a green or red banner with a different title, then
+     * the game's [Game.resultText] (e.g. the secret word) if it has one.
+     */
+    private fun renderSoloResult(scene: Scene, won: Boolean) {
+        val band = if (won) Palette.OK else Palette.DANGER
+        scene.rect(SOLO_BAND_MARGIN_PT, SOLO_BAND_Y_PT, width - 2 * SOLO_BAND_MARGIN_PT, SOLO_BAND_H_PT, band, radius = BUTTON_RADIUS_PT)
+        val title = if (won) StringKey.WIN_TITLE else StringKey.LOSE_TITLE
+        scene.text(width / 2f, SOLO_BAND_Y_PT + SOLO_BAND_H_PT / 2f, title, Palette.NEON_WHITE, SOLO_TITLE_SIZE_PT, Align.CENTER)
+        val text = game.resultText
+        if (text != null) {
+            scene.text(width / 2f, SOLO_CAPTION_Y_PT, StringKey.WORD_WAS, Palette.FG_DIM, SUBTITLE_SIZE_PT, Align.CENTER)
+            scene.label(width / 2f, SOLO_RESULT_Y_PT, text, Palette.FG, SOLO_RESULT_SIZE_PT, Align.CENTER)
+        }
     }
 
     private fun renderButtons(scene: Scene) {
@@ -659,6 +690,15 @@ public class GameSession(
         const val TABLE_LABEL_SIZE_PT = 14f
         const val TABLE_CHAMPION_SIZE_PT = 40f
         const val TABLE_ROW_SIZE_PT = 24f
+
+        // End screen of a won or lost one-player game.
+        const val SOLO_BAND_MARGIN_PT = 24f
+        const val SOLO_BAND_Y_PT = 64f
+        const val SOLO_BAND_H_PT = 84f
+        const val SOLO_TITLE_SIZE_PT = 36f
+        const val SOLO_CAPTION_Y_PT = 168f
+        const val SOLO_RESULT_Y_PT = 208f
+        const val SOLO_RESULT_SIZE_PT = 38f
 
         const val TITLE_SIZE_PT = 28f
         const val SUBTITLE_SIZE_PT = 18f

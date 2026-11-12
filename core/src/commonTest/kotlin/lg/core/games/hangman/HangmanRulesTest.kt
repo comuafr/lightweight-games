@@ -73,8 +73,9 @@ public class HangmanRulesTest {
         }
         assertEquals(HangmanGame.MAX_WRONG, misses)
         assertTrue(game.status is GameStatus.Over)
-        assertEquals(0, (game.status as GameStatus.Over).winner)
+        assertEquals(GameStatus.SOLO_LOSS, (game.status as GameStatus.Over).winner)
         assertEquals(0, game.score)
+        assertEquals(word.uppercase(), game.resultText, "the end screen shows the word that was not found")
     }
 
     @Test
@@ -90,7 +91,18 @@ public class HangmanRulesTest {
             }
         }
         assertTrue(game.status is GameStatus.Over)
+        assertEquals(GameStatus.SOLO_WIN, (game.status as GameStatus.Over).winner)
         assertEquals(1, game.score)
+        assertEquals(word.uppercase(), game.resultText)
+    }
+
+    @Test
+    public fun noResultTextWhileThePlayerIsStillGuessing(): Unit {
+        val game = newGame()
+        assertEquals(null, game.resultText)
+        val word = game.debugWord()
+        game.debugGuessLetter(('a' + ((word[0] - 'a' + 1) % 26)) - 'a')
+        if (game.status is GameStatus.Running) assertEquals(null, game.resultText)
     }
 
     @Test

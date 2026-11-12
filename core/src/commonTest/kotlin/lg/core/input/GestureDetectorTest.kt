@@ -134,4 +134,41 @@ public class GestureDetectorTest {
         assertEquals(GestureKind.SWIPE_RIGHT, recorder.kind)
         assertEquals(2, recorder.pointerId)
     }
+
+    @Test
+    public fun aLongPressStillFiresOnReleaseWhenNoUpdateCameInTime(): Unit {
+        val recorder = Recorder()
+        val detector = newDetector(recorder)
+        detector.onPointer(0, PointerPhase.DOWN, 100f, 100f, 0L)
+        detector.onPointer(0, PointerPhase.UP, 101f, 100f, 900L)
+        assertEquals(GestureKind.LONG_PRESS, recorder.kind)
+        assertEquals(1, recorder.count)
+    }
+
+    @Test
+    public fun aMovedPressHeldLongIsNotALongPress(): Unit {
+        val recorder = Recorder()
+        val detector = newDetector(recorder)
+        detector.onPointer(0, PointerPhase.DOWN, 100f, 100f, 0L)
+        detector.onPointer(0, PointerPhase.MOVE, 160f, 100f, 400L)
+        detector.onPointer(0, PointerPhase.UP, 160f, 100f, 900L)
+        assertEquals(GestureKind.SWIPE_RIGHT, recorder.kind)
+    }
+
+    @Test
+    public fun theLongPressIsPendingOnlyWhileAFingerIsDownAndStill(): Unit {
+        val recorder = Recorder()
+        val detector = newDetector(recorder)
+        assertEquals(false, detector.hasPendingLongPress)
+        detector.onPointer(0, PointerPhase.DOWN, 100f, 100f, 0L)
+        assertEquals(true, detector.hasPendingLongPress)
+        detector.update(500L)
+        assertEquals(false, detector.hasPendingLongPress, "already fired")
+        detector.onPointer(0, PointerPhase.UP, 100f, 100f, 520L)
+        detector.onPointer(1, PointerPhase.DOWN, 50f, 50f, 600L)
+        detector.onPointer(1, PointerPhase.MOVE, 120f, 50f, 650L)
+        assertEquals(false, detector.hasPendingLongPress, "the finger moved")
+        detector.onPointer(1, PointerPhase.UP, 120f, 50f, 700L)
+        assertEquals(false, detector.hasPendingLongPress)
+    }
 }
