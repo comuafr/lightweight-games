@@ -62,7 +62,7 @@ final class SmokeTests: XCTestCase {
         }
 
         let session = GameSession(meta: meta, scores: scores, settings: settings, clock: clock)
-        session.resize(width: 390, height: 844)
+        session.resize(width: 390, height: 844, safeTop: 0)
         session.start(players: 1, seed: 42)
 
         for _ in 0..<60 {
