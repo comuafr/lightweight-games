@@ -84,13 +84,11 @@ final class GameViewController: UIViewController {
         // The permanent Quit button drawn by the session at the bottom of the game.
         session.onQuit = { [weak self] in
             self?.closeTapped()
-            return KotlinUnit()
         }
 
         // A new high score: ask for three initials (a text field, upper case), then hand them back to the session.
         session.onEnterInitials = { [weak self] _, _ in
             self?.askInitials()
-            return KotlinUnit()
         }
     }
 
