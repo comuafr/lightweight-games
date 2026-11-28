@@ -1,0 +1,1 @@
+Sudoku : blocs mieux visibles, notes au crayon, erreurs non signalées, solution à la demande et arc-en-ciel avec licornes en cas de victoire. Affichage plus net dans tous les jeux.

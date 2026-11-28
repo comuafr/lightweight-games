@@ -1,0 +1,1 @@
+Sudoku: clearer blocks, pencil notes, mistakes are not shown, solution on request, and a rainbow with unicorns when you win. Cleaner picture in every game.

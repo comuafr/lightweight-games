@@ -1,0 +1,1 @@
+Sudoku: klarere Blöcke, Bleistiftnotizen, keine Fehleranzeige, Lösung auf Wunsch und Regenbogen mit Einhörnern beim Sieg. Klarere Darstellung in allen Spielen.

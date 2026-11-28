@@ -1,0 +1,84 @@
+<fr-FR>
+Sudoku : blocs mieux visibles, notes au crayon, erreurs non signalées, solution à la demande et arc-en-ciel avec licornes en cas de victoire. Affichage plus net dans tous les jeux.
+</fr-FR>
+<ar>
+سودوكو: مربعات أوضح، ملاحظات بالقلم، لا تُظهر الأخطاء، يمكن طلب الحل، وقوس قزح ووحيدا القرن عند الفوز. عرض أوضح في كل الألعاب.
+</ar>
+<cs-CZ>
+Sudoku: výraznější bloky, poznámky tužkou, chyby se neoznačují, řešení na požádání a duha s jednorožci při výhře. Čistší zobrazení ve všech hrách.
+</cs-CZ>
+<da-DK>
+Sudoku: tydeligere felter, blyantsnoter, fejl vises ikke, løsning efter ønske og regnbue med enhjørninger, når du vinder. Skarpere visning i alle spil.
+</da-DK>
+<de-DE>
+Sudoku: klarere Blöcke, Bleistiftnotizen, keine Fehleranzeige, Lösung auf Wunsch und Regenbogen mit Einhörnern beim Sieg. Klarere Darstellung in allen Spielen.
+</de-DE>
+<es-419>
+Sudoku: bloques más visibles, notas a lápiz, los errores no se marcan, solución a pedido y arcoíris con unicornios al ganar. Imagen más nítida en todos los juegos.
+</es-419>
+<es-ES>
+Sudoku: bloques más visibles, notas a lápiz, los errores no se señalan, solución a petición y arcoíris con unicornios al ganar. Imagen más nítida en todos los juegos.
+</es-ES>
+<fi-FI>
+Sudoku: selkeämmät ruudukot, lyijykynämerkinnät, virheitä ei näytetä, ratkaisu pyynnöstä sekä sateenkaari ja yksisarviset voitosta. Selkeämpi kuva kaikissa peleissä.
+</fi-FI>
+<hi-IN>
+सुडोकू: साफ़ ब्लॉक, पेंसिल नोट्स, गलतियाँ नहीं दिखाई जातीं, चाहें तो हल देखें, और जीतने पर इंद्रधनुष व यूनिकॉर्न. सभी गेम में साफ़ डिस्प्ले.
+</hi-IN>
+<hu-HU>
+Sudoku: jobban látható blokkok, ceruzás jegyzetek, a hibák nem jelennek meg, kérhető megoldás, győzelemkor szivárvány és unikornisok. Tisztább kép minden játékban.
+</hu-HU>
+<id>
+Sudoku: blok lebih jelas, catatan pensil, kesalahan tidak ditandai, solusi bisa dilihat, serta pelangi dan unicorn saat menang. Tampilan lebih bersih di semua game.
+</id>
+<it-IT>
+Sudoku: blocchi più visibili, appunti a matita, errori non segnalati, soluzione su richiesta e arcobaleno con unicorni quando vinci. Grafica più nitida in tutti i giochi.
+</it-IT>
+<iw-IL>
+סודוקו: בלוקים ברורים יותר, הערות בעיפרון, טעויות לא מסומנות, אפשר לבקש את הפתרון, וקשת וחדי קרן בניצחון. תצוגה נקייה יותר בכל המשחקים.
+</iw-IL>
+<ja-JP>
+数独：ブロックが見やすくなり、鉛筆メモを追加。間違いは表示されず、解答は希望時に表示。クリアすると虹とユニコーンが登場します。全ゲームの画面もすっきりしました。
+</ja-JP>
+<ko-KR>
+스도쿠: 블록이 더 잘 보이고, 연필 메모를 추가했습니다. 실수는 표시되지 않으며 원할 때 정답을 볼 수 있고, 이기면 무지개와 유니콘이 나타납니다. 모든 게임의 화면이 더 깔끔해졌습니다.
+</ko-KR>
+<nl-NL>
+Sudoku: duidelijkere blokken, potloodnotities, fouten worden niet getoond, oplossing op verzoek en een regenboog met eenhoorns bij winst. Rustiger beeld in alle spellen.
+</nl-NL>
+<no-NO>
+Sudoku: tydeligere blokker, blyantnotater, feil vises ikke, løsning på forespørsel og regnbue med enhjørninger når du vinner. Klarere bilde i alle spill.
+</no-NO>
+<pl-PL>
+Sudoku: czytelniejsze bloki, notatki ołówkiem, błędy nie są oznaczane, rozwiązanie na życzenie oraz tęcza i jednorożce po wygranej. Czystszy obraz we wszystkich grach.
+</pl-PL>
+<pt-BR>
+Sudoku: blocos mais visíveis, anotações a lápis, erros não são marcados, solução quando quiser e arco-íris com unicórnios na vitória. Visual mais limpo em todos os jogos.
+</pt-BR>
+<ro>
+Sudoku: blocuri mai vizibile, notițe cu creionul, greșelile nu sunt marcate, soluția la cerere și curcubeu cu unicorni la victorie. Imagine mai clară în toate jocurile.
+</ro>
+<ru-RU>
+Судоку: блоки лучше видны, пометки карандашом, ошибки не подсвечиваются, решение по запросу, а при победе — радуга и единороги. Более чистая картинка во всех играх.
+</ru-RU>
+<sk>
+Sudoku: výraznejšie bloky, poznámky ceruzkou, chyby sa neoznačujú, riešenie na požiadanie a dúha s jednorožcami pri výhre. Čistejšie zobrazenie vo všetkých hrách.
+</sk>
+<sv-SE>
+Sudoku: tydligare block, blyertsanteckningar, fel visas inte, lösning på begäran och regnbåge med enhörningar när du vinner. Renare bild i alla spel.
+</sv-SE>
+<th>
+ซูโดกุ: เห็นบล็อกชัดขึ้น จดโน้ตด้วยดินสอได้ ไม่แสดงข้อผิดพลาด ดูเฉลยได้เมื่อต้องการ และมีสายรุ้งกับยูนิคอร์นเมื่อชนะ ภาพคมชัดขึ้นในทุกเกม
+</th>
+<tr-TR>
+Sudoku: daha belirgin bloklar, kalemle notlar, hatalar gösterilmez, istenince çözüm ve kazanınca gökkuşağı ile tek boynuzlu atlar. Tüm oyunlarda daha temiz görüntü.
+</tr-TR>
+<uk>
+Судоку: блоки краще видно, нотатки олівцем, помилки не позначаються, розв’язок на вимогу, а в разі перемоги — веселка та єдинороги. Чистіша картинка в усіх іграх.
+</uk>
+<vi>
+Sudoku: khối dễ nhìn hơn, ghi chú bút chì, không báo lỗi, xem đáp án khi muốn, có cầu vồng và kỳ lân khi thắng. Hình ảnh gọn gàng hơn ở mọi trò chơi.
+</vi>
+<zh-CN>
+数独：宫格更清晰，新增铅笔笔记，不提示错误，可随时查看答案，获胜时出现彩虹和独角兽。所有游戏画面更清爽。
+</zh-CN>

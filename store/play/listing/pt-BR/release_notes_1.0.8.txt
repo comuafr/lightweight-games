@@ -1,0 +1,1 @@
+Sudoku: blocos mais visíveis, anotações a lápis, erros não são marcados, solução quando quiser e arco-íris com unicórnios na vitória. Visual mais limpo em todos os jogos.
