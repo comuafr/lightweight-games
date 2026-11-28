@@ -42,6 +42,7 @@ Titres d'affichage sans marque déposée (voir §8). Les ids internes sont stabl
 | 10 | reversi | Reversi | 8×8, retournements, IA positionnelle | tap | 1 ou 2 | C |
 | 11 | sudoku | Sudoku | générateur backtracking + unicité, 3 niveaux | tap + pavé | 1 | C |
 | 12 | nonogram | Nonogramme / Nonogram | 5×5 à 15×15, solveur ligne | tap / glisser | 1 | C |
+| 16 | mixup (ajouté après la 1.0) | Aligner trois, 30 niveaux | échange de voisines, bonus, glace | tap / glisser | 1 | M |
 
 Backlog après v1 : Dames, Solitaire Klondike (rendu de cartes riche, drag & drop complexe). Tout est dessiné procéduralement, aucune image bitmap, aucun fichier audio, aucune police embarquée.
 

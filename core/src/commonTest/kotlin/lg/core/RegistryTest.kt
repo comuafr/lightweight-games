@@ -13,10 +13,10 @@ public class RegistryTest {
     }
 
     @Test
-    public fun exactlyThreeFreeGamesAndFifteenTotal(): Unit {
-        assertEquals(15, GameRegistry.all.size)
+    public fun exactlyThreeFreeGamesAndSixteenTotal(): Unit {
+        assertEquals(16, GameRegistry.all.size)
         assertEquals(3, GameRegistry.all.count { it.tier == Tier.FREE })
-        assertEquals(12, GameRegistry.all.count { it.tier == Tier.UNLOCKED })
+        assertEquals(13, GameRegistry.all.count { it.tier == Tier.UNLOCKED })
     }
 
     @Test

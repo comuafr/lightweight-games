@@ -70,6 +70,10 @@ enum Strings {
         "lose_title", // 52 LOSE_TITLE
         "word_was", // 53 WORD_WAS
         "quit_confirm", // 54 QUIT_CONFIRM
+        "title_mixup", // 55 TITLE_MIXUP
+        "moves", // 56 MOVES
+        "goal", // 57 GOAL
+        "next_level", // 58 NEXT_LEVEL
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps

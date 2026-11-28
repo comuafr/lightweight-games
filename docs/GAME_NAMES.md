@@ -21,5 +21,6 @@ Les identifiants internes (`id`) ne changent jamais : ce sont les clés de sauve
 | `reversi` | Flip Discs | Retourne-pions |
 | `sudoku` | Nine by Nine | Neuf par neuf |
 | `nonogram` | Pixel Reveal | Pixel caché |
+| `mixup` | Mix-Up | Méli-mélo |
 
 Ne jamais utiliser les noms classiques dans les fiches de magasin, les captures ou les mots-clés ; décrire la mécanique à la place (« un serpent qui grandit », « fusionner des tuiles », etc.).

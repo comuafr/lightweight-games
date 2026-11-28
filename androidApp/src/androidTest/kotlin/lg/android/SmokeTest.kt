@@ -44,7 +44,7 @@ class SmokeTest {
         instrumentation.waitForIdleSync()
 
         val tileCount = countTileViews(activity.window.decorView)
-        assertEquals(15, tileCount)
+        assertEquals(16, tileCount)
     }
 
     @Test

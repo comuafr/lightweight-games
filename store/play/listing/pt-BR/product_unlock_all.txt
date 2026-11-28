@@ -1,2 +1,2 @@
 Title: Desbloquear todos os jogos
-Description: Desbloqueia os doze jogos extras, uma única vez, sem assinatura.
+Description: Desbloqueia os treze jogos extras, uma única vez, sem assinatura.

@@ -503,7 +503,7 @@ public class GameSession(
                 addButton(StringKey.QUIT, ACTION_QUIT)
             }
             is Overlay.Over -> {
-                addButton(StringKey.RESTART, ACTION_RESTART)
+                addButton(game.overActionKey ?: StringKey.RESTART, ACTION_RESTART)
             }
             is Overlay.NewHighScore, Overlay.None -> Unit
         }

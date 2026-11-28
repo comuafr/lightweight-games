@@ -14,7 +14,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Leaving a saved game and coming back to it, on the five real resumable games. */
+/** Leaving a saved game and coming back to it, on the six real resumable games. */
 public class ResumeSessionTest {
     private val store = FakeStore()
     private var now = 0L
@@ -51,6 +51,7 @@ public class ResumeSessionTest {
         val session = open(meta)
         session.start(players = 1, seed = 42)
         session.persist(store)
+        if (meta.id == "mixup") makeOneMove(session, meta)
         var y = 40f
         while (saved(meta) == null && y < 540f) {
             var x = 20f
@@ -65,11 +66,25 @@ public class ResumeSessionTest {
         return session
     }
 
+    /** Mix-Up needs a precise move, a swap that lines something up: picks level 1, then tries neighbours in turn. */
+    private fun makeOneMove(session: GameSession, meta: GameMeta) {
+        session.tap(44f, 148f)
+        for (row in 0 until 9) {
+            for (col in 0 until 6) {
+                session.tap(30f + col * 50f, 125f + row * 50f)
+                session.tap(80f + col * 50f, 125f + row * 50f)
+                session.persist(store)
+                if (saved(meta) != null) return
+                repeat(10) { session.update(50) }
+            }
+        }
+    }
+
     private fun resumable(): List<GameMeta> = GameRegistry.byId.values.filter { it.resumable }
 
     @Test
-    public fun theFiveSavedGamesAreStillTheResumableOnes() {
-        assertEquals(setOf("g2048", "sliding", "mines", "sudoku", "nonogram"), resumable().map { it.id }.toSet())
+    public fun theSixSavedGamesAreStillTheResumableOnes() {
+        assertEquals(setOf("g2048", "sliding", "mines", "sudoku", "nonogram", "mixup"), resumable().map { it.id }.toSet())
     }
 
     @Test

@@ -1,0 +1,1 @@
+Nouveau jeu : Méli-mélo, aligner trois formes, 30 niveaux. « Quitter » demande confirmation. Les parties en cours peuvent enfin être reprises. Nouvelle icône.

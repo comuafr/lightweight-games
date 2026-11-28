@@ -1,2 +1,2 @@
 Title: Alle Spiele freischalten
-Description: Schaltet die zwölf zusätzlichen Spiele frei, einmalig und ohne Abonnement.
+Description: Schaltet die dreizehn zusätzlichen Spiele frei, einmalig und ohne Abonnement.

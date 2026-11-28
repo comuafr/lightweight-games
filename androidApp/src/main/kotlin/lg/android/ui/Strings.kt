@@ -83,6 +83,10 @@ internal class Strings(context: Context) {
             R.string.lose_title, // LOSE_TITLE
             R.string.word_was, // WORD_WAS
             R.string.quit_confirm, // QUIT_CONFIRM
+            R.string.title_mixup, // TITLE_MIXUP
+            R.string.moves, // MOVES
+            R.string.goal, // GOAL
+            R.string.next_level, // NEXT_LEVEL
         )
     }
 }

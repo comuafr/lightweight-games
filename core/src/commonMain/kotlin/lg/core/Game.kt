@@ -3,6 +3,7 @@ package lg.core
 import lg.core.input.Gesture
 import lg.core.input.PointerPhase
 import lg.core.scene.Scene
+import lg.core.scene.StringKey
 
 /**
  * Contract implemented by every mini-game. [lg.core.session.GameSession] is
@@ -50,6 +51,9 @@ public interface Game {
      * `null` for none. Must be a stable string, not built per frame.
      */
     public val resultText: String? get() = null
+
+    /** Label of the end screen's button when it is not "Restart" (e.g. "Next level"); the button calls [reset]. */
+    public val overActionKey: StringKey? get() = null
 
     /** Gives the game the progress saved earlier; called once, before the first [reset]. */
     public fun restoreProgress(value: Int) {}

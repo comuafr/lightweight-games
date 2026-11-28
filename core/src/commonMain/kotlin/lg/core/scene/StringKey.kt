@@ -65,4 +65,8 @@ public enum class StringKey {
     LOSE_TITLE,
     WORD_WAS,
     QUIT_CONFIRM,
+    TITLE_MIXUP,
+    MOVES,
+    GOAL,
+    NEXT_LEVEL,
 }

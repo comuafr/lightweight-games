@@ -1,0 +1,1 @@
+New game: Mix-Up, line up three shapes, 30 levels. Quit now asks to confirm. Unfinished games can now be resumed. New icon.

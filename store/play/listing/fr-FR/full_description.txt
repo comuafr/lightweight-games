@@ -1,11 +1,11 @@
-Jeux Légers est une salle d'arcade de poche qui marche partout : dans le train, en voiture, en avion, ou dès que le réseau est mauvais. Quinze petits jeux dans une application minuscule, sans rien à configurer.
+Jeux Légers est une salle d'arcade de poche qui marche partout : dans le train, en voiture, en avion, ou dès que le réseau est mauvais. Seize petits jeux dans une application minuscule, sans rien à configurer.
 
 GRATUITS
 • Glouton : guidez un serpent qui grandit vers les pommes sans vous mordre la queue. Pas de murs : sortez par un bord, vous revenez par l'autre.
 • Fusion : faites glisser des tuiles numérotées pour fusionner les identiques et former le plus grand nombre.
 • Casse-mur : faites rebondir la balle sur votre raquette et cassez toutes les briques. Dix niveaux avec briques résistantes et blocs d'acier, capsules bonus et malus, et multi-balles.
 
-UN SEUL ACHAT DÉBLOQUE DOUZE JEUX DE PLUS
+UN SEUL ACHAT DÉBLOQUE TREIZE JEUX DE PLUS
 • Écho de couleurs : répétez une suite de couleurs de plus en plus longue.
 • Jumeaux : retournez les cartes et retrouvez les paires.
 • Glisse-cases : faites glisser les tuiles pour les remettre dans l'ordre.
@@ -18,6 +18,7 @@ UN SEUL ACHAT DÉBLOQUE DOUZE JEUX DE PLUS
 • Retourne-pions : coincez les pions adverses entre les vôtres pour les retourner.
 • Neuf par neuf : remplissez la grille de chiffres, sans répétition sur une ligne, une colonne ou un bloc.
 • Pixel caché : suivez les indices chiffrés pour faire apparaître une image cachée.
+• Méli-mélo : échangez deux formes voisines pour en aligner trois. Trente niveaux aux objectifs variés : points à atteindre, formes à ramasser ou glace à briser.
 
 POURQUOI ON L'AIME
 • Aucune publicité, aucun écran d'interruption, aucun faux bouton, aucun abonnement. Un seul paiement, pour toujours.

@@ -62,6 +62,10 @@
     <string name="lose_title">You lost!</string>
     <string name="word_was">The word was</string>
     <string name="quit_confirm">Quit the game?</string>
+    <string name="title_mixup">Mix-Up</string>
+    <string name="moves">Moves</string>
+    <string name="goal">Goal</string>
+    <string name="next_level">Next level</string>
     <string name="reset_scores">Reset scores</string>
     <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
     <string name="reset_scores_erase">Erase</string>
@@ -113,6 +117,8 @@ One purchase unlocks everything, forever</string>
     <string name="controls_sudoku">Choose a difficulty, tap an empty square, then tap a digit on the pad. Use the erase key to clear a square.</string>
     <string name="rules_nonogram">Reveal the hidden picture. The numbers beside each row and column tell the lengths of the runs of filled squares in it. Cross the squares you know are empty.</string>
     <string name="controls_nonogram">Tap or drag to fill squares. Press and hold to put a cross.</string>
+    <string name="rules_mixup">Swap two neighbouring shapes to line up three or more. Reach the goal of the level before your moves run out. Four in a line make a striped shape that clears a line; five make a bomb that takes a whole kind. Each level has its own goal: reach a score, collect shapes, or break the ice. To break ice, clear the shape sitting on it (twice for thick ice).</string>
+    <string name="controls_mixup">Drag a shape towards its neighbour, or tap one and then the other.</string>
 
     <!-- Billing errors shown on the paywall (Android only, not part of the shared StringKey list). -->
     <string name="billing_connecting">Connecting to Google Play…</string>

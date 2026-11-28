@@ -6,6 +6,7 @@ import lg.core.games.fourinrow.FourInRowGame
 import lg.core.games.g2048.Game2048
 import lg.core.games.hangman.HangmanGame
 import lg.core.games.mines.MinesGame
+import lg.core.games.mixup.MixUpGame
 import lg.core.games.nonogram.NonogramGame
 import lg.core.games.paddles.PaddlesGame
 import lg.core.games.pairs.PairsGame
@@ -23,7 +24,8 @@ import lg.core.games.tictactoe.TicTacToeGame
  * (a); M3 added the 6 complexity-S/M UNLOCKED games (sequence, pairs,
  * sliding, tictactoe, paddles, fourinrow); M4 adds the remaining 6
  * complexity-M/C UNLOCKED games (bird, mines, hangman, reversi, sudoku,
- * nonogram), for 15 games total (PLAN.md §9).
+ * nonogram); Mix-Up, the match-three game, came after the first release, for 16
+ * games in total.
  */
 public object GameRegistry {
     public val all: List<GameMeta> = listOf(
@@ -42,6 +44,7 @@ public object GameRegistry {
         ReversiGame.META,
         SudokuGame.META,
         NonogramGame.META,
+        MixUpGame.META,
     )
 
     public val byId: Map<String, GameMeta> = all.associateBy { it.id }

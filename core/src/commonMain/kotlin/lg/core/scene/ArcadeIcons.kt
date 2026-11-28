@@ -20,6 +20,22 @@ internal object ArcadeIcons {
     fun flipDiscs(scene: Scene, size: Float): Unit = PixelArt.draw(scene, size, SPRITE_FLIPDISCS)
     fun nineByNine(scene: Scene, size: Float): Unit = PixelArt.draw(scene, size, SPRITE_NINEBYNINE)
     fun pixelReveal(scene: Scene, size: Float): Unit = PixelArt.draw(scene, size, SPRITE_PIXELREVEAL)
+    fun mixUp(scene: Scene, size: Float): Unit = PixelArt.draw(scene, size, SPRITE_MIXUP)
+
+    private val SPRITE_MIXUP: Array<String> = arrayOf(
+        "............",
+        ".cc...y..gg.",
+        "cccc.yyy.gg.",
+        ".cc.yyyyy...",
+        "............",
+        "...r...r...r",
+        "..rrr.rrr.rr",
+        "...r...r...r",
+        "............",
+        ".gg..pp...y.",
+        ".gg.p..p.yyy",
+        ".....pp.....",
+    )
 
     private val SPRITE_SNAKE: Array<String> = arrayOf(
         "............",

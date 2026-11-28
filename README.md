@@ -1,6 +1,6 @@
 # Lightweight Games
 
-One small mobile app (Android + iOS) with 15 minimal, offline games: 3 free, 12 unlocked by a single non-consumable purchase. No ads, no tracking, no account, no network needed to play.
+One small mobile app (Android + iOS) with 16 minimal, offline games: 3 free, 13 unlocked by a single non-consumable purchase. No ads, no tracking, no account, no network needed to play.
 
 - `PLAN.md` — the approved plan: catalog, architecture, IAP, footprint strategy, milestones, risks.
 - `docs/JOURNAL.md` — session-by-session history of decisions and results.

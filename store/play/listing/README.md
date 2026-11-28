@@ -41,7 +41,7 @@ Visuels : `../icon_512.png`, `../feature_1024x500_<langue>.png` (en, fr, es, de,
 
 ### Texte « Any other information required for access » (en anglais)
 ```
-No account or sign-in is required. Three games are free (Gobbler, Fusion, Wall Smash). The other twelve are unlocked by one in-app purchase, "Unlock every game" (product ID unlock_all).
+No account or sign-in is required. Three games are free (Gobbler, Fusion, Wall Smash). The other thirteen are unlocked by one in-app purchase, "Unlock every game" (product ID unlock_all).
 
 To reach the purchase screen: on the home screen, tap any locked game (padlock icon) or the "Unlock all" link. The purchase button is protected by a parental gate: press and hold it for 3 seconds, then Google Play's purchase sheet opens.
 
@@ -51,8 +51,8 @@ Nom du jeu d'identifiants : `Unlock all games (in-app purchase)`. Laisser identi
 
 ## Produit intégré `unlock_all`
 - Titre FR : `Débloquer tous les jeux`. Titre EN : `Unlock every game`.
-- Description FR : `Débloque les douze jeux supplémentaires, une seule fois, sans abonnement.`
-- Description EN : `Unlocks the twelve extra games, one time, no subscription.`
+- Description FR : `Débloque les treize jeux supplémentaires, une seule fois, sans abonnement.`
+- Description EN : `Unlocks the thirteen extra games, one time, no subscription.`
 - Option d'achat `unlock-all`, type Buy, active. Icône : `../product_icon_unlock_all_512.png`.
 
 ## Captures d'écran à faire sur le téléphone
