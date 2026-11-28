@@ -2,6 +2,7 @@
 kotlin = "2.4.20"
 agp = "9.4.0"
 billing = "8.0.0"
+androidxFragment = "1.8.9"
 compileSdk = "36"
 minSdk = "24"
 junit = "4.13.2"
@@ -11,6 +12,8 @@ androidxTestJunit = "1.2.1"
 
 [libraries]
 billing = { module = "com.android.billingclient:billing", version.ref = "billing" }
+# Not used by the app: billing's play-services-base asks for 1.0.0, which Play flags as outdated. Constraint only.
+androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "androidxFragment" }
 # Test-only (JVM unit tests); never ships in the app.
 junit = { module = "junit:junit", version.ref = "junit" }
 # Test-only (androidTest instrumentation, androidTestImplementation only); never ships in the app.

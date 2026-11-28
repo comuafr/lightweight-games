@@ -42,8 +42,8 @@ android {
         applicationId = "fr.comua.lightgames"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.compileSdk.get().toInt()
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 9
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -115,6 +115,9 @@ kotlin {
 dependencies {
     implementation(project(":core"))
     implementation(libs.billing)
+    constraints {
+        implementation(libs.androidx.fragment)
+    }
 
     testImplementation(libs.junit)
 

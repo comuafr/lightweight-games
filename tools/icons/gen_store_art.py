@@ -178,12 +178,12 @@ def main():
     ios_art()
     # The app exists in English and French only, so the other store languages keep the title "Light Games".
     for code, title, sentences in (
-        ("en", "Light Games", ("16 tiny offline games.", "No ads.")),
-        ("fr", "Jeux Légers", ("16 mini-jeux hors ligne.", "Sans pub.")),
-        ("es", "Light Games", ("16 minijuegos sin conexión.", "Sin anuncios.")),
-        ("de", "Light Games", ("16 Mini-Spiele ohne Internet.", "Keine Werbung.")),
-        ("it", "Light Games", ("16 mini-giochi offline.", "Niente pubblicità.")),
-        ("pt-BR", "Light Games", ("16 minijogos offline.", "Sem anúncios.")),
+        ("en", "Light Games", ("15 tiny offline games.", "No ads.")),
+        ("fr", "Jeux Légers", ("15 mini-jeux hors ligne.", "Sans pub.")),
+        ("es", "Light Games", ("15 minijuegos sin conexión.", "Sin anuncios.")),
+        ("de", "Light Games", ("15 Mini-Spiele ohne Internet.", "Keine Werbung.")),
+        ("it", "Light Games", ("15 mini-giochi offline.", "Niente pubblicità.")),
+        ("pt-BR", "Light Games", ("15 minijogos offline.", "Sem anúncios.")),
     ):
         feature(os.path.join(PLAY, f"feature_1024x500_{code}.png"), title, sentences)
     product_icon(os.path.join(PLAY, "product_icon_unlock_all_512.png"))
