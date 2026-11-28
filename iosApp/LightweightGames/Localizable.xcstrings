@@ -1157,6 +1157,40 @@
         }
       }
     },
+    "fix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fix it"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Corriger"
+          }
+        }
+      }
+    },
+    "show_solution": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show solution"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voir la solution"
+          }
+        }
+      }
+    },
     "word_was": {
       "extractionState": "manual",
       "localizations": {

@@ -70,4 +70,6 @@ public enum class StringKey {
     GOAL,
     NEXT_LEVEL,
     GRID_HAS_ERROR,
+    FIX,
+    SHOW_SOLUTION,
 }

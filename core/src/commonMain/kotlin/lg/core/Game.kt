@@ -52,6 +52,13 @@ public interface Game {
      */
     public val resultText: String? get() = null
 
+    /**
+     * True when the game draws its own end screen (a solution to look at, a celebration): the session then adds
+     * neither its veil nor its title, only its button, at the bottom. Such a game keeps being [update]d after
+     * [GameStatus.Over] for as long as [wantsFrames] is true.
+     */
+    public val ownsEndScreen: Boolean get() = false
+
     /** Label of the end screen's button when it is not "Restart" (e.g. "Next level"); the button calls [reset]. */
     public val overActionKey: StringKey? get() = null
 

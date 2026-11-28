@@ -277,6 +277,11 @@ public class GameSession(
         val clampedDt = dtMs.coerceAtMost(MAX_DT_MS)
         gestureDeliveredInUpdate = false
         gestureDetector.update(clock.nowMs())
+        if (animatesEndScreen()) {
+            val changed = game.update(clampedDt)
+            if (changed) eventsArmed = true
+            return changed
+        }
         if (overlay != Overlay.None) return false
 
         // A long press that fires while the finger is still down changes the game (a flag, a cross) without any
@@ -395,7 +400,10 @@ public class GameSession(
      * flag in the minesweeper, is detected by the time that [update] advances).
      */
     public val needsFrameLoop: Boolean
-        get() = overlay == Overlay.None && (game.wantsFrames || gestureDetector.hasPendingLongPress)
+        get() = (overlay == Overlay.None && (game.wantsFrames || gestureDetector.hasPendingLongPress)) || animatesEndScreen()
+
+    /** A game with its own end screen may still be moving there (see [Game.ownsEndScreen]). */
+    private fun animatesEndScreen(): Boolean = overlay is Overlay.Over && game.ownsEndScreen && game.wantsFrames
 
     /**
      * Persists the game's resumable state (no-op if [GameMeta.resumable] is false). Before the start the stored game is
@@ -511,8 +519,8 @@ public class GameSession(
         val btnW = (width * 0.9f).coerceAtLeast(btnH * 2f)
         val gap = BUTTON_GAP_PT
         val totalH = buttonCount * btnH + (buttonCount - 1).coerceAtLeast(0) * gap
-        // With a high-score table on the screen the buttons sit at the bottom, below the table.
-        var y = if (showsTable(overlay)) height - BUTTON_BOTTOM_MARGIN_PT - totalH else (height - totalH) / 2f
+        // With a high-score table, or an end screen the game draws itself, the buttons sit at the bottom.
+        var y = if (showsTable(overlay) || (overlay is Overlay.Over && game.ownsEndScreen)) height - BUTTON_BOTTOM_MARGIN_PT - totalH else (height - totalH) / 2f
         val x = (width - btnW) / 2f
         for (i in 0 until buttonCount) {
             buttonRect[i].x = x
@@ -572,6 +580,10 @@ public class GameSession(
     private fun renderOverlay(scene: Scene) {
         val currentOverlay = overlay
         if (currentOverlay == Overlay.None) return
+        if (currentOverlay is Overlay.Over && game.ownsEndScreen) {
+            renderButtons(scene)
+            return
+        }
 
         scene.rect(0f, 0f, width, height, Palette.SURFACE, alpha = OVERLAY_SCRIM_ALPHA)
         if (showsTable(currentOverlay)) {

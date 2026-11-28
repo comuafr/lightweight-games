@@ -218,30 +218,87 @@ public class SudokuRulesTest {
         assertTrue(!SudokuGame().restore("$old;notes=1,2"))
     }
 
-    @Test
-    public fun onlyAFullWrongGridSaysThereIsAnError(): Unit {
-        val game = newGame()
-        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.EASY)
-        game.resize(360f, 560f)
-        fun warns(): Boolean {
-            val scene = Scene()
-            game.render(scene)
-            return (0 until scene.count).any { scene.color[it] == Palette.DANGER }
-        }
+    /** Fills every blank, the last one wrongly. @return that last cell. */
+    private fun fillWithOneMistake(game: SudokuGame): Int {
         val blanks = (0 until 81).filter { game.debugGiven(it) == 0 }
-        val last = blanks.last()
-        val wrong = game.debugSolution(last) % 9 + 1
         for (i in blanks.dropLast(1)) {
             game.debugSetSelected(i)
             game.debugApplyNumpadKey(game.debugSolution(i))
         }
-        assertTrue(!warns())
+        assertTrue(!game.debugAsking())
+        val last = blanks.last()
         game.debugSetSelected(last)
-        game.debugApplyNumpadKey(wrong)
-        assertTrue(warns())
+        game.debugApplyNumpadKey(game.debugSolution(last) % 9 + 1)
+        return last
+    }
+
+    private fun easyGame(): SudokuGame {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.EASY)
+        game.resize(360f, 560f)
+        return game
+    }
+
+    @Test
+    public fun aFullWrongGridAsksAndFixingGoesOn(): Unit {
+        val game = easyGame()
+        val last = fillWithOneMistake(game)
+        assertTrue(game.debugAsking())
+        assertEquals(GameStatus.Running, game.status)
+        // The grid and the pad wait for an answer.
+        tap(game, 20f, 100f)
+        assertEquals(last, game.debugSelected())
+        // The question survives a save.
+        val restored = SudokuGame()
+        assertTrue(restored.restore(game.snapshot()!!))
+        assertTrue(restored.debugAsking())
+
+        tap(game, 90f, 423f + 68f) // "Fix it"
+        assertTrue(!game.debugAsking())
         game.debugApplyNumpadKey(game.debugSolution(last))
-        assertTrue(!warns())
-        assertTrue(game.status is GameStatus.Over)
+        assertEquals(GameStatus.SOLO_WIN, (game.status as GameStatus.Over).winner)
+    }
+
+    @Test
+    public fun askingForTheSolutionLosesAndShowsItWithTheMistakes(): Unit {
+        val game = easyGame()
+        fillWithOneMistake(game)
+        tap(game, 270f, 423f + 68f) // "Show solution"
+        assertEquals(GameStatus.SOLO_LOSS, (game.status as GameStatus.Over).winner)
+        assertTrue(game.ownsEndScreen)
+        assertTrue(!game.wantsFrames)
+        assertTrue(!game.canResume)
+        val scene = Scene()
+        game.render(scene)
+        assertEquals(SoundId.LOSE.bit, scene.soundMask)
+        // One wrong cell: one red rectangle and the red title.
+        assertEquals(2, (0 until scene.count).count { scene.color[it] == Palette.DANGER })
+    }
+
+    @Test
+    public fun aWinIsCelebratedForAWhileThenHoldsStill(): Unit {
+        val game = easyGame()
+        for (i in 0 until 81) {
+            if (game.debugGiven(i) != 0) continue
+            game.debugSetSelected(i)
+            game.debugApplyNumpadKey(game.debugSolution(i))
+        }
+        assertTrue(game.wantsFrames)
+        val scene = Scene()
+        var sounds = 0
+        var most = 0
+        var frames = 0
+        while (game.wantsFrames) {
+            assertTrue(game.update(50))
+            scene.clear()
+            game.render(scene)
+            assertEquals(0, scene.dropped)
+            most = maxOf(most, scene.count)
+            if (scene.soundMask and SoundId.WIN.bit != 0) sounds++
+            assertTrue(frames++ < 1000)
+        }
+        assertEquals(1, sounds)
+        assertTrue(most < 900, "too many primitives: $most")
     }
 
     @Test
@@ -297,7 +354,7 @@ public class SudokuRulesTest {
             }
         }
         assertTrue(game.status is GameStatus.Over)
-        assertEquals(0, (game.status as GameStatus.Over).winner)
+        assertEquals(GameStatus.SOLO_WIN, (game.status as GameStatus.Over).winner)
     }
 
     @Test

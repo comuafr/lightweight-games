@@ -75,6 +75,8 @@ enum Strings {
         "goal", // 57 GOAL
         "next_level", // 58 NEXT_LEVEL
         "grid_has_error", // 59 GRID_HAS_ERROR
+        "fix", // 60 FIX
+        "show_solution", // 61 SHOW_SOLUTION
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps

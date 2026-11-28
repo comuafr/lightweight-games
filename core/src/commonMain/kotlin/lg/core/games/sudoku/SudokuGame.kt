@@ -11,6 +11,7 @@ import lg.core.input.GestureKind
 import lg.core.input.PointerPhase
 import lg.core.scene.Align
 import lg.core.scene.Palette
+import lg.core.scene.PixelArt
 import lg.core.scene.ArcadeIcons
 import lg.core.scene.Scene
 import lg.core.scene.SoundId
@@ -19,6 +20,8 @@ import lg.core.util.KvCodec
 import lg.core.util.Layout
 import lg.core.util.Rect
 import lg.core.util.Rng
+import kotlin.math.abs
+import kotlin.math.sin
 
 /**
  * 9x9 Sudoku with a difficulty choice drawn by the game itself.
@@ -45,10 +48,12 @@ import lg.core.util.Rng
  * cell ([notes], one bit per digit). Notes are entirely the player's: nothing
  * removes them but the player; a digit entered in the cell only hides them.
  *
- * Nothing tells a wrong digit from a right one (same color, same sound, and the
- * score counts filled cells). Only a grid that is full and not the solution says
- * that it holds an error, without saying where. The game is won once `current`
- * equals `solution` everywhere.
+ * Nothing tells a wrong digit from a right one while playing (same color, same
+ * sound, and the score counts filled cells). Only a grid that is full and not the
+ * solution says that it holds an error, and asks: fix it, or see the solution,
+ * which loses the game and marks the wrong cells. The game is won once `current`
+ * equals `solution` everywhere. The game draws both end screens itself: the
+ * solution stays in full view, a win is celebrated with rainbows and unicorns.
  */
 public class SudokuGame : Game {
     override val meta: GameMeta get() = META
@@ -59,7 +64,11 @@ public class SudokuGame : Game {
     override var score: Int = 0
         private set
 
-    override val wantsFrames: Boolean = false
+    /** Frames run only for the celebration of a win. */
+    override val wantsFrames: Boolean
+        get() = won && partyMs < PARTY_MS
+
+    override val ownsEndScreen: Boolean get() = true
 
     private var viewWidth: Float = 0f
     private var viewHeight: Float = 0f
@@ -78,10 +87,24 @@ public class SudokuGame : Game {
     private val notes = IntArray(CELL_COUNT)
     private var pencil: Boolean = false
 
+    /** True while the full but wrong grid offers to be fixed or to show the solution. */
+    private var asking: Boolean = false
+
+    /** The cells that were wrong when the player asked for the solution. */
+    private val mistakes = BooleanArray(CELL_COUNT)
+
+    /** Time into the celebration of a win. */
+    private var partyMs: Int = 0
+    private var winSoundPending: Boolean = false
+
+    private val won: Boolean get() = (status as? GameStatus.Over)?.winner == GameStatus.SOLO_WIN
+    private val lost: Boolean get() = (status as? GameStatus.Over)?.winner == GameStatus.SOLO_LOSS
+
     // Events from the most recent action, read (not mutated) by render().
     private var enteredThisMove: Boolean = false
     private var notedThisMove: Boolean = false
     private var wonThisMove: Boolean = false
+    private var lostThisMove: Boolean = false
 
     override fun reset(seed: Long, players: Int) {
         rng = Rng(seed)
@@ -92,15 +115,24 @@ public class SudokuGame : Game {
         selected = -1
         notes.fill(0)
         pencil = false
+        clearEnd()
         score = 0
         clearEvents()
         status = GameStatus.Running
+    }
+
+    private fun clearEnd() {
+        asking = false
+        mistakes.fill(false)
+        partyMs = 0
+        winSoundPending = false
     }
 
     private fun clearEvents() {
         enteredThisMove = false
         notedThisMove = false
         wonThisMove = false
+        lostThisMove = false
     }
 
     override fun resize(width: Float, height: Float) {
@@ -125,6 +157,15 @@ public class SudokuGame : Game {
             return
         }
 
+        if (asking) {
+            // Only the two answers do anything until one is chosen.
+            when (answerAt(gesture.x, gesture.y)) {
+                0 -> asking = false
+                1 -> giveUp()
+            }
+            return
+        }
+
         val cellIdx = cellAt(gesture.x, gesture.y)
         if (cellIdx != null) {
             selected = cellIdx
@@ -141,7 +182,20 @@ public class SudokuGame : Game {
 
     override fun update(dtMs: Int): Boolean {
         clearEvents()
-        return false
+        if (!wantsFrames) return false
+        // The winning sound belongs to a frame of its own, so a redraw of the tap cannot lose or repeat it.
+        wonThisMove = winSoundPending
+        winSoundPending = false
+        partyMs += dtMs
+        return true
+    }
+
+    private fun giveUp() {
+        asking = false
+        for (i in 0 until CELL_COUNT) mistakes[i] = current[i] != solution[i]
+        selected = -1
+        status = GameStatus.Over(GameStatus.SOLO_LOSS)
+        lostThisMove = true
     }
 
     private fun startWithDifficulty(d: SudokuGenerator.Difficulty) {
@@ -155,6 +209,7 @@ public class SudokuGame : Game {
         selected = -1
         notes.fill(0)
         pencil = false
+        clearEnd()
         choosing = false
         score = computeScore()
     }
@@ -176,8 +231,24 @@ public class SudokuGame : Game {
         }
         score = computeScore()
         if (isSolved()) {
-            status = GameStatus.Over(0)
-            wonThisMove = true
+            status = GameStatus.Over(GameStatus.SOLO_WIN)
+            selected = -1
+            partyMs = 0
+            winSoundPending = true
+        } else if (value != 0 && !pencil && isFullButWrong()) {
+            asking = true
+        }
+    }
+
+    /** Which answer of the question is at ([x], [y]): 0 fix, 1 show the solution, -1 neither. */
+    private fun answerAt(x: Float, y: Float): Int {
+        val top = numpadY() + ANSWER_Y_PT
+        if (y < top || y > top + ANSWER_H_PT) return -1
+        val half = viewWidth / 2f
+        return when {
+            x >= ANSWER_MARGIN_PT && x <= half - ANSWER_MARGIN_PT / 2f -> 0
+            x >= half + ANSWER_MARGIN_PT / 2f && x <= viewWidth - ANSWER_MARGIN_PT -> 1
+            else -> -1
         }
     }
 
@@ -255,6 +326,7 @@ public class SudokuGame : Game {
     internal fun debugSelected(): Int = selected
     internal fun debugNotes(idx: Int): Int = notes[idx]
     internal fun debugPencil(): Boolean = pencil
+    internal fun debugAsking(): Boolean = asking
     internal fun debugKeyAt(x: Float, y: Float): Int? = numpadKeyAt(x, y)
     internal fun debugApplyNumpadKey(value: Int): Unit = applyNumpadKey(value)
     internal fun debugRngState(): Long = rng.state
@@ -269,15 +341,17 @@ public class SudokuGame : Game {
             renderChooser(scene)
         } else {
             renderBoard(scene)
-            renderNumpad(scene)
-            if (isFullButWrong()) {
-                val y = numpadY() + NUMPAD_ROWS * NUMPAD_KEY_H + ERROR_GAP_PT
-                scene.text(viewWidth / 2f, y, StringKey.GRID_HAS_ERROR, Palette.DANGER, ERROR_TEXT_PT, Align.CENTER)
+            when {
+                won -> renderParty(scene)
+                lost -> scene.text(viewWidth / 2f, numpadY() + END_TITLE_Y_PT, StringKey.LOSE_TITLE, Palette.DANGER, END_TITLE_PT, Align.CENTER)
+                asking -> renderQuestion(scene)
+                else -> renderNumpad(scene)
             }
         }
 
         if (enteredThisMove) scene.sound(SoundId.EAT)
         if (notedThisMove) scene.sound(SoundId.TICK)
+        if (lostThisMove) scene.sound(SoundId.LOSE)
         if (wonThisMove) {
             scene.sound(SoundId.WIN)
             scene.haptic()
@@ -287,6 +361,60 @@ public class SudokuGame : Game {
     private fun isFullButWrong(): Boolean {
         for (i in 0 until CELL_COUNT) if (current[i] == 0) return false
         return !isSolved()
+    }
+
+    /** In place of the pad: the grid is full and wrong. */
+    private fun renderQuestion(scene: Scene) {
+        scene.text(viewWidth / 2f, numpadY() + QUESTION_Y_PT, StringKey.GRID_HAS_ERROR, Palette.DANGER, QUESTION_PT, Align.CENTER)
+        val top = numpadY() + ANSWER_Y_PT
+        val half = viewWidth / 2f
+        val width = half - 1.5f * ANSWER_MARGIN_PT
+        scene.rect(ANSWER_MARGIN_PT, top, width, ANSWER_H_PT, Palette.ACCENT, radius = 12f)
+        scene.text(ANSWER_MARGIN_PT + width / 2f, top + ANSWER_H_PT / 2f, StringKey.FIX, Palette.BG, ANSWER_PT, Align.CENTER)
+        val right = half + ANSWER_MARGIN_PT / 2f
+        scene.rect(right, top, width, ANSWER_H_PT, Palette.SURFACE, radius = 12f)
+        scene.text(right + width / 2f, top + ANSWER_H_PT / 2f, StringKey.SHOW_SOLUTION, Palette.FG, ANSWER_PT, Align.CENTER)
+    }
+
+    /**
+     * A win: the solved grid fades back, a rainbow rises over it, unicorns come in and hop, sparkles twinkle. After
+     * [PARTY_MS] everything holds still.
+     */
+    private fun renderParty(scene: Scene) {
+        scene.rect(boardRect.x, boardRect.y, boardRect.w, boardRect.h, Palette.BG, alpha = 0.7f)
+        val rise = (partyMs / RAINBOW_RISE_MS.toFloat()).coerceIn(0f, 1f)
+        val cx = viewWidth / 2f
+        val baseY = boardRect.y + boardRect.h * 0.68f
+        // Concentric half discs, the last one in the background color, leave six bands.
+        val outer = boardRect.w * 0.48f * rise
+        if (outer > 1f) {
+            for (k in RAINBOW.indices) scene.arc(cx, baseY, outer * (1f - k * BAND_SHARE), 180f, 180f, RAINBOW[k])
+            scene.arc(cx, baseY, outer * (1f - RAINBOW.size * BAND_SHARE), 180f, 180f, Palette.BG)
+        }
+        val t = partyMs / 1000f
+        for (k in 0 until SPARKLES) {
+            // Fixed places, each twinkling at its own moment.
+            val x = boardRect.x + boardRect.w * ((k * 0.618f + 0.07f) % 1f)
+            val y = boardRect.y + boardRect.h * ((k * 0.381f + 0.03f) % 1f)
+            val glow = 0.5f + 0.5f * sin(t * 5f + k * 1.7f)
+            val color = RAINBOW[k % RAINBOW.size]
+            val r = 2f + 6f * glow
+            scene.line(x - r, y, x + r, y, color, width = 2f, alpha = glow)
+            scene.line(x, y - r, x, y + r, color, width = 2f, alpha = glow)
+        }
+        val arrive = (partyMs / UNICORN_ARRIVE_MS.toFloat()).coerceIn(0f, 1f)
+        val settle = 1f - (partyMs / PARTY_MS.toFloat()).coerceIn(0f, 1f)
+        val hop = abs(sin(t * 4f)) * 18f * settle
+        renderUnicorn(scene, -UNICORN_PT + arrive * (UNICORN_PT + 14f), baseY - UNICORN_PT * 0.3f - hop, UNICORN_RIGHT)
+        val other = abs(sin(t * 4f + 1.6f)) * 18f * settle
+        renderUnicorn(scene, viewWidth - arrive * (UNICORN_PT + 14f), baseY - UNICORN_PT * 0.3f - other, UNICORN_LEFT)
+        scene.text(cx, numpadY() + END_TITLE_Y_PT, StringKey.WIN_TITLE, Palette.ACCENT, END_TITLE_PT, Align.CENTER)
+    }
+
+    private fun renderUnicorn(scene: Scene, x: Float, y: Float, sprite: Array<String>) {
+        val mark = scene.count
+        PixelArt.draw(scene, UNICORN_PT, sprite)
+        scene.transformFrom(mark, 1f, x, y)
     }
 
     private fun renderChooser(scene: Scene) {
@@ -315,6 +443,12 @@ public class SudokuGame : Game {
             )
         }
 
+        if (lost) {
+            for (i in 0 until CELL_COUNT) {
+                if (mistakes[i]) scene.rect(boardRect.x + i % SIZE * cell, boardRect.y + i / SIZE * cell, cell, cell, Palette.DANGER)
+            }
+        }
+
         if (selected >= 0) {
             val row = selected / SIZE
             val col = selected % SIZE
@@ -326,12 +460,18 @@ public class SudokuGame : Game {
             val col = i % SIZE
             val cx = boardRect.x + col * cell + cell / 2f
             val cy = boardRect.y + row * cell + cell / 2f
-            val v = current[i]
+            // A lost game shows the solution.
+            val v = if (lost) solution[i] else current[i]
             if (v == 0) {
                 renderNotes(scene, notes[i], cx, cy, cell)
                 continue
             }
-            scene.number(cx, cy, v, if (given[i] != 0) Palette.FG else Palette.ACCENT, cell * 0.5f, Align.CENTER)
+            val color = when {
+                lost && mistakes[i] -> Palette.NEON_WHITE
+                given[i] != 0 -> Palette.FG
+                else -> Palette.ACCENT
+            }
+            scene.number(cx, cy, v, color, cell * 0.5f, Align.CENTER)
         }
 
         // Thin lines first, then the block borders over them.
@@ -468,6 +608,8 @@ public class SudokuGame : Game {
         score = computeScore()
         rng = Rng.fromState(rngState)
         status = GameStatus.Running
+        clearEnd()
+        asking = !choosing && isFullButWrong()
         clearEvents()
         return true
     }
@@ -507,8 +649,49 @@ public class SudokuGame : Game {
 
         private const val NOTE_STEP: Float = 0.3f
         private const val NOTE_SIZE: Float = 0.27f
-        private const val ERROR_GAP_PT: Float = 14f
-        private const val ERROR_TEXT_PT: Float = 15f
+        // The question shown in place of the pad, relative to the pad's top.
+        private const val QUESTION_Y_PT: Float = 18f
+        private const val QUESTION_PT: Float = 16f
+        private const val ANSWER_Y_PT: Float = 40f
+        private const val ANSWER_H_PT: Float = 56f
+        private const val ANSWER_MARGIN_PT: Float = 14f
+        private const val ANSWER_PT: Float = 16f
+
+        // End screens. The session's button sits at 472..536 of the 560 pt zone, below this title.
+        private const val END_TITLE_Y_PT: Float = 24f
+        private const val END_TITLE_PT: Float = 30f
+        private const val PARTY_MS: Int = 8000
+        private const val RAINBOW_RISE_MS: Int = 900
+        private const val UNICORN_ARRIVE_MS: Int = 1200
+        private const val UNICORN_PT: Float = 112f
+        private const val BAND_SHARE: Float = 0.09f
+        private const val SPARKLES: Int = 18
+        private val RAINBOW = intArrayOf(
+            Palette.NEON_RED, Palette.NEON_ORANGE, Palette.NEON_YELLOW,
+            Palette.NEON_GREEN, Palette.NEON_CYAN, Palette.NEON_PURPLE,
+        )
+
+        /** A unicorn looking right: golden horn, pink mane and tail. */
+        private val UNICORN_RIGHT: Array<String> = arrayOf(
+            "..............y.",
+            ".............y..",
+            "............y...",
+            "..........pww...",
+            ".........ppwwww.",
+            "........ppwwdww.",
+            ".......ppwwwwwww",
+            "......ppwww.wwww",
+            "..wwwwpwwww.....",
+            "pwwwwwwwwww.....",
+            "ppwwwwwwwww.....",
+            "pp.wwwwwwww.....",
+            "p..ww....ww.....",
+            "p..w.w...w.w....",
+            "...w..w..w..w...",
+            "...uu.uu.uu.uu..",
+        )
+
+        private val UNICORN_LEFT: Array<String> = Array(UNICORN_RIGHT.size) { UNICORN_RIGHT[it].reversed() }
         private const val BLOCK_TINT_ALPHA: Float = 0.16f
         private const val TINTED_LINE_ALPHA: Float = 0.6f
 

@@ -67,6 +67,8 @@
     <string name="goal">Goal</string>
     <string name="next_level">Next level</string>
     <string name="grid_has_error">The grid has a mistake</string>
+    <string name="fix">Fix it</string>
+    <string name="show_solution">Show solution</string>
     <string name="reset_scores">Reset scores</string>
     <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
     <string name="reset_scores_erase">Erase</string>
@@ -114,7 +116,7 @@ One purchase unlocks everything, forever</string>
     <string name="controls_hangman">Tap a letter on the keyboard.</string>
     <string name="rules_reversi">Place discs to trap your opponent\'s discs between yours: they flip to your color. Whoever has the most discs at the end wins. If you can\'t play, your turn is skipped.</string>
     <string name="controls_reversi">Tap a square where you can flip at least one disc.</string>
-    <string name="rules_sudoku">Fill the grid so that every row, every column and every 3x3 block holds each digit from 1 to 9 exactly once. Mistakes are not shown: you only learn of one once the grid is full.</string>
+    <string name="rules_sudoku">Fill the grid so that every row, every column and every 3x3 block holds each digit from 1 to 9 exactly once. Mistakes are not shown: you only learn of one once the grid is full; then fix it, or look at the solution and lose the game.</string>
     <string name="controls_sudoku">Pick a difficulty, tap an empty cell, then a digit on the pad. The pencil writes small notes instead of the digit; tap it again to write digits. The cross erases the digit, then the notes.</string>
     <string name="rules_nonogram">Reveal the hidden picture. The numbers beside each row and column tell the lengths of the runs of filled squares in it. Cross the squares you know are empty.</string>
     <string name="controls_nonogram">Tap or drag to fill squares. Press and hold to put a cross.</string>
