@@ -2,5 +2,5 @@
 <resources>
     <!-- Matches Palette.LIGHT[Palette.BG] in ui/Palette.kt; kept in sync by hand. -->
     <color name="window_background">#FFF6F1E7</color>
-    <color name="ic_launcher_background">#FF2EC4B6</color>
+    <color name="ic_launcher_background">#FF1A0C50</color>
 </resources>

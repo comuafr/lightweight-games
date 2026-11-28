@@ -2,7 +2,7 @@
 
 Textes prêts à coller (un fichier par champ, limites vérifiées) :
 `en-US/` et `fr-FR/` : `title.txt` (30), `short_description.txt` (80), `full_description.txt` (4000), `release_notes.txt` (500).
-Visuels : `../icon_512.png`, `../feature_1024x500_en.png`, `../feature_1024x500_fr.png`, `../product_icon_unlock_all_512.png` (icône du produit). Les captures sont à faire sur le téléphone (voir plus bas).
+Visuels : `../icon_512.png`, `../feature_1024x500_<langue>.png` (en, fr, es, de, it, pt-BR), `../product_icon_unlock_all_512.png` (icône du produit), tous générés depuis `../feature-final.png` par `tools/icons/gen_store_art.py`. Les captures sont à faire sur le téléphone (voir plus bas).
 
 ## Présence sur le Store > Fiche principale
 | Champ | Valeur |
