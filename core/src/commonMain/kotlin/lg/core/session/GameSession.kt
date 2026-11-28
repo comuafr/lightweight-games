@@ -347,7 +347,6 @@ public class GameSession(
         renderHud(scene)
         renderOverlay(scene)
         scene.transformFrom(mark, scale, originX, originY)
-        renderScanlines(scene)
         renderQuitBar(scene)
     }
 
@@ -537,15 +536,6 @@ public class GameSession(
         scene.rect(frameX, frameY, frameW, frameH, Palette.BEZEL_EDGE, radius = FRAME_RADIUS_PT)
     }
 
-    /** Faint horizontal CRT scanlines over the whole play zone (view coordinates, fixed spacing on screen). */
-    private fun renderScanlines(scene: Scene) {
-        var y = SCANLINE_STEP_PT / 2f
-        while (y < zoneH) {
-            scene.rect(originX, originY + y, zoneW, 1f, Palette.BEZEL, alpha = SCANLINE_ALPHA)
-            y += SCANLINE_STEP_PT
-        }
-    }
-
     /** The permanent bottom controls: arcade-style Help and Quit buttons (view coordinates). */
     private fun renderQuitBar(scene: Scene) {
         arcadeButton(scene, helpX, helpY, helpW, StringKey.HELP, Palette.NEON_CYAN)
@@ -715,8 +705,6 @@ public class GameSession(
         const val BAR_MAX_WIDTH_PT = 380f
         const val BAR_GAP_PT = 12f
         const val HELP_SHARE = 0.38f
-        const val SCANLINE_STEP_PT = 4f
-        const val SCANLINE_ALPHA = 0.07f
 
         const val ACTION_START_1P = 1
         const val ACTION_START_2P = 2

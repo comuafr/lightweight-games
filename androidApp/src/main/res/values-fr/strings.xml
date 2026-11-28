@@ -65,6 +65,7 @@
     <string name="moves">Coups</string>
     <string name="goal">Objectif</string>
     <string name="next_level">Niveau suivant</string>
+    <string name="grid_has_error">La grille contient une erreur</string>
     <string name="reset_scores">Réinitialiser les scores</string>
     <string name="reset_scores_confirm">Effacer tous les meilleurs scores ? Cette action est définitive.</string>
     <string name="reset_scores_erase">Effacer</string>
@@ -111,8 +112,8 @@ Un seul achat débloque tout, pour toujours</string>
     <string name="controls_hangman">Touche une lettre du clavier.</string>
     <string name="rules_reversi">Pose des pions pour encadrer ceux de l\'adversaire : ils prennent ta couleur. Celui qui a le plus de pions à la fin gagne. Si tu ne peux pas jouer, ton tour est passé.</string>
     <string name="controls_reversi">Touche une case où tu retournes au moins un pion.</string>
-    <string name="rules_sudoku">Remplis la grille pour que chaque ligne, chaque colonne et chaque bloc de 3x3 contienne une seule fois les chiffres de 1 à 9. Les chiffres faux s\'affichent en rouge.</string>
-    <string name="controls_sudoku">Choisis une difficulté, touche une case vide, puis un chiffre sur le pavé. La touche gomme efface une case.</string>
+    <string name="rules_sudoku">Remplis la grille pour que chaque ligne, chaque colonne et chaque bloc de 3x3 contienne une seule fois les chiffres de 1 à 9. Les erreurs ne sont pas signalées : tu ne sais qu’il y en a une qu’une fois la grille remplie.</string>
+    <string name="controls_sudoku">Choisis une difficulté, touche une case vide, puis un chiffre sur le pavé. Le crayon écrit de petites notes à la place du chiffre ; touche-le à nouveau pour écrire des chiffres. La croix efface le chiffre, puis les notes.</string>
     <string name="rules_nonogram">Fais apparaître l\'image cachée. Les nombres à côté de chaque ligne et colonne donnent la longueur des suites de cases pleines. Marque d\'une croix les cases que tu sais vides.</string>
     <string name="controls_nonogram">Touche ou fais glisser le doigt pour remplir des cases. Appuie longuement pour poser une croix.</string>
     <string name="rules_mixup">Échange deux formes voisines pour en aligner trois ou plus. Atteins l’objectif du niveau avant d’avoir épuisé tes coups. Quatre alignées donnent une forme rayée qui vide une ligne ; cinq donnent une bombe qui emporte toute une sorte. Chaque niveau a son objectif : atteindre un score, ramasser des formes ou briser la glace. Pour briser la glace, fais disparaître la forme posée dessus (deux fois si la glace est épaisse).</string>

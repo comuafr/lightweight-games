@@ -1,5 +1,10 @@
 package lg.core.games.sudoku
 
+import lg.core.scene.SoundId
+import lg.core.scene.Scene
+import lg.core.scene.Palette
+import lg.core.input.GestureKind
+import lg.core.input.Gesture
 import lg.core.GameStatus
 import lg.core.util.Rng
 import kotlin.test.Test
@@ -112,16 +117,150 @@ public class SudokuRulesTest {
     }
 
     @Test
-    public fun wrongEntryIsStoredButNotCountedAsScore(): Unit {
+    public fun aWrongEntryCountsLikeARightOneSoNothingGivesItAway(): Unit {
         val game = newGame()
         game.debugStartWithDifficulty(SudokuGenerator.Difficulty.EASY)
         val blank = (0 until 81).first { game.debugGiven(it) == 0 }
         game.debugSetSelected(blank)
         val correct = game.debugSolution(blank)
         val wrong = if (correct == 9) 1 else correct + 1
+        val scoreBefore = game.score
         game.debugApplyNumpadKey(wrong)
         assertEquals(wrong, game.debugCurrent(blank))
+        assertEquals(scoreBefore + 1, game.score)
         assertEquals(GameStatus.Running, game.status)
+        // Same color, same sound: the entry is drawn like a right one.
+        val scene = Scene()
+        game.resize(360f, 560f)
+        game.render(scene)
+        assertTrue((0 until scene.count).none { scene.color[it] == Palette.DANGER })
+        assertEquals(SoundId.EAT.bit, scene.soundMask)
+    }
+
+    private fun blankOf(game: SudokuGame): Int {
+        val blank = (0 until 81).first { game.debugGiven(it) == 0 }
+        game.debugSetSelected(blank)
+        return blank
+    }
+
+    private fun tap(game: SudokuGame, x: Float, y: Float) {
+        game.onGesture(Gesture().also { it.kind = GestureKind.TAP; it.x = x; it.y = y })
+    }
+
+    /** Taps slot [slot] (0..11, row by row) of the six-column pad of a 360 x 560 zone: board 55..415, pad from 423. */
+    private fun tapKey(game: SudokuGame, slot: Int) = tap(game, 6f + (slot % 6) * 53f + 26f, 423f + (slot / 6) * 48f + 24f)
+
+    @Test
+    public fun thePadHasDigitsEraseAndAWidePencil(): Unit {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.EASY)
+        game.resize(360f, 560f)
+        val keys = (0 until 12).map { game.debugKeyAt(6f + (it % 6) * 53f + 26f, 423f + (it / 6) * 48f + 24f) }
+        assertEquals(listOf(1, 2, 3, 4, 5, 0, 6, 7, 8, 9, SudokuGame.PENCIL_KEY, SudokuGame.PENCIL_KEY), keys)
+    }
+
+    @Test
+    public fun thePencilWritesAndRemovesNotesInEmptyCellsOnly(): Unit {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.HARD)
+        game.resize(360f, 560f)
+        val cell = blankOf(game)
+        tapKey(game, 10)
+        assertTrue(game.debugPencil())
+        tapKey(game, 0)
+        tapKey(game, 9) // digit 9
+        assertEquals(1 or 256, game.debugNotes(cell))
+        assertEquals(0, game.debugCurrent(cell))
+        tapKey(game, 0)
+        assertEquals(256, game.debugNotes(cell))
+
+        // A digit in the cell hides the notes; erasing it brings them back, erasing again removes them.
+        tapKey(game, 11)
+        assertTrue(!game.debugPencil())
+        tapKey(game, 2)
+        assertEquals(3, game.debugCurrent(cell))
+        tapKey(game, 10)
+        tapKey(game, 4) // pencil on a filled cell: nothing
+        assertEquals(256, game.debugNotes(cell))
+        tapKey(game, 5)
+        assertEquals(0, game.debugCurrent(cell))
+        assertEquals(256, game.debugNotes(cell))
+        tapKey(game, 5)
+        assertEquals(0, game.debugNotes(cell))
+
+        val givenCell = (0 until 81).first { game.debugGiven(it) != 0 }
+        game.debugSetSelected(givenCell)
+        tapKey(game, 0)
+        assertEquals(0, game.debugNotes(givenCell))
+    }
+
+    @Test
+    public fun notesAndPencilAreSavedAndOldSavesStillLoad(): Unit {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.HARD)
+        game.resize(360f, 560f)
+        val cell = blankOf(game)
+        tapKey(game, 10)
+        tapKey(game, 3)
+        val data = game.snapshot()!!
+        val restored = SudokuGame()
+        assertTrue(restored.restore(data))
+        assertEquals(8, restored.debugNotes(cell))
+        assertTrue(restored.debugPencil())
+
+        // The format of version 1.0.7 had neither notes nor pencil.
+        val old = data.split(";").filterNot { it.startsWith("notes=") || it.startsWith("pencil=") }.joinToString(";")
+        val fromOld = SudokuGame()
+        assertTrue(fromOld.restore(old))
+        assertEquals(0, fromOld.debugNotes(cell))
+        assertTrue(!fromOld.debugPencil())
+        assertTrue(!SudokuGame().restore(data.replace("pencil=1", "pencil=7")))
+        assertTrue(!SudokuGame().restore("$old;notes=1,2"))
+    }
+
+    @Test
+    public fun onlyAFullWrongGridSaysThereIsAnError(): Unit {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.EASY)
+        game.resize(360f, 560f)
+        fun warns(): Boolean {
+            val scene = Scene()
+            game.render(scene)
+            return (0 until scene.count).any { scene.color[it] == Palette.DANGER }
+        }
+        val blanks = (0 until 81).filter { game.debugGiven(it) == 0 }
+        val last = blanks.last()
+        val wrong = game.debugSolution(last) % 9 + 1
+        for (i in blanks.dropLast(1)) {
+            game.debugSetSelected(i)
+            game.debugApplyNumpadKey(game.debugSolution(i))
+        }
+        assertTrue(!warns())
+        game.debugSetSelected(last)
+        game.debugApplyNumpadKey(wrong)
+        assertTrue(warns())
+        game.debugApplyNumpadKey(game.debugSolution(last))
+        assertTrue(!warns())
+        assertTrue(game.status is GameStatus.Over)
+    }
+
+    @Test
+    public fun everyNoteOfEveryCellFitsInTheScene(): Unit {
+        val game = newGame()
+        game.debugStartWithDifficulty(SudokuGenerator.Difficulty.HARD)
+        game.resize(360f, 560f)
+        game.debugApplyNumpadKey(0)
+        tapKey(game, 10)
+        for (i in 0 until 81) {
+            if (game.debugGiven(i) != 0) continue
+            game.debugSetSelected(i)
+            for (d in 1..9) game.debugApplyNumpadKey(d)
+        }
+        val scene = Scene()
+        game.render(scene)
+        assertEquals(0, scene.dropped)
+        // The session adds its frame, HUD, overlay and buttons on top.
+        assertTrue(scene.count < 950, "too many primitives: ${scene.count}")
     }
 
     @Test

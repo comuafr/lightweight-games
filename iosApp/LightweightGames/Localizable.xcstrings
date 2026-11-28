@@ -1140,6 +1140,23 @@
         }
       }
     },
+    "grid_has_error": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The grid has a mistake"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La grille contient une erreur"
+          }
+        }
+      }
+    },
     "word_was": {
       "extractionState": "manual",
       "localizations": {

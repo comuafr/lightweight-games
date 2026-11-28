@@ -87,6 +87,7 @@ internal class Strings(context: Context) {
             R.string.moves, // MOVES
             R.string.goal, // GOAL
             R.string.next_level, // NEXT_LEVEL
+            R.string.grid_has_error, // GRID_HAS_ERROR
         )
     }
 }

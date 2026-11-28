@@ -66,6 +66,7 @@
     <string name="moves">Moves</string>
     <string name="goal">Goal</string>
     <string name="next_level">Next level</string>
+    <string name="grid_has_error">The grid has a mistake</string>
     <string name="reset_scores">Reset scores</string>
     <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
     <string name="reset_scores_erase">Erase</string>
@@ -113,8 +114,8 @@ One purchase unlocks everything, forever</string>
     <string name="controls_hangman">Tap a letter on the keyboard.</string>
     <string name="rules_reversi">Place discs to trap your opponent\'s discs between yours: they flip to your color. Whoever has the most discs at the end wins. If you can\'t play, your turn is skipped.</string>
     <string name="controls_reversi">Tap a square where you can flip at least one disc.</string>
-    <string name="rules_sudoku">Fill the grid so that every row, every column and every 3x3 block contains the digits 1 to 9 once. Wrong digits show in red.</string>
-    <string name="controls_sudoku">Choose a difficulty, tap an empty square, then tap a digit on the pad. Use the erase key to clear a square.</string>
+    <string name="rules_sudoku">Fill the grid so that every row, every column and every 3x3 block holds each digit from 1 to 9 exactly once. Mistakes are not shown: you only learn of one once the grid is full.</string>
+    <string name="controls_sudoku">Pick a difficulty, tap an empty cell, then a digit on the pad. The pencil writes small notes instead of the digit; tap it again to write digits. The cross erases the digit, then the notes.</string>
     <string name="rules_nonogram">Reveal the hidden picture. The numbers beside each row and column tell the lengths of the runs of filled squares in it. Cross the squares you know are empty.</string>
     <string name="controls_nonogram">Tap or drag to fill squares. Press and hold to put a cross.</string>
     <string name="rules_mixup">Swap two neighbouring shapes to line up three or more. Reach the goal of the level before your moves run out. Four in a line make a striped shape that clears a line; five make a bomb that takes a whole kind. Each level has its own goal: reach a score, collect shapes, or break the ice. To break ice, clear the shape sitting on it (twice for thick ice).</string>

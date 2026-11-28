@@ -69,4 +69,5 @@ public enum class StringKey {
     MOVES,
     GOAL,
     NEXT_LEVEL,
+    GRID_HAS_ERROR,
 }
