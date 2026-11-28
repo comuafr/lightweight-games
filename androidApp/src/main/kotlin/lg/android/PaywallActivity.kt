@@ -9,6 +9,7 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -24,11 +25,10 @@ import lg.android.ui.Strings
 import lg.android.ui.TileView
 import lg.core.GameMeta
 import lg.core.GameRegistry
-import lg.core.Tier
 import lg.core.scene.StringKey
 
 /**
- * The "unlock all" paywall (PLAN.md §6, §8): the locked game's icon, title
+ * The "unlock all" paywall (PLAN.md §6, §8): the locked game's icon (or the app's), title
  * and body copy, the price once known, a parental-gate hold button, a
  * "Restore purchases" action, and, when the price can't be fetched, a message
  * saying why (store unreachable, product not offered, other error with its code)
@@ -56,12 +56,8 @@ class PaywallActivity : Activity() {
         super.onCreate(savedInstanceState)
         strings = Strings(this)
 
+        // The locked game that was tapped, or null when opened from the catalogue's "unlock all" link.
         val meta = intent.getStringExtra(EXTRA_GAME_ID)?.let { GameRegistry.byId[it] }
-            ?: GameRegistry.all.firstOrNull { it.tier == Tier.UNLOCKED }
-        if (meta == null) {
-            finish()
-            return
-        }
 
         val scroll = ScrollView(this).apply { isFillViewport = true }
         val root = LinearLayout(this).apply {
@@ -144,8 +140,16 @@ class PaywallActivity : Activity() {
         App.from(this).billing.purchaseListener = null
     }
 
-    private fun buildIcon(meta: GameMeta): View =
-        TileView(this, meta).apply { locked = true }
+    /** The tile of the game that was tapped; without one, the application's own icon. */
+    private fun buildIcon(meta: GameMeta?): View =
+        if (meta != null) {
+            TileView(this, meta).apply { locked = true }
+        } else {
+            ImageView(this).apply {
+                setImageDrawable(applicationInfo.loadIcon(packageManager))
+                contentDescription = applicationInfo.loadLabel(packageManager)
+            }
+        }
 
     private fun loadProduct() {
         val id = ++loadId

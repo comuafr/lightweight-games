@@ -162,9 +162,20 @@ def launcher():
         icon.save(os.path.join(RES, f"mipmap-xxxhdpi/{name}.webp"), quality=85, method=6)
 
 
+def ios_art():
+    """The art as an ordinary image of the iOS app (96 pt at 3x), shown on the "unlock all" screen."""
+    folder = os.path.join(os.path.dirname(os.path.dirname(IOS_ICON)), "AppArt.imageset")
+    os.makedirs(folder, exist_ok=True)
+    square(288).save(os.path.join(folder, "app_art.png"), optimize=True)
+    with open(os.path.join(folder, "Contents.json"), "w") as f:
+        f.write('{\n  "images" : [\n    { "filename" : "app_art.png", "idiom" : "universal" }\n  ],\n'
+                '  "info" : { "author" : "xcode", "version" : 1 }\n}\n')
+
+
 def main():
     square(512).save(os.path.join(PLAY, "icon_512.png"), optimize=True)
     square(1024).save(IOS_ICON, optimize=True)
+    ios_art()
     # The app exists in English and French only, so the other store languages keep the title "Light Games".
     for code, title, sentences in (
         ("en", "Light Games", ("15 tiny offline games.", "No ads.")),

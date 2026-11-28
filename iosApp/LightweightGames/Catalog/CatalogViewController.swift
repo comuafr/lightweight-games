@@ -114,8 +114,7 @@ final class CatalogViewController: UIViewController {
     }
 
     @objc private func unlockBannerTapped() {
-        guard let meta = firstLockedMeta() else { return }
-        presentPaywall(for: meta)
+        presentPaywall(for: nil)
     }
 
     private func firstLockedMeta() -> GameMeta? {
@@ -135,7 +134,7 @@ final class CatalogViewController: UIViewController {
         Task { await services.store.silentRevalidateIfNeeded() }
     }
 
-    private func presentPaywall(for meta: GameMeta) {
+    private func presentPaywall(for meta: GameMeta?) {
         let paywall = PaywallViewController(services: services, lockedMeta: meta) { [weak self] in
             guard let self else { return }
             self.updateUnlockBanner()

@@ -14,7 +14,8 @@ import GamesCore
 @MainActor
 final class PaywallViewController: UIViewController {
     private let services: Services
-    private let lockedMeta: GameMeta
+    /// The locked game that was tapped, or nil when opened from the catalogue's "unlock all" banner.
+    private let lockedMeta: GameMeta?
 
     /// Called after a purchase or restore actually changes the local
     /// entitlement, so the presenter can refresh immediately (the catalog
@@ -41,7 +42,7 @@ final class PaywallViewController: UIViewController {
         didSet { applyBusyState() }
     }
 
-    init(services: Services, lockedMeta: GameMeta, onUnlockChanged: (() -> Void)? = nil) {
+    init(services: Services, lockedMeta: GameMeta?, onUnlockChanged: (() -> Void)? = nil) {
         self.services = services
         self.lockedMeta = lockedMeta
         self.onUnlockChanged = onUnlockChanged
@@ -90,8 +91,19 @@ final class PaywallViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(stack)
 
-        iconView.configure(meta: lockedMeta)
-        iconView.translatesAutoresizingMaskIntoConstraints = false
+        // The tile of the game that was tapped; without one, the application's own artwork.
+        let artView: UIView
+        if let lockedMeta {
+            iconView.configure(meta: lockedMeta)
+            artView = iconView
+        } else {
+            let appArt = UIImageView(image: UIImage(named: "AppArt"))
+            appArt.contentMode = .scaleAspectFit
+            appArt.layer.cornerRadius = 20
+            appArt.clipsToBounds = true
+            artView = appArt
+        }
+        artView.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.text = Strings.string(for: .unlockTitle)
         titleLabel.font = .systemFont(ofSize: 24, weight: .bold)
@@ -138,13 +150,13 @@ final class PaywallViewController: UIViewController {
 
         let iconWrapper = UIView()
         iconWrapper.translatesAutoresizingMaskIntoConstraints = false
-        iconWrapper.addSubview(iconView)
+        iconWrapper.addSubview(artView)
         NSLayoutConstraint.activate([
-            iconView.topAnchor.constraint(equalTo: iconWrapper.topAnchor),
-            iconView.bottomAnchor.constraint(equalTo: iconWrapper.bottomAnchor),
-            iconView.centerXAnchor.constraint(equalTo: iconWrapper.centerXAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 96),
-            iconView.heightAnchor.constraint(equalToConstant: 96),
+            artView.topAnchor.constraint(equalTo: iconWrapper.topAnchor),
+            artView.bottomAnchor.constraint(equalTo: iconWrapper.bottomAnchor),
+            artView.centerXAnchor.constraint(equalTo: iconWrapper.centerXAnchor),
+            artView.widthAnchor.constraint(equalToConstant: 96),
+            artView.heightAnchor.constraint(equalToConstant: 96),
         ])
 
         [iconWrapper, titleLabel, bodyLabel, priceLabel, offlineLabel, unlockButton, gateHintLabel, restoreButton]

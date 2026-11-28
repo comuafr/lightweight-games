@@ -131,8 +131,7 @@ class MainActivity : Activity() {
 
         banner.visibility = if (unlocked) View.GONE else View.VISIBLE
         if (!unlocked) {
-            val firstLocked = games.firstOrNull { it.tier == Tier.UNLOCKED }
-            banner.setOnClickListener { PaywallActivity.start(this, firstLocked?.id) }
+            banner.setOnClickListener { PaywallActivity.start(this, null) }
         }
 
         var index = 0
