@@ -455,6 +455,10 @@ public class Game2048 : Game {
      * pause, not from any per-frame path, so the map/string allocation here
      * is fine despite the zero-allocation rule for `update`/`render`.
      */
+    // An empty grid (a game never started) has nothing to resume, nor has a blocked one.
+    override val canResume: Boolean
+        get() = status == GameStatus.Running && hasTileAtLeast(1) && hasAnyMove()
+
     override fun snapshot(): String? {
         val map = LinkedHashMap<String, String>(SIZE * SIZE + 4)
         for (y in 0 until SIZE) {

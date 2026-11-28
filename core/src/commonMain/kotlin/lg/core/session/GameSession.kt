@@ -42,7 +42,7 @@ public class GameSession(
     public val score: Int
         get() = game.score
 
-    /** Called when the player taps the permanent "Quit" button; the platform leaves the game screen. */
+    /** Called once the player really leaves (see [requestQuit]); the platform closes the game screen. */
     public var onQuit: (() -> Unit)? = null
 
     /** Called when the player taps the permanent "Help" button; the platform shows the rules and controls. */
@@ -58,6 +58,9 @@ public class GameSession(
     /** True while the platform is asked for the initials of a new high score. */
     public val isAwaitingInitials: Boolean
         get() = overlay is Overlay.NewHighScore
+
+    /** True while the start screen offers to take up the saved game restored by [tryRestore]. */
+    private var resumeOffered: Boolean = false
 
     // Full view size (screen dp). The game and the overlays always work in a fixed
     // logical play zone of `width` x `height` ([LOGICAL_SHORT] x [LOGICAL_LONG], swapped for a landscape game) so that
@@ -180,6 +183,7 @@ public class GameSession(
         this.players = players.coerceIn(meta.players.first, meta.players.last)
         game.reset(seed, this.players)
         highlightRank = -1
+        resumeOffered = false
         overlay = Overlay.None
         eventsArmed = true
         layoutButtons()
@@ -347,6 +351,30 @@ public class GameSession(
         renderQuitBar(scene)
     }
 
+    /**
+     * The player asks to leave (Quit button, back key). A game in progress, running or paused, first shows
+     * [Overlay.ConfirmQuit]; before the start and after the end there is nothing to lose and [onQuit] is called at once.
+     * No-op while the confirmation is shown: only its own button leaves, so a double tap on Quit does not.
+     */
+    public fun requestQuit() {
+        when (overlay) {
+            Overlay.None, Overlay.Paused -> {
+                overlay = Overlay.ConfirmQuit
+                layoutButtons()
+            }
+            Overlay.ConfirmQuit -> Unit
+            else -> onQuit?.invoke()
+        }
+    }
+
+    /** Backs out of the quit confirmation to the Paused overlay. No-op otherwise. */
+    public fun cancelQuit() {
+        if (overlay === Overlay.ConfirmQuit) {
+            overlay = Overlay.Paused
+            layoutButtons()
+        }
+    }
+
     /** Pauses a running game, showing the Paused overlay. No-op if an overlay is already shown. */
     public fun pause() {
         if (overlay == Overlay.None) {
@@ -355,9 +383,9 @@ public class GameSession(
         }
     }
 
-    /** Dismisses the Paused overlay and hands input/time back to the game. No-op otherwise. */
+    /** Dismisses the Paused or quit confirmation overlay and hands input/time back to the game. No-op otherwise. */
     public fun resume() {
-        if (overlay is Overlay.Paused) {
+        if (overlay === Overlay.Paused || overlay === Overlay.ConfirmQuit) {
             overlay = Overlay.None
         }
     }
@@ -370,18 +398,29 @@ public class GameSession(
     public val needsFrameLoop: Boolean
         get() = overlay == Overlay.None && (game.wantsFrames || gestureDetector.hasPendingLongPress)
 
-    /** Persists the game's resumable state (no-op if [GameMeta.resumable] is false or nothing to save). */
+    /**
+     * Persists the game's resumable state (no-op if [GameMeta.resumable] is false). Before the start the stored game is
+     * left alone: there is nothing newer to save. A finished game, or one with nothing to take up again
+     * ([Game.canResume]), removes it.
+     */
     public fun persist(store: KeyValueStore) {
-        if (!meta.resumable) return
-        val snapshot = game.snapshot() ?: return
-        store.putString(saveKey(), snapshot)
+        if (!meta.resumable || overlay === Overlay.Start) return
+        val ended = overlay is Overlay.Over || overlay is Overlay.NewHighScore
+        val snapshot = if (!ended && game.canResume) game.snapshot() else null
+        if (snapshot != null) store.putString(saveKey(), snapshot) else store.remove(saveKey())
     }
 
-    /** Attempts to restore previously persisted state. @return true if a save was found and applied. */
+    /**
+     * Attempts to restore previously persisted state; if it is a game left unfinished, the start screen then offers
+     * "Resume" or "Restart". @return true if a save was found and applied.
+     */
     public fun tryRestore(store: KeyValueStore): Boolean {
         if (!meta.resumable) return false
         val data = store.getString(saveKey(), null) ?: return false
-        return game.restore(data)
+        val restored = game.restore(data)
+        resumeOffered = restored && game.canResume
+        layoutButtons()
+        return restored
     }
 
     private fun saveKey(): String = "save.${meta.id}"
@@ -390,7 +429,7 @@ public class GameSession(
         if (inControls(gesture.x, gesture.y)) {
             if (gesture.kind == GestureKind.TAP) {
                 if (hits(gesture.x, gesture.y, quitX, quitY, quitW)) {
-                    onQuit?.invoke()
+                    requestQuit()
                 } else if (hits(gesture.x, gesture.y, helpX, helpY, helpW)) {
                     pause()
                     onHelp?.invoke()
@@ -432,6 +471,12 @@ public class GameSession(
             ACTION_START_2P -> start(players = 2)
             ACTION_RESUME -> resume()
             ACTION_RESTART -> start(players = players)
+            ACTION_QUIT -> onQuit?.invoke()
+            ACTION_CONTINUE -> {
+                resumeOffered = false
+                overlay = Overlay.None
+                layoutButtons()
+            }
         }
     }
 
@@ -439,7 +484,10 @@ public class GameSession(
         buttonCount = 0
         when (overlay) {
             Overlay.Start -> {
-                if (meta.players.last >= 2) {
+                if (resumeOffered) {
+                    addButton(StringKey.RESUME, ACTION_CONTINUE)
+                    addButton(StringKey.RESTART, ACTION_START_1P)
+                } else if (meta.players.last >= 2) {
                     addButton(StringKey.ONE_PLAYER, ACTION_START_1P)
                     addButton(StringKey.TWO_PLAYERS, ACTION_START_2P)
                 } else {
@@ -449,6 +497,10 @@ public class GameSession(
             Overlay.Paused -> {
                 addButton(StringKey.RESUME, ACTION_RESUME)
                 addButton(StringKey.RESTART, ACTION_RESTART)
+            }
+            Overlay.ConfirmQuit -> {
+                addButton(StringKey.RESUME, ACTION_RESUME)
+                addButton(StringKey.QUIT, ACTION_QUIT)
             }
             is Overlay.Over -> {
                 addButton(StringKey.RESTART, ACTION_RESTART)
@@ -543,6 +595,9 @@ public class GameSession(
             Overlay.Paused -> {
                 scene.text(width / 2f, height * 0.32f, StringKey.PAUSED, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
             }
+            Overlay.ConfirmQuit -> {
+                scene.text(width / 2f, height * 0.28f, StringKey.QUIT_CONFIRM, Palette.FG, TITLE_SIZE_PT, Align.CENTER)
+            }
             is Overlay.Over -> {
                 if (currentOverlay.winner == GameStatus.SOLO_WIN || currentOverlay.winner == GameStatus.SOLO_LOSS) {
                     renderSoloResult(scene, won = currentOverlay.winner == GameStatus.SOLO_WIN)
@@ -590,9 +645,12 @@ public class GameSession(
         }
     }
 
-    /** Whether [overlay] is drawn together with the game's high-score table (start and end screens of such a game). */
-    private fun showsTable(overlay: Overlay): Boolean =
-        defaultScores != null && (overlay === Overlay.Start || overlay is Overlay.Over || overlay is Overlay.NewHighScore)
+    /**
+     * Whether [overlay] is drawn together with the game's high-score table (start and end screens of such a game).
+     * A start screen that offers to resume leaves the table out: its two buttons need the room.
+     */
+    private fun showsTable(overlay: Overlay): Boolean = defaultScores != null &&
+        ((overlay === Overlay.Start && !resumeOffered) || overlay is Overlay.Over || overlay is Overlay.NewHighScore)
 
     /** Start or end screen of a game with a high-score table: a title, then the table, then the buttons. */
     private fun renderTableOverlay(scene: Scene, overlay: Overlay) {
@@ -664,6 +722,8 @@ public class GameSession(
         const val ACTION_START_2P = 2
         const val ACTION_RESUME = 3
         const val ACTION_RESTART = 4
+        const val ACTION_QUIT = 5
+        const val ACTION_CONTINUE = 6
 
         const val BUTTON_HEIGHT_PT = 64f
         const val BUTTON_GAP_PT = 16f

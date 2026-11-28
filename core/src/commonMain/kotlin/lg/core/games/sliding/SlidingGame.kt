@@ -217,6 +217,9 @@ public class SlidingGame : Game {
     // Only called from GameSession.persist() on pause, never per-frame, so
     // the map/string allocation here is fine (see docs/ARCHITECTURE.md).
 
+    override val canResume: Boolean
+        get() = status == GameStatus.Running && !isSolved()
+
     override fun snapshot(): String? {
         val map = LinkedHashMap<String, String>(CELL_COUNT + 2)
         for (i in 0 until CELL_COUNT) map["t$i"] = tiles[i].toString()

@@ -54,6 +54,12 @@ public interface Game {
     /** Gives the game the progress saved earlier; called once, before the first [reset]. */
     public fun restoreProgress(value: Int) {}
 
+    /**
+     * True when the current state is a game worth taking up again: begun and not finished. Read after [restore] to
+     * offer "Resume", and before saving, so that an untouched or finished board is never kept.
+     */
+    public val canResume: Boolean get() = status == GameStatus.Running
+
     /** Serializes resumable state as `"k=v;k=v"`, or null if this game is not resumable / has nothing to save. */
     public fun snapshot(): String? = null
 

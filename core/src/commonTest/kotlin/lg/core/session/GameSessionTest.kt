@@ -331,6 +331,59 @@ public class GameSessionTest {
     }
 
     @Test
+    public fun quittingAGameInProgressAsksForConfirmationFirst(): Unit {
+        val session = newSession()
+        session.resize(400f, 400f)
+        var quits = 0
+        session.onQuit = { quits++ }
+        session.start(players = 1, seed = 1)
+
+        tapQuitBar(session, id = 0)
+        assertEquals(0, quits)
+        assertIs<Overlay.ConfirmQuit>(session.overlay)
+        assertEquals(false, session.needsFrameLoop)
+
+        // A second tap on the same button does not leave either.
+        tapQuitBar(session, id = 1)
+        assertEquals(0, quits)
+        assertIs<Overlay.ConfirmQuit>(session.overlay)
+
+        session.resume()
+        assertIs<Overlay.None>(session.overlay)
+
+        session.pause()
+        session.requestQuit()
+        assertIs<Overlay.ConfirmQuit>(session.overlay)
+        session.cancelQuit()
+        assertIs<Overlay.Paused>(session.overlay)
+        assertEquals(0, quits)
+    }
+
+    @Test
+    public fun theConfirmationButtonsResumeOrQuit(): Unit {
+        for ((row, expectedQuits) in listOf(0 to 0, 1 to 1)) {
+            val session = newSession()
+            session.resize(400f, 400f)
+            var quits = 0
+            session.onQuit = { quits++ }
+            session.start(players = 1, seed = 1)
+            session.requestQuit()
+            // Two 64 pt buttons with a 16 pt gap, centred in the 560 pt play zone: Resume, then Quit.
+            val x = session.playOriginX + 180f * session.playScale
+            val y = session.playOriginY + (240f + row * 80f) * session.playScale
+            session.onPointer(0, PointerPhase.DOWN, x, y)
+            session.onPointer(0, PointerPhase.UP, x, y)
+            assertEquals(expectedQuits, quits)
+            if (row == 0) assertIs<Overlay.None>(session.overlay)
+        }
+    }
+
+    private fun tapQuitBar(session: GameSession, id: Int) {
+        session.onPointer(id, PointerPhase.DOWN, 200f, 360f)
+        session.onPointer(id, PointerPhase.UP, 200f, 360f)
+    }
+
+    @Test
     public fun framedPlayAreaLeavesRoomAtTheTopForTheSafeInset(): Unit {
         val session = newSession()
         session.resize(400f, 800f, safeTop = 48f)

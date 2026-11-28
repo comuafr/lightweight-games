@@ -64,4 +64,5 @@ public enum class StringKey {
     WIN_TITLE,
     LOSE_TITLE,
     WORD_WAS,
+    QUIT_CONFIRM,
 }

@@ -61,6 +61,7 @@
     <string name="win_title">You won!</string>
     <string name="lose_title">You lost!</string>
     <string name="word_was">The word was</string>
+    <string name="quit_confirm">Quit the game?</string>
     <string name="reset_scores">Reset scores</string>
     <string name="reset_scores_confirm">Erase all best scores? This cannot be undone.</string>
     <string name="reset_scores_erase">Erase</string>

@@ -11,6 +11,9 @@ public sealed class Overlay {
     /** Shown while [GameSession.pause] is in effect: "Resume" / "Restart". */
     public object Paused : Overlay()
 
+    /** Shown when the player asks to leave a game in progress: "Resume" / "Quit", so a stray tap loses nothing. */
+    public object ConfirmQuit : Overlay()
+
     /** Shown once the game reaches [lg.core.GameStatus.Over]: result + "Restart" (and the high-score table). */
     public class Over(public val winner: Int) : Overlay()
 

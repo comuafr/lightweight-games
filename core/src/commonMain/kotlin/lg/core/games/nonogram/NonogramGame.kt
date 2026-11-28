@@ -211,10 +211,15 @@ public class NonogramGame : Game {
         return n
     }
 
-    private fun checkWin() {
+    private fun isSolved(): Boolean {
         for (i in 0 until size * size) {
-            if ((cellState[i] == STATE_FILLED) != picture[i]) return
+            if ((cellState[i] == STATE_FILLED) != picture[i]) return false
         }
+        return true
+    }
+
+    private fun checkWin() {
+        if (!isSolved()) return
         status = GameStatus.Over(0)
         wonThisMove = true
     }
@@ -358,6 +363,9 @@ public class NonogramGame : Game {
     // --- Save / restore -----------------------------------------------------
     // Only called from GameSession.persist() on pause, never per-frame, so the
     // map/string allocation here is fine (see docs/ARCHITECTURE.md).
+
+    override val canResume: Boolean
+        get() = status == GameStatus.Running && !choosing && size > 0 && !isSolved()
 
     override fun snapshot(): String? {
         val map = LinkedHashMap<String, String>(8)

@@ -60,6 +60,7 @@
     <string name="win_title">Gagné !</string>
     <string name="lose_title">Perdu !</string>
     <string name="word_was">Le mot était</string>
+    <string name="quit_confirm">Quitter la partie ?</string>
     <string name="reset_scores">Réinitialiser les scores</string>
     <string name="reset_scores_confirm">Effacer tous les meilleurs scores ? Cette action est définitive.</string>
     <string name="reset_scores_erase">Effacer</string>

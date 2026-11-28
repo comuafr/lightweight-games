@@ -596,6 +596,10 @@ public class MinesGame : Game {
     // Only called from GameSession.persist() on pause, never per-frame, so the
     // map/string allocation here is fine (see docs/ARCHITECTURE.md).
 
+    // Nothing to resume on the level chooser or on a board with neither a cell opened nor a flag planted.
+    override val canResume: Boolean
+        get() = status == GameStatus.Running && !choosing && !lost && !won && (firstTapDone || flagged.any { it })
+
     override fun snapshot(): String? {
         val map = LinkedHashMap<String, String>(8)
         map["mines"] = bitsToString(mines, cellCount)

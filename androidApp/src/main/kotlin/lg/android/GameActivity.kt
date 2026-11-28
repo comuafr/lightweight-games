@@ -218,13 +218,15 @@ class GameActivity : Activity() {
             it.dismiss()
             return
         }
-        if (session.overlay == Overlay.None) {
-            session.pause()
-            gameView.stopFrameLoop()
-            gameView.invalidate()
-        } else {
-            finish()
+        when (session.overlay) {
+            Overlay.None -> session.pause()
+            // Back on the confirmation cancels it, as for any dialog.
+            Overlay.ConfirmQuit -> session.cancelQuit()
+            // Paused: asks to confirm. Start or end screen: leaves at once (onQuit).
+            else -> session.requestQuit()
         }
+        gameView.stopFrameLoop()
+        gameView.invalidate()
     }
 
     companion object {

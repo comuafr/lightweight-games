@@ -69,6 +69,7 @@ enum Strings {
         "win_title", // 51 WIN_TITLE
         "lose_title", // 52 LOSE_TITLE
         "word_was", // 53 WORD_WAS
+        "quit_confirm", // 54 QUIT_CONFIRM
     ]
 
     /// Resolved once at process startup (PLAN.md §5: `Strings.swift` "maps

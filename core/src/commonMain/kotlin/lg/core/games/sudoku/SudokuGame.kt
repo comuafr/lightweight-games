@@ -316,6 +316,9 @@ public class SudokuGame : Game {
     // Only called from GameSession.persist() on pause, never per-frame, so the
     // map/string allocation here is fine (see docs/ARCHITECTURE.md).
 
+    override val canResume: Boolean
+        get() = status == GameStatus.Running && !choosing && !isSolved()
+
     override fun snapshot(): String? {
         val map = LinkedHashMap<String, String>(8)
         map["choosing"] = if (choosing) "1" else "0"
